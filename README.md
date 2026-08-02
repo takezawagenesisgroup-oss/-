@@ -44,6 +44,7 @@ stock_screener/
 ├── us_screener.py         # 米国株スクリーニング (yfinance + Financial Modeling Prep任意、順張り軸)
 ├── reversal_screener.py   # 短期反発候補スクリーニング (日本株/米国株、下げ止まり確認型)
 ├── run_all.py             # 全てまとめて実行し、統合HTMLを出力するエントリポイント
+├── backtest.py             # スコアリングロジックのバックテストツール
 ├── requirements.txt
 └── result.html             # 実行結果(都度上書き、gitignore対象)
 ```
@@ -134,6 +135,32 @@ python run_all.py --jp-limit 30 --us-tickers AAPL,MSFT,NVDA,GOOGL,AMZN
 ```
 
 実行後、`stock_screener/result.html` をブラウザで開くと結果を確認できます。
+
+## バックテスト
+
+`backtest.py` は、過去の株価データ(yfinance)にスコアリングロジックを適用し、その後の実際の
+リターンと突き合わせて検証するツールです。J-Quants/FMPのAPIキーは不要です。
+
+```bash
+cd stock_screener
+
+# 合成データでツール自体の動作確認(ネットワーク不要)
+python backtest.py --demo
+
+# 実データでの検証
+python backtest.py --tickers 7203.T,9984.T,AAPL,MSFT --period 2y
+```
+
+**検証範囲の限界**: 業績成長率・信用残変化・投資部門別売買動向・機関投資家保有比率・
+インサイダー買い・ニュースセンチメントは、多くのAPIが現在時点のスナップショットしか
+提供せず長期の時系列データを取得できないため、このバックテストの対象に含まれません。
+「順張り」のバックテストはvolume_spike+momentumの2シグナルのみで計算した簡易版のスコアに
+なります(本番のjp_screener/us_screenerが使う6〜7シグナルとは異なります)。一方
+`reversal_screener`は短期反発候補6シグナルのうちshort_squeeze以外(重み8/9)がOHLCVのみ
+から計算できる設計のため、このバックテストでもほぼそのままの精度で評価できます。
+
+売買コスト・スリッページは考慮しておらず、上場廃止銘柄によるサバイバーシップバイアスも
+排除できていません。あくまで傾向を掴むための簡易ツールという位置づけです。
 
 ## 今後のロードマップ(優先度順の一案)
 
