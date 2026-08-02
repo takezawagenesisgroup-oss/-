@@ -4,6 +4,7 @@ import argparse
 import os
 
 import jp_screener
+import reversal_screener
 import us_screener
 from common import render_combined_html
 
@@ -29,16 +30,26 @@ def main() -> None:
     if args.demo:
         jp_results = jp_screener.screen_demo()
         us_results = us_screener.screen_demo()
+        reversal_jp_results = reversal_screener.screen_demo_jp()
+        reversal_us_results = reversal_screener.screen_demo_us()
     else:
         jp_results = jp_screener.screen_real(limit=args.jp_limit)
         us_results = us_screener.screen_real(us_tickers)
+        reversal_jp_results = reversal_screener.screen_jp_real(limit=args.jp_limit)
+        reversal_us_results = reversal_screener.screen_us_real(us_tickers)
 
-    html = render_combined_html(jp_results, us_results)
+    html = render_combined_html([
+        ("日本株 (順張り: トレンド追随型)", jp_results),
+        ("米国株 (順張り: トレンド追随型)", us_results),
+        ("日本株 (短期反発候補: 下げ止まり確認型)", reversal_jp_results),
+        ("米国株 (短期反発候補: 下げ止まり確認型)", reversal_us_results),
+    ])
     os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
     with open(args.output, "w", encoding="utf-8") as f:
         f.write(html)
 
-    print(f"日本株候補: {len(jp_results)}件 / 米国株候補: {len(us_results)}件")
+    print(f"日本株候補(順張り): {len(jp_results)}件 / 米国株候補(順張り): {len(us_results)}件")
+    print(f"日本株候補(短期反発): {len(reversal_jp_results)}件 / 米国株候補(短期反発): {len(reversal_us_results)}件")
     print(f"出力先: {args.output}")
 
 

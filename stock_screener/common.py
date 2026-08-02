@@ -101,7 +101,7 @@ def render_card(ticker: str, name: str, market: str, score: Optional[float], sig
     </div>"""
 
 
-def render_combined_html(jp_results: list[dict], us_results: list[dict]) -> str:
+def render_combined_html(sections: list[tuple[str, list[dict]]]) -> str:
     generated_at = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def section(title: str, results: list[dict]) -> str:
@@ -112,6 +112,8 @@ def render_combined_html(jp_results: list[dict], us_results: list[dict]) -> str:
             for r in results
         )
         return f"<section><h2>{title}</h2><div class='cards'>{cards}</div></section>"
+
+    body = "".join(section(title, results) for title, results in sections)
 
     return f"""<!DOCTYPE html>
 <html lang="ja">
@@ -150,8 +152,9 @@ def render_combined_html(jp_results: list[dict], us_results: list[dict]) -> str:
   <div class="disclaimer">
     本ツールは投資助言ではありません。市場シグナルを機械的にスコアリングした参考情報であり、
     最終的な投資判断・発注は必ずご自身の責任で行ってください。
+    「順張り」は資金流入トレンドを後追いする軸、「短期反発」は短期的に下落しつつも
+    下げ止まりの兆候がある銘柄を検知する軸です。
   </div>
-  {section("日本株", jp_results)}
-  {section("米国株", us_results)}
+  {body}
 </body>
 </html>"""

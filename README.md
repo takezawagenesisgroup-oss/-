@@ -6,6 +6,18 @@
 **本ツールは投資助言ではありません。** 市場シグナルを機械的にスコアリングした参考情報を出すだけで、
 自動発注機能は意図的に実装していません。最終的な投資判断・発注は必ずご自身の責任で行ってください。
 
+## 2つのスクリーニング軸
+
+- **順張り(トレンド追随型)** — `jp_screener.py` / `us_screener.py`。資金流入トレンド
+  (出来高急増・業績成長・投資部門別売買動向など)を後追いする、比較的長めの保有を想定した軸。
+- **短期反発候補(下げ止まり確認型)** — `reversal_screener.py`。短期的に下落しているが、
+  下げ止まりの兆候がある銘柄を検知する軸。「落ちるナイフを拾う」ことを避けるため、
+  以下の2条件を**必須ゲート**として課しており、合成スコアが高くてもこれを満たさない銘柄は
+  候補から除外される:
+  1. 実際に一定以上下落していること(20日高値からの下落幅が`MIN_DRAWDOWN_PCT`以下)
+  2. 出来高急増日の終値位置(セリングクライマックス後の切り返し)か、直近安値の切り上げの
+     いずれかで下げ止まりが確認できること
+
 ## 設計思想
 
 「AIが買いそうな株を先回りで買う」ことは、アルゴリズム取引が非公開ロジック・ミリ秒単位で動く以上、
@@ -27,12 +39,13 @@
 
 ```
 stock_screener/
-├── common.py         # スコアリング共通ロジック + HTML生成
-├── jp_screener.py     # 日本株スクリーニング (J-Quants API)
-├── us_screener.py     # 米国株スクリーニング (yfinance + Financial Modeling Prep任意)
-├── run_all.py         # 両方まとめて実行し、統合HTMLを出力するエントリポイント
+├── common.py             # スコアリング共通ロジック + HTML生成
+├── jp_screener.py         # 日本株スクリーニング (J-Quants API、順張り軸)
+├── us_screener.py         # 米国株スクリーニング (yfinance + Financial Modeling Prep任意、順張り軸)
+├── reversal_screener.py   # 短期反発候補スクリーニング (日本株/米国株、下げ止まり確認型)
+├── run_all.py             # 全てまとめて実行し、統合HTMLを出力するエントリポイント
 ├── requirements.txt
-└── result.html         # 実行結果(都度上書き、gitignore対象)
+└── result.html             # 実行結果(都度上書き、gitignore対象)
 ```
 
 ## シグナル設計と重み(初期値、要チューニング)
@@ -59,6 +72,17 @@ stock_screener/
 | institutional | 機関投資家保有比率 | 1.0 | yfinance (`heldPercentInstitutions`) |
 | insider_buy | インサイダー買い越し額 | 1.5 | FMP `/insider-trading` (要APIキー) |
 | news_sentiment | ニュースセンチメント平均 | 1.0 | FMP `/stock_news_sentiment` (要APIキー) |
+
+### 短期反発候補 (`reversal_screener.py` の `WEIGHTS`)
+
+| シグナル | 内容 | 重み | ゲート |
+|---|---|---|---|
+| drawdown | 20日高値からの下落幅 | 1.5 | 必須(`MIN_DRAWDOWN_PCT`以下でなければ即除外) |
+| rsi_oversold | RSI(14)の売られすぎ度 | 2.0 | - |
+| volume_climax | 出来高急増日の終値位置(セリングクライマックス後の切り返し) | 2.0 | higher_lowとのOR条件で必須 |
+| higher_low | 直近安値の切り上げ率 | 1.5 | volume_climaxとのOR条件で必須 |
+| volatility_contraction | 値動きの収縮度 | 1.0 | - |
+| short_squeeze | 空売り比率(踏み上げ余地、日本株はJ-Quants `/markets/short_selling`、米国株はyfinance `shortPercentOfFloat`) | 1.0 | - |
 
 重みと各シグナルの閾値(`*_RANGE`定数、何%で0点/100点になるか)はすべて仮置きです。
 実データを見ながら分布を確認し、調整する必要があります。
