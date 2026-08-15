@@ -4,10 +4,10 @@ import { CHECKLIST_ITEMS, APPROVALS_REQUIRED } from '../types';
 export const ME: Member = { id: 'me', name: '自分', avatar: '🙂' };
 
 export const COLLEAGUES: Member[] = [
-  { id: 'u1', name: '田中 美咲', avatar: '👩🏻' },
-  { id: 'u2', name: '佐藤 healthy', avatar: '👨🏻' },
-  { id: 'u3', name: '鈴木 蓮', avatar: '🧑🏻' },
-  { id: 'u4', name: '山本 陽菜', avatar: '👩🏻‍🦱' },
+  { id: 'u1', name: '田中 美咲', avatar: '/photos/person1-avatar.jpg', photo: '/photos/person1.jpg' },
+  { id: 'u2', name: '佐藤 健一', avatar: '/photos/person2-avatar.jpg', photo: '/photos/person2.jpg' },
+  { id: 'u3', name: '鈴木 蓮', avatar: '/photos/person3-avatar.jpg', photo: '/photos/person3.jpg' },
+  { id: 'u4', name: '山本 陽菜', avatar: '/photos/person4-avatar.jpg', photo: '/photos/person4.jpg' },
   { id: 'u5', name: '高橋 大和', avatar: '👨🏻‍🦰' },
 ];
 
@@ -100,7 +100,7 @@ export function buildSeedPosts(): SmilePost[] {
       userId: user.id,
       userName: user.name,
       avatar: user.avatar,
-      photo: PHOTO_EMOJIS[Math.floor(Math.random() * PHOTO_EMOJIS.length)],
+      photo: user.photo ?? PHOTO_EMOJIS[Math.floor(Math.random() * PHOTO_EMOJIS.length)],
       checklist,
       score: scoreFor(checklist),
       comment: comments[Math.floor(Math.random() * comments.length)],

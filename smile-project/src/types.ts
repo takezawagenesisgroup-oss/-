@@ -39,5 +39,6 @@ export interface SmilePost {
 export interface Member {
   id: string;
   name: string;
-  avatar: string;
+  avatar: string; // emoji, or an image path/data URI
+  photo?: string; // this member's own smile photo, used on their posts
 }

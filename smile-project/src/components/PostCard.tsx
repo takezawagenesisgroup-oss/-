@@ -1,6 +1,8 @@
 import type { SmilePost } from '../types';
 import { APPROVALS_REQUIRED, CHECKLIST_ITEMS } from '../types';
 import { useStore } from '../data/store';
+import Avatar from './Avatar';
+import { isImageSrc } from '../utils/media';
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -13,10 +15,6 @@ function timeAgo(iso: string): string {
   if (days < 7) return `${days}日前`;
   const d = new Date(iso);
   return `${d.getMonth() + 1}月${d.getDate()}日`;
-}
-
-function isPhotoUrl(photo: string): boolean {
-  return photo.startsWith('data:');
 }
 
 export default function PostCard({ post }: { post: SmilePost }) {
@@ -35,7 +33,7 @@ export default function PostCard({ post }: { post: SmilePost }) {
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-xl">{post.avatar}</div>
+        <Avatar src={post.avatar} alt={post.userName} className="h-10 w-10 rounded-full bg-blue-50 text-xl" />
         <div className="flex-1">
           <p className="text-sm font-semibold text-slate-800">{post.userName}</p>
           <p className="text-xs text-slate-400">{timeAgo(post.createdAt)}</p>
@@ -44,7 +42,7 @@ export default function PostCard({ post }: { post: SmilePost }) {
       </div>
 
       <div className="mt-3 flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-amber-50 to-blue-50">
-        {isPhotoUrl(post.photo) ? (
+        {isImageSrc(post.photo) ? (
           <img src={post.photo} alt="スマイル投稿" className="h-48 w-full object-cover" />
         ) : (
           <div className="flex h-48 w-full items-center justify-center text-7xl">{post.photo}</div>
@@ -70,13 +68,12 @@ export default function PostCard({ post }: { post: SmilePost }) {
           <div className="flex -space-x-2">
             {post.approvals.length === 0 && <span className="text-xs text-slate-400">まだ承認なし</span>}
             {post.approvals.map((a) => (
-              <span
+              <Avatar
                 key={a.userId}
-                title={a.userName}
-                className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-blue-100 text-xs"
-              >
-                {a.avatar}
-              </span>
+                src={a.avatar}
+                alt={a.userName}
+                className="h-6 w-6 rounded-full border-2 border-white bg-blue-100 text-xs"
+              />
             ))}
           </div>
           {post.approvals.length > 0 && (

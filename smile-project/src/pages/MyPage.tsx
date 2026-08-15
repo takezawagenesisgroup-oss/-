@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../data/store';
+import Avatar from '../components/Avatar';
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -38,7 +39,7 @@ export default function MyPage() {
     <div className="mx-auto max-w-md px-4 py-4">
       <div className="rounded-2xl bg-gradient-to-br from-blue-800 to-blue-600 p-5 text-white shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20 text-3xl">{currentUser.avatar}</div>
+          <Avatar src={currentUser.avatar} alt={currentUser.name} className="h-14 w-14 rounded-full bg-white/20 text-3xl" />
           <div>
             <p className="text-sm text-blue-100">{currentUser.name}</p>
             <p className="text-2xl font-bold">{totalPoints(currentUser.id)} pt</p>
