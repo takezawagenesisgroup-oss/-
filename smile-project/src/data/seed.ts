@@ -1,5 +1,5 @@
 import type { Member, SmilePost } from '../types';
-import { CHECKLIST_ITEMS, APPROVALS_REQUIRED } from '../types';
+import { CHECKLIST_ITEMS, APPROVALS_REQUIRED, MISSION_BONUS_POINTS, PROP_OPTIONS, STAMP_OPTIONS, missionForDate } from '../types';
 
 export const ME: Member = { id: 'me', name: '自分', avatar: '🙂' };
 
@@ -38,8 +38,37 @@ function nextId(): string {
   return `p${idCounter++}`;
 }
 
+function buildExtras(createdAt: string, userId: string): { extras: Partial<SmilePost>; bonus: number } {
+  const extras: Partial<SmilePost> = {};
+  let bonus = 0;
+  if (Math.random() < 0.55) {
+    extras.missionTitle = missionForDate(new Date(createdAt)).title;
+    bonus = MISSION_BONUS_POINTS;
+  }
+  if (Math.random() < 0.3) {
+    extras.prop = PROP_OPTIONS[Math.floor(Math.random() * PROP_OPTIONS.length)];
+  }
+  if (Math.random() < 0.25) {
+    extras.stampKey = STAMP_OPTIONS[Math.floor(Math.random() * STAMP_OPTIONS.length)].key;
+  }
+  if (Math.random() < 0.35) {
+    const pool = [ME, ...COLLEAGUES].filter((m) => m.id !== userId);
+    const buddy = pool[Math.floor(Math.random() * pool.length)];
+    extras.buddyIds = [buddy.id];
+  }
+  return { extras, bonus };
+}
+
 export function buildSeedPosts(): SmilePost[] {
   const posts: SmilePost[] = [];
+
+  const selfComments = [
+    '',
+    '',
+    'お客様に「いつもありがとう」と言われて嬉しかった瞬間！',
+    '鈴木さんがナイスフォローしてくれて助かった時の笑顔！',
+    '自分なりに頑張れた一日でした！',
+  ];
 
   // "me" posts scattered over the current month for the stamp calendar
   const today = new Date();
@@ -60,6 +89,7 @@ export function buildSeedPosts(): SmilePost[] {
           approvedAt: createdAt,
         });
       }
+      const { extras, bonus } = buildExtras(createdAt, ME.id);
       posts.push({
         id: nextId(),
         userId: ME.id,
@@ -67,11 +97,12 @@ export function buildSeedPosts(): SmilePost[] {
         avatar: ME.avatar,
         photo: PHOTO_EMOJIS[Math.floor(Math.random() * PHOTO_EMOJIS.length)],
         checklist,
-        score: scoreFor(checklist),
-        comment: '',
+        score: scoreFor(checklist) + bonus,
+        comment: selfComments[Math.floor(Math.random() * selfComments.length)],
         createdAt,
         approvals,
         ticketIssued: approvals.length >= APPROVALS_REQUIRED,
+        ...extras,
       });
     }
   }
@@ -80,9 +111,10 @@ export function buildSeedPosts(): SmilePost[] {
   const comments = [
     '今日もお疲れ様！',
     '朝から元気いっぱいでした🌞',
-    '接客褒められました！',
-    'チームで励まし合って頑張った一日',
+    'お客様に「また来るね」と言われて嬉しかった瞬間！',
+    '田中さんがナイスフォローしてくれて助かった時の笑顔！',
     '笑顔を意識して過ごせました',
+    'ピークタイムを乗り切ったあとの一枚です！',
   ];
   for (let i = 0; i < 10; i++) {
     const user = COLLEAGUES[Math.floor(Math.random() * COLLEAGUES.length)];
@@ -95,6 +127,7 @@ export function buildSeedPosts(): SmilePost[] {
       const a = approverPool[j];
       approvals.push({ userId: a.id, userName: a.name, avatar: a.avatar, approvedAt: createdAt });
     }
+    const { extras, bonus } = buildExtras(createdAt, user.id);
     posts.push({
       id: nextId(),
       userId: user.id,
@@ -102,11 +135,12 @@ export function buildSeedPosts(): SmilePost[] {
       avatar: user.avatar,
       photo: user.photo ?? PHOTO_EMOJIS[Math.floor(Math.random() * PHOTO_EMOJIS.length)],
       checklist,
-      score: scoreFor(checklist),
+      score: scoreFor(checklist) + bonus,
       comment: comments[Math.floor(Math.random() * comments.length)],
       createdAt,
       approvals,
       ticketIssued: approvals.length >= APPROVALS_REQUIRED,
+      ...extras,
     });
   }
 

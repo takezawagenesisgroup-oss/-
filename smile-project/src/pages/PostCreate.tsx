@@ -1,7 +1,16 @@
 import { useRef, useState } from 'react';
-import { APPROVALS_REQUIRED, CHECKLIST_ITEMS } from '../types';
+import {
+  APPROVALS_REQUIRED,
+  CHECKLIST_ITEMS,
+  MISSION_BONUS_POINTS,
+  PROP_OPTIONS,
+  STAMP_OPTIONS,
+  STORY_TEMPLATES,
+  missionForDate,
+} from '../types';
 import { useStore } from '../data/store';
 import type { Tab } from '../components/BottomNav';
+import Avatar from '../components/Avatar';
 
 const EMOJI_OPTIONS = ['😄', '😁', '😊', '🥰', '😆', '🙂'];
 
@@ -30,14 +39,22 @@ function resizeImage(file: File): Promise<string> {
 }
 
 export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
-  const { addPost } = useStore();
+  const { addPost, colleagues, todaysBuddy, currentUser } = useStore();
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [comment, setComment] = useState('');
   const [photo, setPhoto] = useState<string>(EMOJI_OPTIONS[0]);
+  const [missionDone, setMissionDone] = useState(false);
+  const [prop, setProp] = useState<string | null>(null);
+  const [stampKey, setStampKey] = useState<string | null>(null);
+  const [buddyIds, setBuddyIds] = useState<Set<string>>(new Set());
   const [submitted, setSubmitted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const score = CHECKLIST_ITEMS.reduce((sum, item) => (checked.has(item.key) ? sum + item.points : sum), 0);
+  const mission = missionForDate(new Date());
+  const buddy = todaysBuddy(currentUser.id);
+
+  const checklistScore = CHECKLIST_ITEMS.reduce((sum, item) => (checked.has(item.key) ? sum + item.points : sum), 0);
+  const score = checklistScore + (missionDone ? MISSION_BONUS_POINTS : 0);
 
   function toggle(key: string) {
     setChecked((prev) => {
@@ -46,6 +63,19 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
       else next.add(key);
       return next;
     });
+  }
+
+  function toggleBuddy(id: string) {
+    setBuddyIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function insertTemplate(template: string) {
+    setComment((prev) => (prev ? prev : template));
   }
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -57,13 +87,22 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
 
   function handleSubmit() {
     if (checked.size === 0) return;
-    addPost(Array.from(checked), comment.trim(), photo);
+    addPost(Array.from(checked), comment.trim(), photo, {
+      missionTitle: missionDone ? mission.title : undefined,
+      prop: prop ?? undefined,
+      stampKey: stampKey ?? undefined,
+      buddyIds: buddyIds.size > 0 ? Array.from(buddyIds) : undefined,
+    });
     setSubmitted(true);
     setTimeout(() => {
       setSubmitted(false);
       setChecked(new Set());
       setComment('');
       setPhoto(EMOJI_OPTIONS[0]);
+      setMissionDone(false);
+      setProp(null);
+      setStampKey(null);
+      setBuddyIds(new Set());
       onDone('home');
     }, 1100);
   }
@@ -82,7 +121,33 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
     <div className="mx-auto max-w-md px-4 py-4">
       <p className="mb-3 text-sm font-semibold text-slate-700">📸 今日のスマイルを投稿</p>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl bg-gradient-to-br from-blue-700 to-blue-500 p-4 text-white shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{mission.icon}</span>
+          <div className="flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-100">今日のミッション</p>
+            <p className="text-sm font-bold">{mission.title}</p>
+          </div>
+          <span className="rounded-full bg-white/20 px-2 py-1 text-[11px] font-bold">+{MISSION_BONUS_POINTS}点</span>
+        </div>
+        <p className="mt-2 text-xs leading-relaxed text-blue-50">{mission.prompt}</p>
+        <button
+          onClick={() => setMissionDone((v) => !v)}
+          className={`mt-3 w-full rounded-xl py-2 text-xs font-bold transition ${
+            missionDone ? 'bg-white text-blue-700' : 'bg-white/15 text-white'
+          }`}
+        >
+          {missionDone ? '✓ ミッション達成としてボーナス獲得' : 'このミッションに挑戦した！'}
+        </button>
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2">
+          <Avatar src={buddy.avatar} alt={buddy.name} className="h-7 w-7 rounded-full bg-white/30 text-sm" />
+          <p className="flex-1 text-xs text-blue-50">
+            本日のスマイルバディは <span className="font-bold text-white">{buddy.name}</span> さん
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
         <div className="flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-amber-50 to-blue-50">
           {photo.startsWith('data:') ? (
             <img src={photo} alt="プレビュー" className="h-44 w-full object-cover" />
@@ -112,6 +177,52 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
               </button>
             ))}
           </div>
+        </div>
+
+        <p className="mb-1.5 mt-4 text-xs font-semibold text-slate-500">スマイルプロップス（任意）</p>
+        <div className="flex flex-wrap gap-1.5">
+          {PROP_OPTIONS.map((p) => (
+            <button
+              key={p}
+              onClick={() => setProp((cur) => (cur === p ? null : p))}
+              className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                prop === p ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500'
+              }`}
+            >
+              💬 {p}
+            </button>
+          ))}
+        </div>
+
+        <p className="mb-1.5 mt-3 text-xs font-semibold text-slate-500">限定フレーム・スタンプ（任意）</p>
+        <div className="flex flex-wrap gap-1.5">
+          {STAMP_OPTIONS.map((s) => (
+            <button
+              key={s.key}
+              onClick={() => setStampKey((cur) => (cur === s.key ? null : s.key))}
+              className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                stampKey === s.key ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500'
+              }`}
+            >
+              {s.emoji} {s.label}
+            </button>
+          ))}
+        </div>
+
+        <p className="mb-1.5 mt-3 text-xs font-semibold text-slate-500">一緒に写っている仲間をタグ付け（任意）</p>
+        <div className="flex flex-wrap gap-1.5">
+          {colleagues.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => toggleBuddy(c.id)}
+              className={`flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-xs transition ${
+                buddyIds.has(c.id) ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500'
+              }`}
+            >
+              <Avatar src={c.avatar} alt={c.name} className="h-5 w-5 rounded-full bg-slate-100 text-[11px]" />
+              {c.name}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -148,12 +259,24 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
       </div>
 
       <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
-        <p className="mb-2 text-sm font-semibold text-slate-700">ひとこと（任意）</p>
+        <p className="mb-1 text-sm font-semibold text-slate-700">📝 今日の笑顔ストーリー</p>
+        <p className="mb-2 text-xs text-slate-400">なぜその笑顔になったのか、一言エピソードを添えましょう（任意）</p>
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {STORY_TEMPLATES.map((t) => (
+            <button
+              key={t}
+              onClick={() => insertTemplate(t)}
+              className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] text-slate-500 active:scale-95"
+            >
+              + {t.length > 14 ? `${t.slice(0, 14)}…` : t}
+            </button>
+          ))}
+        </div>
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="今日の一言を書きましょう"
-          rows={2}
+          placeholder="例：お客様に「ありがとう」と言われて嬉しかった瞬間！"
+          rows={3}
           className="w-full resize-none rounded-xl border border-slate-200 p-2.5 text-sm text-slate-700 outline-none focus:border-blue-400"
         />
       </div>

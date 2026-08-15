@@ -1,5 +1,5 @@
 import type { SmilePost } from '../types';
-import { APPROVALS_REQUIRED, CHECKLIST_ITEMS } from '../types';
+import { APPROVALS_REQUIRED, CHECKLIST_ITEMS, STAMP_OPTIONS } from '../types';
 import { useStore } from '../data/store';
 import Avatar from './Avatar';
 import { isImageSrc } from '../utils/media';
@@ -18,10 +18,12 @@ function timeAgo(iso: string): string {
 }
 
 export default function PostCard({ post }: { post: SmilePost }) {
-  const { currentUser, toggleApproval, colleagues } = useStore();
+  const { currentUser, toggleApproval, colleagues, memberById } = useStore();
   const isMine = post.userId === currentUser.id;
   const myApproval = post.approvals.some((a) => a.userId === currentUser.id);
   const remaining = Math.max(0, APPROVALS_REQUIRED - post.approvals.length);
+  const stamp = post.stampKey ? STAMP_OPTIONS.find((s) => s.key === post.stampKey) : undefined;
+  const buddies = (post.buddyIds ?? []).map((id) => memberById(id)).filter((m): m is NonNullable<typeof m> => Boolean(m));
 
   function simulateColleagueApproval() {
     const notYet = colleagues.filter((c) => !post.approvals.some((a) => a.userId === c.id));
@@ -41,15 +43,39 @@ export default function PostCard({ post }: { post: SmilePost }) {
         <div className="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-bold text-white">{post.score}点</div>
       </div>
 
-      <div className="mt-3 flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-amber-50 to-blue-50">
+      {post.missionTitle && (
+        <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+          🎯 本日のミッション「{post.missionTitle}」達成
+        </div>
+      )}
+
+      <div className="relative mt-3 flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-amber-50 to-blue-50">
         {isImageSrc(post.photo) ? (
           <img src={post.photo} alt="スマイル投稿" className="h-48 w-full object-cover" />
         ) : (
           <div className="flex h-48 w-full items-center justify-center text-7xl">{post.photo}</div>
         )}
+        {post.prop && (
+          <div className="absolute left-2 top-2 max-w-[75%] rounded-2xl rounded-tl-sm bg-white/90 px-2.5 py-1.5 text-[11px] font-bold text-slate-700 shadow">
+            {post.prop}
+          </div>
+        )}
+        {stamp && (
+          <div
+            title={stamp.label}
+            className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-lg shadow"
+          >
+            {stamp.emoji}
+          </div>
+        )}
       </div>
 
-      {post.comment && <p className="mt-3 text-sm text-slate-600">{post.comment}</p>}
+      {post.comment && (
+        <div className="mt-3 flex gap-2 rounded-xl bg-amber-50 px-3 py-2.5">
+          <span className="text-amber-400">❝</span>
+          <p className="text-sm leading-snug text-slate-700">{post.comment}</p>
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {post.checklist.map((key) => {
@@ -62,6 +88,12 @@ export default function PostCard({ post }: { post: SmilePost }) {
           );
         })}
       </div>
+
+      {buddies.length > 0 && (
+        <p className="mt-2 flex items-center gap-1 text-xs text-slate-400">
+          🤝 {buddies.map((b) => b.name).join('、')} さんと一緒に
+        </p>
+      )}
 
       <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5">
         <div className="flex items-center gap-1.5">

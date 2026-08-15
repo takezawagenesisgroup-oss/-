@@ -1,4 +1,4 @@
-export type Tab = 'home' | 'post' | 'mypage';
+export type Tab = 'home' | 'post' | 'ranking' | 'mypage';
 
 interface TabDef {
   id: Tab;
@@ -9,6 +9,7 @@ interface TabDef {
 const TABS: TabDef[] = [
   { id: 'home', label: 'ホーム', icon: '🏠' },
   { id: 'post', label: '投稿する', icon: '📸' },
+  { id: 'ranking', label: 'ランキング', icon: '🏆' },
   { id: 'mypage', label: 'マイページ', icon: '📅' },
 ];
 
