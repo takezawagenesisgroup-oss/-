@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  CRAFTSMAN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNSPECIFIED
+}
+
+enum JobStatus {
+  PENDING    // 依頼送信済み、職人の回答待ち
+  ACCEPTED   // 職人が受諾（マッチング成立）
+  DECLINED   // 職人が辞退
+  CANCELLED  // お客様がキャンセル
+  COMPLETED  // 作業完了・手数料確定
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  role          Role
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  craftsmanProfile CraftsmanProfile?
+  jobRequestsSent  JobRequest[] @relation("CustomerJobRequests")
+}
+
+model CraftsmanProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  category       String   // 主分野: 大工, 電気工事, 左官, 塗装, 内装, 水道設備, 造園, その他
+  skills         String   // カンマ区切りのできること
+  specialty      String   // 得意分野・アピール文
+  age            Int
+  gender         Gender   @default(UNSPECIFIED)
+  area           String   // 対応エリア
+  hourlyRate     Int      // 目安時給・単価(円)
+  yearsExperience Int     @default(0)
+  bio            String   @default("")
+  availableDays  String   // カンマ区切り: MON,TUE,WED,THU,FRI,SAT,SUN
+  isActive       Boolean  @default(true)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  jobRequestsReceived JobRequest[] @relation("CraftsmanJobRequests")
+}
+
+model JobRequest {
+  id            String   @id @default(cuid())
+
+  customerId    String
+  customer      User     @relation("CustomerJobRequests", fields: [customerId], references: [id], onDelete: Cascade)
+
+  craftsmanId   String
+  craftsman     CraftsmanProfile @relation("CraftsmanJobRequests", fields: [craftsmanId], references: [id], onDelete: Cascade)
+
+  title         String
+  description   String
+  desiredDate   DateTime
+  location      String
+  budget        Int      // お客様提示金額(円)
+  commissionRate Float   @default(0.15) // 手数料率
+  status        JobStatus @default(PENDING)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
