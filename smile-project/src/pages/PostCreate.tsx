@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import {
   APPROVALS_REQUIRED,
+  APPROVAL_BONUS_COINS,
   CHECKLIST_ITEMS,
   MISSION_BONUS_POINTS,
   PROP_OPTIONS,
@@ -128,7 +129,7 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
             <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-100">今日のミッション</p>
             <p className="text-sm font-bold">{mission.title}</p>
           </div>
-          <span className="rounded-full bg-white/20 px-2 py-1 text-[11px] font-bold">+{MISSION_BONUS_POINTS}点</span>
+          <span className="rounded-full bg-white/20 px-2 py-1 text-[11px] font-bold">+{MISSION_BONUS_POINTS} GC</span>
         </div>
         <p className="mt-2 text-xs leading-relaxed text-blue-50">{mission.prompt}</p>
         <button
@@ -229,7 +230,7 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
       <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
         <div className="mb-3 flex items-center justify-between">
           <p className="text-sm font-semibold text-slate-700">自己採点（30秒でOK）</p>
-          <span className="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-bold text-white">{score}点</span>
+          <span className="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-bold text-white">🪙 {score} GC</span>
         </div>
         <div className="flex flex-col gap-2">
           {CHECKLIST_ITEMS.map((item) => {
@@ -244,7 +245,7 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
               >
                 <span className="text-xl">{item.emoji}</span>
                 <span className="flex-1 text-sm text-slate-700">{item.label}</span>
-                <span className="text-xs text-slate-400">+{item.points}</span>
+                <span className="text-xs text-slate-400">+{item.points} GC</span>
                 <span
                   className={`flex h-5 w-5 items-center justify-center rounded-full border-2 text-xs ${
                     isChecked ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-transparent'
@@ -288,7 +289,7 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
       >
         投稿する
       </button>
-      <p className="mt-2 text-center text-xs text-slate-400">承認が{APPROVALS_REQUIRED}人集まるとドリンクチケットが発行されます 🎫</p>
+      <p className="mt-2 text-center text-xs text-slate-400">承認が{APPROVALS_REQUIRED}人集まるとGenesisコイン+{APPROVAL_BONUS_COINS}を獲得できます 🪙</p>
     </div>
   );
 }

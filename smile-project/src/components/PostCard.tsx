@@ -1,5 +1,5 @@
 import type { SmilePost } from '../types';
-import { APPROVALS_REQUIRED, CHECKLIST_ITEMS, STAMP_OPTIONS } from '../types';
+import { APPROVALS_REQUIRED, APPROVAL_BONUS_COINS, CHECKLIST_ITEMS, STAMP_OPTIONS } from '../types';
 import { useStore } from '../data/store';
 import Avatar from './Avatar';
 import { isImageSrc } from '../utils/media';
@@ -40,7 +40,7 @@ export default function PostCard({ post }: { post: SmilePost }) {
           <p className="text-sm font-semibold text-slate-800">{post.userName}</p>
           <p className="text-xs text-slate-400">{timeAgo(post.createdAt)}</p>
         </div>
-        <div className="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-bold text-white">{post.score}点</div>
+        <div className="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-bold text-white">🪙 {post.score} GC</div>
       </div>
 
       {post.missionTitle && (
@@ -115,9 +115,9 @@ export default function PostCard({ post }: { post: SmilePost }) {
           )}
         </div>
 
-        {post.ticketIssued ? (
+        {post.approvalBonusAwarded ? (
           <span className="flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-700">
-            🎫 チケット発行済み
+            🪙 ボーナス+{APPROVAL_BONUS_COINS} GC獲得
           </span>
         ) : isMine ? (
           <button

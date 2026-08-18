@@ -1,12 +1,14 @@
 import { useStore } from '../data/store';
 import PostCard from '../components/PostCard';
 import Avatar from '../components/Avatar';
-import { missionForDate } from '../types';
+import { EXCHANGE_ITEMS, missionForDate } from '../types';
 
 export default function HomeFeed() {
-  const { posts, currentUser, totalPoints, ticketCount, todaysBuddy } = useStore();
+  const { posts, currentUser, totalCoins, todaysBuddy } = useStore();
   const mission = missionForDate(new Date());
   const buddy = todaysBuddy(currentUser.id);
+  const coins = totalCoins(currentUser.id);
+  const affordableCount = EXCHANGE_ITEMS.filter((i) => i.cost <= coins).length;
 
   return (
     <div className="mx-auto max-w-md px-4 py-4">
@@ -26,12 +28,12 @@ export default function HomeFeed() {
 
       <div className="mb-4 grid grid-cols-3 gap-2">
         <div className="rounded-xl bg-white p-3 text-center shadow-sm">
-          <p className="text-lg font-bold text-blue-700">{totalPoints(currentUser.id)}</p>
-          <p className="text-[11px] text-slate-400">累計ポイント</p>
+          <p className="text-lg font-bold text-blue-700">🪙 {coins}</p>
+          <p className="text-[11px] text-slate-400">Genesisコイン</p>
         </div>
         <div className="rounded-xl bg-white p-3 text-center shadow-sm">
-          <p className="text-lg font-bold text-amber-600">{ticketCount(currentUser.id)}</p>
-          <p className="text-[11px] text-slate-400">獲得チケット</p>
+          <p className="text-lg font-bold text-amber-600">{affordableCount}</p>
+          <p className="text-[11px] text-slate-400">交換可能アイテム</p>
         </div>
         <div className="rounded-xl bg-white p-3 text-center shadow-sm">
           <p className="text-lg font-bold text-slate-700">{posts.filter((p) => p.userId === currentUser.id).length}</p>

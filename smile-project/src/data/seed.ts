@@ -1,5 +1,14 @@
-import type { Member, SmilePost } from '../types';
-import { CHECKLIST_ITEMS, APPROVALS_REQUIRED, MISSION_BONUS_POINTS, PROP_OPTIONS, STAMP_OPTIONS, missionForDate } from '../types';
+import type { EventAction, Member, Redemption, SmilePost } from '../types';
+import {
+  CHECKLIST_ITEMS,
+  APPROVALS_REQUIRED,
+  MISSION_BONUS_POINTS,
+  PROP_OPTIONS,
+  STAMP_OPTIONS,
+  missionForDate,
+  SEASONAL_EVENTS,
+  EXCHANGE_ITEMS,
+} from '../types';
 
 export const ME: Member = { id: 'me', name: '自分', avatar: '🙂' };
 
@@ -101,7 +110,7 @@ export function buildSeedPosts(): SmilePost[] {
         comment: selfComments[Math.floor(Math.random() * selfComments.length)],
         createdAt,
         approvals,
-        ticketIssued: approvals.length >= APPROVALS_REQUIRED,
+        approvalBonusAwarded: approvals.length >= APPROVALS_REQUIRED,
         ...extras,
       });
     }
@@ -139,10 +148,70 @@ export function buildSeedPosts(): SmilePost[] {
       comment: comments[Math.floor(Math.random() * comments.length)],
       createdAt,
       approvals,
-      ticketIssued: approvals.length >= APPROVALS_REQUIRED,
+      approvalBonusAwarded: approvals.length >= APPROVALS_REQUIRED,
       ...extras,
     });
   }
 
   return posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export function buildSeedEventActions(): EventAction[] {
+  const actions: EventAction[] = [];
+  // Take the two most recently kicked-off events as "already underway" so the Events page has activity.
+  const now = new Date();
+  const pastEvents = SEASONAL_EVENTS.filter((ev) => ev.month <= now.getMonth() + 1).slice(-2);
+  const events = pastEvents.length > 0 ? pastEvents : [SEASONAL_EVENTS[0]];
+
+  let idCounter = 1;
+  events.forEach((ev) => {
+    const shuffled = [...COLLEAGUES].sort(() => Math.random() - 0.5);
+    const leader = shuffled[0];
+    const createdAt = daysAgo(10 + Math.floor(Math.random() * 20));
+    actions.push({
+      id: `ev${idCounter++}`,
+      userId: leader.id,
+      userName: leader.name,
+      avatar: leader.avatar,
+      eventKey: ev.key,
+      role: 'leader',
+      coins: ev.leaderCoins,
+      createdAt,
+    });
+    shuffled.slice(1, 1 + 2 + Math.floor(Math.random() * 2)).forEach((member) => {
+      actions.push({
+        id: `ev${idCounter++}`,
+        userId: member.id,
+        userName: member.name,
+        avatar: member.avatar,
+        eventKey: ev.key,
+        role: 'participant',
+        coins: ev.participateCoins,
+        createdAt: daysAgo(8 + Math.floor(Math.random() * 20)),
+      });
+    });
+  });
+
+  return actions;
+}
+
+export function buildSeedRedemptions(): Redemption[] {
+  const redemptions: Redemption[] = [];
+  let idCounter = 1;
+  const pool = COLLEAGUES;
+  const count = 4 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < count; i++) {
+    const user = pool[Math.floor(Math.random() * pool.length)];
+    const item = EXCHANGE_ITEMS[Math.floor(Math.random() * 3)]; // keep seeded redemptions to the cheaper tiers
+    redemptions.push({
+      id: `rd${idCounter++}`,
+      userId: user.id,
+      itemKey: item.key,
+      label: item.label,
+      emoji: item.emoji,
+      cost: item.cost,
+      createdAt: daysAgo(Math.floor(Math.random() * 20)),
+    });
+  }
+  return redemptions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
