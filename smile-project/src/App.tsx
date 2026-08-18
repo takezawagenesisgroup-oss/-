@@ -22,7 +22,7 @@ function App() {
 
   return (
     <StoreProvider>
-      <div className="flex min-h-svh flex-col bg-[#eef2f9]">
+      <div className="flex min-h-svh flex-col bg-background">
         <Header title={title} subtitle={subtitle} />
         <main className="flex-1 pb-6">
           {tab === 'home' && <HomeFeed />}

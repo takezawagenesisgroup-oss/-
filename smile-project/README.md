@@ -1,6 +1,11 @@
 # スマイルプロジェクト
 
-社内エンゲージメント制度「スマイルプロジェクト」のUIプロトタイプです。React + TypeScript + Vite + Tailwind CSS で構築しています。
+社内エンゲージメント制度「スマイルプロジェクト」のUIプロトタイプです。React + TypeScript + Vite + Tailwind CSS + shadcn/ui で構築しています。
+
+## デザイン
+
+indigo（紫寄りの青）と gold（Genesisコインを象徴する金色）を軸にした専用のカラートークン・タイポグラフィ（見出し・数字は「M PLUS Rounded 1c」）を定義し、`src/components/ui/` にButton・Card・Badge・Progress・Separatorなどのshadcn/uiプリミティブを実装。アイコンはlucide-reactを使用しています。
+（この環境からは `ui.shadcn.com` のコンポーネントレジストリへのネットワークアクセスがブロックされているため、shadcn CLIではなく同等のソースコードを手動で実装しています。）
 
 ## 機能
 
@@ -41,3 +46,4 @@ npm run build    # 本番ビルド
 - 2026-08-15: 実際の従業員写真をアバター・投稿写真に反映。
 - 2026-08-15: 日替わりミッション、フォトプロップス／スタンプ、スマイルバディ、笑顔ストーリー、週間ランキング／月間イベントを追加。
 - 2026-08-18: ドリンクチケット即時発行の仕組みを一旦中断し、社内オリジナル通貨「Genesisコイン」制度に移行。四季の成長プロジェクト（季節イベント参加・リーダー挙手でコイン獲得）ページと、コインを段階的な報酬に交換できるコイン交換ページを新設。
+- 2026-08-18: shadcn/ui構成（Button/Card/Badge/Progress/Separator等）を導入し、indigo×goldの専用カラートークンとM PLUS Rounded 1cによる見た目を全面刷新。

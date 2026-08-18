@@ -1,7 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap');
 @import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-coin: var(--coin);
+  --color-coin-foreground: var(--coin-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 5px);
+
+  --font-display: 'M PLUS Rounded 1c', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', system-ui, sans-serif;
+  --font-sans: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', system-ui, sans-serif;
+}
 
 :root {
   color-scheme: light;
+
+  --radius: 1.1rem;
+
+  --background: #f2f0fb;
+  --foreground: #201b45;
+  --card: #ffffff;
+  --card-foreground: #201b45;
+  --primary: #4a37e0;
+  --primary-foreground: #ffffff;
+  --secondary: #e9e6fa;
+  --secondary-foreground: #4a37e0;
+  --muted: #ece9f9;
+  --muted-foreground: #6c6796;
+  --accent: #e9e6fa;
+  --accent-foreground: #201b45;
+  --coin: #e5a53a;
+  --coin-foreground: #4a2e00;
+  --destructive: #dc2626;
+  --border: #e1ddf3;
+  --input: #e1ddf3;
+  --ring: #4a37e0;
 }
 
 * {
@@ -10,13 +61,17 @@
 
 body {
   margin: 0;
-  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
-  background: #eef2f9;
-  color: #1e2433;
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
 }
 
 #root {
   min-height: 100svh;
+}
+
+.font-display {
+  font-family: var(--font-display);
 }
 
 ::-webkit-scrollbar {
@@ -24,6 +79,6 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--border);
   border-radius: 999px;
 }

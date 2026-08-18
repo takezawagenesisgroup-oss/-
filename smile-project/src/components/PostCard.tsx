@@ -3,6 +3,10 @@ import { APPROVALS_REQUIRED, APPROVAL_BONUS_COINS, CHECKLIST_ITEMS, STAMP_OPTION
 import { useStore } from '../data/store';
 import Avatar from './Avatar';
 import { isImageSrc } from '../utils/media';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ThumbsUp, Check, Target } from 'lucide-react';
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -33,30 +37,32 @@ export default function PostCard({ post }: { post: SmilePost }) {
   }
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <Card className="p-4">
       <div className="flex items-center gap-3">
-        <Avatar src={post.avatar} alt={post.userName} className="h-10 w-10 rounded-full bg-blue-50 text-xl" />
+        <Avatar src={post.avatar} alt={post.userName} className="h-10 w-10 rounded-full bg-secondary text-xl" />
         <div className="flex-1">
-          <p className="text-sm font-semibold text-slate-800">{post.userName}</p>
-          <p className="text-xs text-slate-400">{timeAgo(post.createdAt)}</p>
+          <p className="text-sm font-semibold text-foreground">{post.userName}</p>
+          <p className="text-xs text-muted-foreground">{timeAgo(post.createdAt)}</p>
         </div>
-        <div className="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-bold text-white">🪙 {post.score} GC</div>
+        <Badge variant="coin" className="font-display">
+          🪙 {post.score} GC
+        </Badge>
       </div>
 
       {post.missionTitle && (
-        <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
-          🎯 本日のミッション「{post.missionTitle}」達成
-        </div>
+        <Badge variant="secondary" className="w-fit gap-1">
+          <Target className="size-3" />本日のミッション「{post.missionTitle}」達成
+        </Badge>
       )}
 
-      <div className="relative mt-3 flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-amber-50 to-blue-50">
+      <div className="relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-coin/15 to-secondary">
         {isImageSrc(post.photo) ? (
           <img src={post.photo} alt="スマイル投稿" className="h-48 w-full object-cover" />
         ) : (
           <div className="flex h-48 w-full items-center justify-center text-7xl">{post.photo}</div>
         )}
         {post.prop && (
-          <div className="absolute left-2 top-2 max-w-[75%] rounded-2xl rounded-tl-sm bg-white/90 px-2.5 py-1.5 text-[11px] font-bold text-slate-700 shadow">
+          <div className="absolute left-2 top-2 max-w-[75%] rounded-2xl rounded-tl-sm bg-white/90 px-2.5 py-1.5 text-[11px] font-bold text-foreground shadow">
             {post.prop}
           </div>
         )}
@@ -71,73 +77,79 @@ export default function PostCard({ post }: { post: SmilePost }) {
       </div>
 
       {post.comment && (
-        <div className="mt-3 flex gap-2 rounded-xl bg-amber-50 px-3 py-2.5">
-          <span className="text-amber-400">❝</span>
-          <p className="text-sm leading-snug text-slate-700">{post.comment}</p>
+        <div className="flex gap-2 rounded-xl bg-coin/10 px-3 py-2.5">
+          <span className="text-coin-foreground/60">❝</span>
+          <p className="text-sm leading-snug text-foreground">{post.comment}</p>
         </div>
       )}
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1.5">
         {post.checklist.map((key) => {
           const item = CHECKLIST_ITEMS.find((c) => c.key === key);
           if (!item) return null;
           return (
-            <span key={key} className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
+            <Badge key={key} variant="secondary">
               {item.emoji} {item.label}
-            </span>
+            </Badge>
           );
         })}
       </div>
 
       {buddies.length > 0 && (
-        <p className="mt-2 flex items-center gap-1 text-xs text-slate-400">
+        <p className="flex items-center gap-1 text-xs text-muted-foreground">
           🤝 {buddies.map((b) => b.name).join('、')} さんと一緒に
         </p>
       )}
 
-      <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5">
+      <div className="flex items-center justify-between rounded-xl bg-muted px-3 py-2.5">
         <div className="flex items-center gap-1.5">
           <div className="flex -space-x-2">
-            {post.approvals.length === 0 && <span className="text-xs text-slate-400">まだ承認なし</span>}
+            {post.approvals.length === 0 && <span className="text-xs text-muted-foreground">まだ承認なし</span>}
             {post.approvals.map((a) => (
               <Avatar
                 key={a.userId}
                 src={a.avatar}
                 alt={a.userName}
-                className="h-6 w-6 rounded-full border-2 border-white bg-blue-100 text-xs"
+                className="h-6 w-6 rounded-full border-2 border-card bg-secondary text-xs"
               />
             ))}
           </div>
           {post.approvals.length > 0 && (
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-muted-foreground">
               {post.approvals.length}/{APPROVALS_REQUIRED}人承認
             </span>
           )}
         </div>
 
         {post.approvalBonusAwarded ? (
-          <span className="flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-700">
+          <Badge variant="coin" className="gap-1">
             🪙 ボーナス+{APPROVAL_BONUS_COINS} GC獲得
-          </span>
+          </Badge>
         ) : isMine ? (
-          <button
+          <Button
             onClick={simulateColleagueApproval}
-            className="rounded-full bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700 active:scale-95"
+            size="sm"
+            variant="secondary"
             title="デモ用：タップすると同僚が承認した想定で進みます"
           >
             承認待ち・あと{remaining}人（デモで進める）
-          </button>
+          </Button>
         ) : (
-          <button
-            onClick={() => toggleApproval(post.id, currentUser.id)}
-            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95 ${
-              myApproval ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white'
-            }`}
-          >
-            {myApproval ? '✓ 承認済み（タップで取消）' : '👍 承認する'}
-          </button>
+          <Button onClick={() => toggleApproval(post.id, currentUser.id)} size="sm" variant={myApproval ? 'default' : 'default'}>
+            {myApproval ? (
+              <>
+                <Check className="size-3.5" />
+                承認済み（タップで取消）
+              </>
+            ) : (
+              <>
+                <ThumbsUp className="size-3.5" />
+                承認する
+              </>
+            )}
+          </Button>
         )}
       </div>
-    </article>
+    </Card>
   );
 }
