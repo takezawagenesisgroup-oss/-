@@ -20,26 +20,26 @@ export default function Events() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-4">
-      <div className="rounded-2xl bg-gradient-to-br from-primary to-[#6c53f5] p-4 text-white shadow-sm">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-white/70">{current.seasonLabel}・進行中のイベント</p>
-        <p className="font-display mt-0.5 text-lg font-bold">
+      <div className="rounded-2xl border border-border bg-secondary/40 p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">{current.seasonLabel}・進行中のイベント</p>
+        <p className="font-display mt-0.5 text-lg font-bold text-foreground">
           {current.emoji} {current.title}
         </p>
-        <p className="mt-1.5 text-xs leading-relaxed text-white/80">{current.description}</p>
-        <Badge variant="secondary" className="mt-2 gap-1 bg-white/15 text-white">
+        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{current.description}</p>
+        <Badge variant="secondary" className="mt-2 gap-1">
           <Sparkles className="size-3" />
           勝手に身につくスキル：{current.skillTag}
         </Badge>
 
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <Button onClick={() => joinEvent(current.key)} disabled={iJoined} variant={iJoined ? 'coin' : 'subtle'} className="w-full">
+          <Button onClick={() => joinEvent(current.key)} disabled={iJoined} variant={iJoined ? 'coin' : 'default'} className="w-full">
             {iJoined ? '✓ 参加登録済み' : `参加する（+${current.participateCoins} GC）`}
           </Button>
           <Button
             onClick={() => volunteerAsLeader(current.key)}
             disabled={Boolean(leader)}
-            variant={iAmLeader ? 'coin' : 'subtle'}
-            className={cn('w-full', leader && !iAmLeader && 'text-white/60')}
+            variant={iAmLeader ? 'coin' : 'outline'}
+            className={cn('w-full', leader && !iAmLeader && 'text-muted-foreground')}
           >
             {iAmLeader ? (
               <>
@@ -55,14 +55,14 @@ export default function Events() {
         </div>
 
         {(participants.length > 0 || leader) && (
-          <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2">
+          <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-card px-3 py-2">
             <div className="flex -space-x-2">
-              {leader && <Avatar src={leader.avatar} alt={leader.userName} className="h-6 w-6 rounded-full border-2 border-white bg-coin/40 text-xs" />}
+              {leader && <Avatar src={leader.avatar} alt={leader.userName} className="h-6 w-6 rounded-full border-2 border-card bg-coin/30 text-xs" />}
               {participants.slice(0, 5).map((p) => (
-                <Avatar key={p.id} src={p.avatar} alt={p.userName} className="h-6 w-6 rounded-full border-2 border-white bg-white/30 text-xs" />
+                <Avatar key={p.id} src={p.avatar} alt={p.userName} className="h-6 w-6 rounded-full border-2 border-card bg-secondary text-xs" />
               ))}
             </div>
-            <span className="text-[11px] text-white/80">
+            <span className="text-[11px] text-muted-foreground">
               {leader ? `${leader.userName}（リーダー）ほか` : ''}
               {participants.length}人が参加中
             </span>

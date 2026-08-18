@@ -37,9 +37,9 @@ export default function Exchange() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-4">
-      <div className="rounded-2xl bg-gradient-to-br from-coin to-[#c8862a] p-5 text-coin-foreground shadow-sm">
+      <div className="rounded-2xl border border-border bg-coin/10 p-5">
         <p className="text-xs text-coin-foreground/70">保有Genesisコイン</p>
-        <p className="font-display text-3xl font-bold">
+        <p className="font-display text-3xl font-bold text-coin-foreground">
           🪙 {balance.toLocaleString()} <span className="text-base font-semibold">GC</span>
         </p>
       </div>

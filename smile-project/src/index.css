@@ -20,6 +20,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-story-1: var(--story-1);
+  --color-story-2: var(--story-2);
+  --color-story-3: var(--story-3);
 
   --radius-sm: calc(var(--radius) - 6px);
   --radius-md: calc(var(--radius) - 3px);
@@ -33,26 +36,30 @@
 :root {
   color-scheme: light;
 
-  --radius: 1.1rem;
+  --radius: 1rem;
 
-  --background: #f2f0fb;
-  --foreground: #201b45;
+  --background: #ffffff;
+  --foreground: #1c1c1e;
   --card: #ffffff;
-  --card-foreground: #201b45;
-  --primary: #4a37e0;
+  --card-foreground: #1c1c1e;
+  --primary: #5b3df0;
   --primary-foreground: #ffffff;
-  --secondary: #e9e6fa;
-  --secondary-foreground: #4a37e0;
-  --muted: #ece9f9;
-  --muted-foreground: #6c6796;
-  --accent: #e9e6fa;
-  --accent-foreground: #201b45;
-  --coin: #e5a53a;
-  --coin-foreground: #4a2e00;
+  --secondary: #f0edfe;
+  --secondary-foreground: #5b3df0;
+  --muted: #f5f5f7;
+  --muted-foreground: #8e8e93;
+  --accent: #f5f5f7;
+  --accent-foreground: #1c1c1e;
+  --coin: #ffb100;
+  --coin-foreground: #6b4400;
   --destructive: #dc2626;
-  --border: #e1ddf3;
-  --input: #e1ddf3;
-  --ring: #4a37e0;
+  --border: #eeeeef;
+  --input: #eeeeef;
+  --ring: #5b3df0;
+
+  --story-1: #5b3df0;
+  --story-2: #ff5b94;
+  --story-3: #ffb100;
 }
 
 * {

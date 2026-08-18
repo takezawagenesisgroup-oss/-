@@ -70,18 +70,20 @@ export default function MyPage({ onNavigate }: { onNavigate: (tab: Tab) => void 
 
   return (
     <div className="mx-auto max-w-md px-4 py-4">
-      <div className="rounded-2xl bg-gradient-to-br from-primary to-[#6c53f5] p-5 text-white shadow-sm">
+      <div className="rounded-2xl border border-border p-5">
         <div className="flex items-center gap-3">
-          <Avatar src={currentUser.avatar} alt={currentUser.name} className="h-14 w-14 rounded-full bg-white/20 text-3xl" />
+          <span className="rounded-full bg-gradient-to-tr from-story-1 via-story-2 to-story-3 p-[2px]">
+            <Avatar src={currentUser.avatar} alt={currentUser.name} className="h-14 w-14 rounded-full border-2 border-card bg-secondary text-3xl" />
+          </span>
           <div>
-            <p className="text-sm text-white/70">{currentUser.name}</p>
-            <p className="font-display text-2xl font-bold">🪙 {totalCoins(currentUser.id)} GC</p>
+            <p className="text-sm text-muted-foreground">{currentUser.name}</p>
+            <p className="font-display text-2xl font-bold text-foreground">🪙 {totalCoins(currentUser.id)} GC</p>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2 text-center">
-          <div className="rounded-xl bg-white/10 py-2">
-            <p className="font-display text-lg font-bold">{myPosts.length}</p>
-            <p className="text-[11px] text-white/70">総投稿数</p>
+          <div className="rounded-xl bg-muted py-2">
+            <p className="font-display text-lg font-bold text-foreground">{myPosts.length}</p>
+            <p className="text-[11px] text-muted-foreground">総投稿数</p>
           </div>
           <button onClick={() => onNavigate('exchange')} className="flex flex-col items-center justify-center gap-0.5 rounded-xl bg-coin py-2 text-coin-foreground active:scale-95">
             <Coins className="size-4" />

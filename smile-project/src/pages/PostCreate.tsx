@@ -127,33 +127,33 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
     <div className="mx-auto max-w-md px-4 py-4">
       <p className="mb-3 text-sm font-semibold text-foreground">📸 今日のスマイルを投稿</p>
 
-      <div className="rounded-2xl bg-gradient-to-br from-primary to-[#6c53f5] p-4 text-white shadow-sm">
+      <div className="rounded-2xl border border-border bg-secondary/40 p-4">
         <div className="flex items-center gap-2">
           <span className="text-2xl">{mission.icon}</span>
           <div className="flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-white/70">今日のミッション</p>
-            <p className="text-sm font-bold">{mission.title}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">今日のミッション</p>
+            <p className="text-sm font-bold text-foreground">{mission.title}</p>
           </div>
           <Badge variant="coin">+{MISSION_BONUS_POINTS} GC</Badge>
         </div>
-        <p className="mt-2 text-xs leading-relaxed text-white/80">{mission.prompt}</p>
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{mission.prompt}</p>
         <Button
           onClick={() => setMissionDone((v) => !v)}
-          variant={missionDone ? 'coin' : 'subtle'}
+          variant={missionDone ? 'coin' : 'outline'}
           className="mt-3 w-full rounded-xl"
         >
           {missionDone ? '✓ ミッション達成としてボーナス獲得' : 'このミッションに挑戦した！'}
         </Button>
-        <div className="mt-3 flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2">
-          <Avatar src={buddy.avatar} alt={buddy.name} className="h-7 w-7 rounded-full bg-white/30 text-sm" />
-          <p className="flex-1 text-xs text-white/80">
-            本日のスマイルバディは <span className="font-bold text-white">{buddy.name}</span> さん
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-card px-3 py-2">
+          <Avatar src={buddy.avatar} alt={buddy.name} className="h-7 w-7 rounded-full bg-secondary text-sm" />
+          <p className="flex-1 text-xs text-muted-foreground">
+            本日のスマイルバディは <span className="font-bold text-foreground">{buddy.name}</span> さん
           </p>
         </div>
       </div>
 
       <Card className="mt-4 p-4">
-        <div className="flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-coin/15 to-secondary">
+        <div className="flex items-center justify-center overflow-hidden rounded-xl bg-muted">
           {photo.startsWith('data:') ? (
             <img src={photo} alt="プレビュー" className="h-44 w-full object-cover" />
           ) : (

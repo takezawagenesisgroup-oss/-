@@ -2,7 +2,19 @@ import { useStore } from '../data/store';
 import PostCard from '../components/PostCard';
 import Avatar from '../components/Avatar';
 import { EXCHANGE_ITEMS, missionForDate } from '../types';
-import { Card } from '@/components/ui/card';
+
+function StoryBubble({ emoji, avatar, label, sub }: { emoji?: string; avatar?: string; label: string; sub: string }) {
+  return (
+    <div className="flex w-16 shrink-0 flex-col items-center gap-1 text-center">
+      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-story-1 via-story-2 to-story-3 p-[2.5px]">
+        <span className="flex h-full w-full items-center justify-center rounded-full border-2 border-card bg-secondary text-2xl">
+          {avatar ? <Avatar src={avatar} alt={label} className="h-full w-full rounded-full" /> : emoji}
+        </span>
+      </span>
+      <p className="w-full truncate text-[10px] font-semibold text-foreground">{sub}</p>
+    </div>
+  );
+}
 
 export default function HomeFeed() {
   const { posts, currentUser, totalCoins, todaysBuddy } = useStore();
@@ -10,44 +22,31 @@ export default function HomeFeed() {
   const buddy = todaysBuddy(currentUser.id);
   const coins = totalCoins(currentUser.id);
   const affordableCount = EXCHANGE_ITEMS.filter((i) => i.cost <= coins).length;
+  const myPostCount = posts.filter((p) => p.userId === currentUser.id).length;
 
   return (
-    <div className="mx-auto max-w-md px-4 py-4">
-      <div className="mb-4 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-primary to-[#6c53f5] p-3.5 text-white shadow-sm">
-        <span className="text-2xl">{mission.icon}</span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-white/70">今日のミッション</p>
-          <p className="truncate text-xs font-bold">{mission.title}</p>
+    <div className="mx-auto max-w-md pb-4">
+      <div className="flex gap-4 overflow-x-auto border-b border-border px-4 py-3">
+        <StoryBubble emoji={mission.icon} label="ミッション" sub={mission.title} />
+        <StoryBubble avatar={buddy.avatar} label={buddy.name} sub={buddy.name} />
+      </div>
+
+      <div className="flex items-center divide-x divide-border border-b border-border px-4 py-3 text-center">
+        <div className="flex-1">
+          <p className="font-display text-base font-bold text-coin-foreground">🪙 {coins}</p>
+          <p className="text-[10px] text-muted-foreground">Genesisコイン</p>
         </div>
-        <div className="h-6 w-px bg-white/25" />
-        <Avatar src={buddy.avatar} alt={buddy.name} className="h-7 w-7 shrink-0 rounded-full bg-white/30 text-sm" />
-        <div className="min-w-0">
-          <p className="text-[10px] text-white/70">本日のバディ</p>
-          <p className="truncate text-xs font-bold">{buddy.name}</p>
+        <div className="flex-1">
+          <p className="font-display text-base font-bold text-primary">{affordableCount}</p>
+          <p className="text-[10px] text-muted-foreground">交換可能</p>
+        </div>
+        <div className="flex-1">
+          <p className="font-display text-base font-bold text-foreground">{myPostCount}</p>
+          <p className="text-[10px] text-muted-foreground">投稿数</p>
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-3 gap-2">
-        <Card className="items-center gap-0.5 p-3 text-center">
-          <p className="font-display text-lg font-bold text-coin-foreground">🪙 {coins}</p>
-          <p className="text-[11px] text-muted-foreground">Genesisコイン</p>
-        </Card>
-        <Card className="items-center gap-0.5 p-3 text-center">
-          <p className="font-display text-lg font-bold text-primary">{affordableCount}</p>
-          <p className="text-[11px] text-muted-foreground">交換可能アイテム</p>
-        </Card>
-        <Card className="items-center gap-0.5 p-3 text-center">
-          <p className="font-display text-lg font-bold text-foreground">{posts.filter((p) => p.userId === currentUser.id).length}</p>
-          <p className="text-[11px] text-muted-foreground">投稿数</p>
-        </Card>
-      </div>
-
-      <div className="mb-3 flex items-center gap-2">
-        <span className="h-2 w-2 rounded-full bg-emerald-500" />
-        <p className="text-sm font-semibold text-foreground">みんなのスマイル</p>
-      </div>
-
-      <div className="flex flex-col gap-3 pb-4">
+      <div className="flex flex-col">
         {posts.map((post) => (
           <PostCard key={post.id} post={post} />
         ))}
