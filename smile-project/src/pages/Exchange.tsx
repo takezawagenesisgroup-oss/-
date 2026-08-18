@@ -38,13 +38,15 @@ export default function Exchange() {
   return (
     <div className="mx-auto max-w-md px-4 py-4">
       <div className="rounded-2xl border border-border bg-coin/10 p-5">
-        <p className="text-xs text-coin-foreground/70">保有Genesisコイン</p>
-        <p className="font-display text-3xl font-bold text-coin-foreground">
+        <p className="text-xs text-coin/70">保有Genesisコイン</p>
+        <p className="font-display text-3xl font-bold text-coin">
           🪙 {balance.toLocaleString()} <span className="text-base font-semibold">GC</span>
         </p>
       </div>
 
-      {message && <div className="mt-3 rounded-xl bg-foreground px-3 py-2 text-center text-xs font-semibold text-white">{message}</div>}
+      {message && (
+        <div className="mt-3 rounded-xl bg-primary px-3 py-2 text-center text-xs font-semibold text-primary-foreground">{message}</div>
+      )}
 
       {TIER_ORDER.map((tier) => (
         <div key={tier} className="mt-5">

@@ -11,9 +11,9 @@ const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
 function stampStyle(score: number): string {
   if (score === 0) return '';
-  if (score >= 100) return 'bg-primary text-white';
+  if (score >= 100) return 'bg-primary text-primary-foreground';
   if (score >= 60) return 'bg-secondary text-primary';
-  return 'bg-coin/20 text-coin-foreground';
+  return 'bg-coin/20 text-coin';
 }
 
 interface ActivityEntry {
@@ -148,7 +148,7 @@ export default function MyPage({ onNavigate }: { onNavigate: (tab: Tab) => void 
         ) : (
           <div className="flex flex-col gap-2">
             {activity.slice(0, 6).map((a) => (
-              <div key={a.id} className="flex items-center justify-between rounded-xl bg-coin/10 px-3 py-2 text-xs text-coin-foreground">
+              <div key={a.id} className="flex items-center justify-between rounded-xl bg-coin/10 px-3 py-2 text-xs text-coin">
                 <span>{a.label}</span>
                 <span className="font-bold">+{a.coins} GC</span>
               </div>

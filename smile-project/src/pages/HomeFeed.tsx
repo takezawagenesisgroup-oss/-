@@ -33,7 +33,7 @@ export default function HomeFeed() {
 
       <div className="flex items-center divide-x divide-border border-b border-border px-4 py-3 text-center">
         <div className="flex-1">
-          <p className="font-display text-base font-bold text-coin-foreground">🪙 {coins}</p>
+          <p className="font-display text-base font-bold text-coin">🪙 {coins}</p>
           <p className="text-[10px] text-muted-foreground">Genesisコイン</p>
         </div>
         <div className="flex-1">

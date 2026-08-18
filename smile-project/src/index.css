@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap');
 @import "tailwindcss";
 
 @theme inline {
@@ -29,37 +29,37 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 5px);
 
-  --font-display: 'M PLUS Rounded 1c', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', system-ui, sans-serif;
-  --font-sans: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', system-ui, sans-serif;
+  --font-display: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', system-ui, sans-serif;
+  --font-sans: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', system-ui, sans-serif;
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  --radius: 1rem;
+  --radius: 0.85rem;
 
-  --background: #ffffff;
-  --foreground: #1c1c1e;
-  --card: #ffffff;
-  --card-foreground: #1c1c1e;
-  --primary: #5b3df0;
-  --primary-foreground: #ffffff;
-  --secondary: #f0edfe;
-  --secondary-foreground: #5b3df0;
-  --muted: #f5f5f7;
-  --muted-foreground: #8e8e93;
-  --accent: #f5f5f7;
-  --accent-foreground: #1c1c1e;
-  --coin: #ffb100;
-  --coin-foreground: #6b4400;
-  --destructive: #dc2626;
-  --border: #eeeeef;
-  --input: #eeeeef;
-  --ring: #5b3df0;
+  --background: #0c0c0e;
+  --foreground: #f5f5f7;
+  --card: #17171b;
+  --card-foreground: #f5f5f7;
+  --primary: #ff3d94;
+  --primary-foreground: #0c0c0e;
+  --secondary: #201f24;
+  --secondary-foreground: #ff3d94;
+  --muted: #19191c;
+  --muted-foreground: #9a9aa1;
+  --accent: #201f24;
+  --accent-foreground: #f5f5f7;
+  --coin: #ffcc33;
+  --coin-foreground: #241a00;
+  --destructive: #ff5470;
+  --border: #29292e;
+  --input: #29292e;
+  --ring: #ff3d94;
 
-  --story-1: #5b3df0;
-  --story-2: #ff5b94;
-  --story-3: #ffb100;
+  --story-1: #7c5cff;
+  --story-2: #ff3d94;
+  --story-3: #ffcc33;
 }
 
 * {

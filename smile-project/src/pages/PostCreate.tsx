@@ -264,7 +264,7 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
                 <span
                   className={cn(
                     'flex h-5 w-5 items-center justify-center rounded-full border-2 text-xs',
-                    isChecked ? 'border-primary bg-primary text-white' : 'border-border text-transparent',
+                    isChecked ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-transparent',
                   )}
                 >
                   <Check className="size-3" />

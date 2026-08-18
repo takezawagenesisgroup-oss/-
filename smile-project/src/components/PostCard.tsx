@@ -44,7 +44,7 @@ export default function PostCard({ post }: { post: SmilePost }) {
           <p className="truncate text-sm font-semibold text-foreground">{post.userName}</p>
           <p className="text-[11px] text-muted-foreground">{timeAgo(post.createdAt)}</p>
         </div>
-        <span className="font-display shrink-0 text-xs font-bold text-coin-foreground">🪙 {post.score}</span>
+        <span className="font-display shrink-0 text-xs font-bold text-coin">🪙 {post.score}</span>
       </div>
 
       {post.missionTitle && (
@@ -61,7 +61,7 @@ export default function PostCard({ post }: { post: SmilePost }) {
           <div className="flex aspect-[4/5] w-full items-center justify-center text-8xl">{post.photo}</div>
         )}
         {post.prop && (
-          <div className="absolute left-2.5 top-2.5 max-w-[75%] rounded-2xl rounded-tl-sm bg-white/95 px-2.5 py-1.5 text-[11px] font-bold text-foreground shadow-sm">
+          <div className="absolute left-2.5 top-2.5 max-w-[75%] rounded-2xl rounded-tl-sm bg-white/95 px-2.5 py-1.5 text-[11px] font-bold text-neutral-900 shadow-sm">
             {post.prop}
           </div>
         )}
@@ -95,7 +95,7 @@ export default function PostCard({ post }: { post: SmilePost }) {
             </button>
           )}
           {post.approvalBonusAwarded && (
-            <span className="text-[11px] font-bold text-coin-foreground">🪙 +{APPROVAL_BONUS_COINS} GCボーナス獲得</span>
+            <span className="text-[11px] font-bold text-coin">🪙 +{APPROVAL_BONUS_COINS} GCボーナス獲得</span>
           )}
         </div>
 

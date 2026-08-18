@@ -31,7 +31,7 @@ export default function BottomNav({ active, onChange }: { active: Tab; onChange:
               aria-label={tab.label}
               className={cn(
                 'flex flex-1 items-center justify-center py-3.5 transition-transform active:scale-90',
-                isActive ? 'text-foreground' : 'text-muted-foreground',
+                isActive ? 'text-primary' : 'text-muted-foreground',
               )}
             >
               <Icon className="size-6" strokeWidth={isActive ? 2.4 : 1.8} />
