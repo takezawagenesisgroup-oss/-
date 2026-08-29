@@ -103,19 +103,36 @@ export default async function SearchPage({
 
       {result && (
         <div>
-          {result.items.length === 0 ? (
+          {result.matchLevel === 'none' ? (
             <p className="text-lg text-gray-500">
               まだこの作業の記録がありません。作業後に「登録」から記録してください。
             </p>
           ) : (
             <>
-              {result.matchLevel !== 'facility' && (
-                <p className="text-base text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 mb-4">
-                  {result.matchLevel === 'facility_type'
-                    ? 'この施設そのものの記録がないため、同じ種類の施設の実績から推薦しています。'
-                    : '施設をまだ選んでいないため、この作業内容の全施設の実績から推薦しています。'}
-                </p>
-              )}
+              {(() => {
+                const isReference = result.matchLevel.startsWith('reference');
+                const banner: Record<string, string> = {
+                  facility_type: 'この施設そのものの記録がないため、同じ種類の施設の実績から推薦しています。',
+                  reference_facility_type:
+                    '社内にまだ実績記録がないため、この施設タイプ向けの一般的な参考情報から推薦しています（実績ではありません）。',
+                  reference_general:
+                    '社内にまだ実績記録がないため、一般的な参考情報から推薦しています（実績ではありません）。',
+                  trouble_only: '施設をまだ選んでいないため、この作業内容の全施設の実績から推薦しています。',
+                };
+                const text = banner[result.matchLevel];
+                if (!text) return null;
+                return (
+                  <p
+                    className={`text-base rounded-xl px-4 py-2 mb-4 border ${
+                      isReference
+                        ? 'text-sky-800 bg-sky-50 border-sky-200'
+                        : 'text-amber-700 bg-amber-50 border-amber-200'
+                    }`}
+                  >
+                    {text}
+                  </p>
+                );
+              })()}
 
               <div className="card p-5 mb-5 bg-brand-50 border-brand-200">
                 <h2 className="text-2xl font-bold mb-4">🎒 持って行くものリスト</h2>
@@ -132,9 +149,11 @@ export default async function SearchPage({
                           <div key={it.id} className="icon-tile !border-brand-300 !bg-white">
                             <span className="text-3xl">{it.icon}</span>
                             <span>{it.name}</span>
-                            <span className="text-xs font-normal text-gray-400">
-                              過去{it.count}回使用
-                            </span>
+                            {it.count > 0 && (
+                              <span className="text-xs font-normal text-gray-400">
+                                過去{it.count}回使用
+                              </span>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -150,9 +169,11 @@ export default async function SearchPage({
                         <div key={v.id} className="icon-tile !border-brand-300 !bg-white">
                           <span className="text-3xl">{v.icon}</span>
                           <span>{v.name}</span>
-                          <span className="text-xs font-normal text-gray-400">
-                            過去{v.count}回使用
-                          </span>
+                          {v.count > 0 && (
+                            <span className="text-xs font-normal text-gray-400">
+                              過去{v.count}回使用
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -160,17 +181,38 @@ export default async function SearchPage({
                 )}
               </div>
 
-              <h2 className="text-xl font-bold mb-3">参考にした過去の作業</h2>
-              <div className="space-y-2">
-                {result.records.map((r) => (
-                  <Link key={r.id} href={`/records/${r.id}`} className="card block p-4">
-                    <span className="font-bold text-lg">{r.title}</span>
-                    <span className="block text-base text-gray-500">
-                      {r.facility_name} ／ {r.work_date}
-                    </span>
-                  </Link>
-                ))}
-              </div>
+              {result.guide && (
+                <div className="card p-5 mb-5">
+                  <h2 className="text-xl font-bold mb-2">📖 参考：{result.guide.title}</h2>
+                  <p className="text-lg whitespace-pre-wrap mb-3">{result.guide.procedure}</p>
+                  {(result.guide.estMin || result.guide.estMax) && (
+                    <p className="text-lg mb-2">
+                      ⏱ 目安時間：約{result.guide.estMin}〜{result.guide.estMax}分
+                    </p>
+                  )}
+                  {result.guide.cautionNote && (
+                    <p className="text-base bg-amber-50 border border-amber-200 rounded-xl px-4 py-2">
+                      ⚠️ {result.guide.cautionNote}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {result.records.length > 0 && (
+                <>
+                  <h2 className="text-xl font-bold mb-3">参考にした過去の作業</h2>
+                  <div className="space-y-2">
+                    {result.records.map((r) => (
+                      <Link key={r.id} href={`/records/${r.id}`} className="card block p-4">
+                        <span className="font-bold text-lg">{r.title}</span>
+                        <span className="block text-base text-gray-500">
+                          {r.facility_name} ／ {r.work_date}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
