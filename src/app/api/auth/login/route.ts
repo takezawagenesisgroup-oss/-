@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { getDb } from '@/lib/db';
+import { queryOne } from '@/lib/db';
 import { createSessionCookie } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
@@ -9,12 +9,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'ユーザー名とパスワードを入力してください' }, { status: 400 });
   }
 
-  const db = getDb();
-  const user = db
-    .prepare('SELECT * FROM users WHERE username = ? AND active = 1')
-    .get(username) as
-    | { id: number; username: string; name: string; password_hash: string; role: 'admin' | 'staff' }
-    | undefined;
+  const user = await queryOne<{
+    id: number;
+    username: string;
+    name: string;
+    password_hash: string;
+    role: 'admin' | 'staff';
+  }>('SELECT * FROM users WHERE username = $1 AND active = true', [username]);
 
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return NextResponse.json({ error: 'ユーザー名またはパスワードが違います' }, { status: 401 });

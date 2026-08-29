@@ -1,15 +1,19 @@
-import { getDb } from '@/lib/db';
+import { query } from '@/lib/db';
 import { tierLabel } from '@/lib/labels';
 import { addCategory, addItem, deleteItem } from './actions';
 
-export default function AdminItemsPage() {
-  const db = getDb();
-  const categories = db
-    .prepare('SELECT id, name, kind, icon FROM item_categories ORDER BY sort_order, id')
-    .all() as { id: number; name: string; kind: 'tool' | 'supply'; icon: string }[];
-  const items = db
-    .prepare('SELECT id, category_id, name, tier, icon, storage_location FROM items ORDER BY category_id, tier, id')
-    .all() as { id: number; category_id: number; name: string; tier: number; icon: string; storage_location: string | null }[];
+export default async function AdminItemsPage() {
+  const categories = await query<{ id: number; name: string; kind: 'tool' | 'supply'; icon: string }>(
+    'SELECT id, name, kind, icon FROM item_categories ORDER BY sort_order, id'
+  );
+  const items = await query<{
+    id: number;
+    category_id: number;
+    name: string;
+    tier: number;
+    icon: string;
+    storage_location: string | null;
+  }>('SELECT id, category_id, name, tier, icon, storage_location FROM items ORDER BY category_id, tier, id');
 
   const itemsByCategory = new Map<number, typeof items>();
   for (const it of items) {

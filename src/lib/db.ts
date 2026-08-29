@@ -1,55 +1,78 @@
-import Database from 'better-sqlite3';
+import { Pool, types } from 'pg';
 import bcrypt from 'bcryptjs';
-import path from 'path';
-import fs from 'fs';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-const DB_PATH = path.join(DATA_DIR, 'app.db');
+// Keep DATE columns as plain 'YYYY-MM-DD' strings instead of JS Date objects.
+types.setTypeParser(1082, (val: string) => val);
 
 declare global {
   // eslint-disable-next-line no-var
-  var __db__: Database.Database | undefined;
+  var __pgPool__: Pool | undefined;
+  // eslint-disable-next-line no-var
+  var __dbReady__: Promise<void> | undefined;
 }
 
-function createConnection(): Database.Database {
-  const db = new Database(DB_PATH);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
-  return db;
-}
-
-export function getDb(): Database.Database {
-  if (!global.__db__) {
-    global.__db__ = createConnection();
-    init(global.__db__);
-    try {
-      seed(global.__db__);
-    } catch (err) {
-      // Concurrent processes (e.g. Next.js build workers) may race to seed
-      // the same fresh database; the data is already present either way.
-      if (!(err instanceof Error) || !err.message.includes('UNIQUE constraint failed')) {
-        throw err;
-      }
-    }
+function createPool(): Pool {
+  const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error(
+      'POSTGRES_URL (or DATABASE_URL) environment variable is not set. See README for setup.'
+    );
   }
-  return global.__db__;
+  const isLocal = /localhost|127\.0\.0\.1/.test(connectionString);
+  return new Pool({
+    connectionString,
+    ssl: isLocal ? false : { rejectUnauthorized: false },
+    max: 5,
+  });
 }
 
-function init(db: Database.Database) {
-  db.exec(`
+function getPool(): Pool {
+  if (!global.__pgPool__) global.__pgPool__ = createPool();
+  return global.__pgPool__;
+}
+
+async function rawQuery<T = any>(text: string, params: any[] = []): Promise<T[]> {
+  const res = await getPool().query(text, params);
+  return res.rows as T[];
+}
+
+function ensureReady(): Promise<void> {
+  if (!global.__dbReady__) {
+    global.__dbReady__ = initSchema()
+      .then(() => seed())
+      .catch((err) => {
+        // Allow a retry on the next request instead of caching a failed init forever.
+        global.__dbReady__ = undefined;
+        throw err;
+      });
+  }
+  return global.__dbReady__;
+}
+
+export async function query<T = any>(text: string, params: any[] = []): Promise<T[]> {
+  await ensureReady();
+  return rawQuery<T>(text, params);
+}
+
+export async function queryOne<T = any>(text: string, params: any[] = []): Promise<T | undefined> {
+  const rows = await query<T>(text, params);
+  return rows[0];
+}
+
+async function initSchema() {
+  await rawQuery(`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
       name TEXT NOT NULL,
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'staff',
-      active INTEGER NOT NULL DEFAULT 1,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS facilities (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       type TEXT NOT NULL,
       address TEXT,
@@ -58,32 +81,32 @@ function init(db: Database.Database) {
     );
 
     CREATE TABLE IF NOT EXISTS trouble_types (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       icon TEXT NOT NULL DEFAULT '📋',
-      sort_order INTEGER NOT NULL DEFAULT 0
+      sort_order INT NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS item_categories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
-      kind TEXT NOT NULL CHECK(kind IN ('tool','supply')),
+      kind TEXT NOT NULL CHECK (kind IN ('tool','supply')),
       icon TEXT NOT NULL DEFAULT '🧰',
-      sort_order INTEGER NOT NULL DEFAULT 0
+      sort_order INT NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      category_id INTEGER NOT NULL REFERENCES item_categories(id),
+      id SERIAL PRIMARY KEY,
+      category_id INT NOT NULL REFERENCES item_categories(id),
       name TEXT NOT NULL,
-      tier INTEGER NOT NULL CHECK(tier IN (1,2,3)),
+      tier INT NOT NULL CHECK (tier IN (1,2,3)),
       icon TEXT NOT NULL DEFAULT '🔧',
       storage_location TEXT,
       notes TEXT
     );
 
     CREATE TABLE IF NOT EXISTS vehicles (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       type TEXT,
       icon TEXT NOT NULL DEFAULT '🚚',
@@ -92,61 +115,60 @@ function init(db: Database.Database) {
     );
 
     CREATE TABLE IF NOT EXISTS work_records (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      facility_id INTEGER NOT NULL REFERENCES facilities(id),
-      trouble_type_id INTEGER REFERENCES trouble_types(id),
-      parent_id INTEGER REFERENCES work_records(id),
+      id SERIAL PRIMARY KEY,
+      facility_id INT NOT NULL REFERENCES facilities(id),
+      trouble_type_id INT REFERENCES trouble_types(id),
+      parent_id INT REFERENCES work_records(id),
       title TEXT NOT NULL,
       description TEXT,
       raw_transcript TEXT,
-      work_date TEXT NOT NULL,
-      assignee_id INTEGER REFERENCES users(id),
-      duration_minutes INTEGER,
+      work_date DATE NOT NULL,
+      assignee_id INT REFERENCES users(id),
+      duration_minutes INT,
       status TEXT NOT NULL DEFAULT 'done',
-      created_by INTEGER REFERENCES users(id),
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      created_by INT REFERENCES users(id),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS work_record_photos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      work_record_id INTEGER NOT NULL REFERENCES work_records(id) ON DELETE CASCADE,
-      filename TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      id SERIAL PRIMARY KEY,
+      work_record_id INT NOT NULL REFERENCES work_records(id) ON DELETE CASCADE,
+      url TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS work_record_items (
-      work_record_id INTEGER NOT NULL REFERENCES work_records(id) ON DELETE CASCADE,
-      item_id INTEGER NOT NULL REFERENCES items(id),
-      quantity INTEGER NOT NULL DEFAULT 1,
+      work_record_id INT NOT NULL REFERENCES work_records(id) ON DELETE CASCADE,
+      item_id INT NOT NULL REFERENCES items(id),
+      quantity INT NOT NULL DEFAULT 1,
       PRIMARY KEY (work_record_id, item_id)
     );
 
     CREATE TABLE IF NOT EXISTS work_record_vehicles (
-      work_record_id INTEGER NOT NULL REFERENCES work_records(id) ON DELETE CASCADE,
-      vehicle_id INTEGER NOT NULL REFERENCES vehicles(id),
+      work_record_id INT NOT NULL REFERENCES work_records(id) ON DELETE CASCADE,
+      vehicle_id INT NOT NULL REFERENCES vehicles(id),
       PRIMARY KEY (work_record_id, vehicle_id)
     );
   `);
 }
 
-function seed(db: Database.Database) {
-  const userCount = db.prepare('SELECT COUNT(*) c FROM users').get() as { c: number };
-  if (userCount.c === 0) {
-    const insertUser = db.prepare(
-      'INSERT INTO users (username, name, password_hash, role) VALUES (?,?,?,?)'
-    );
-    insertUser.run('admin', '管理者', bcrypt.hashSync('admin1234', 10), 'admin');
-    insertUser.run('sato', '佐藤', bcrypt.hashSync('staff1234', 10), 'staff');
-    insertUser.run('suzuki', '鈴木', bcrypt.hashSync('staff1234', 10), 'staff');
-    insertUser.run('takahashi', '高橋', bcrypt.hashSync('staff1234', 10), 'staff');
+async function seed() {
+  const [{ count: userCount }] = await rawQuery<{ count: string }>('SELECT COUNT(*)::int as count FROM users');
+  if (Number(userCount) === 0) {
+    const insertUser = async (username: string, name: string, password: string, role: string) =>
+      rawQuery(
+        'INSERT INTO users (username, name, password_hash, role) VALUES ($1,$2,$3,$4) ON CONFLICT (username) DO NOTHING',
+        [username, name, bcrypt.hashSync(password, 10), role]
+      );
+    await insertUser('admin', '管理者', 'admin1234', 'admin');
+    await insertUser('sato', '佐藤', 'staff1234', 'staff');
+    await insertUser('suzuki', '鈴木', 'staff1234', 'staff');
+    await insertUser('takahashi', '高橋', 'staff1234', 'staff');
   }
 
-  const facCount = db.prepare('SELECT COUNT(*) c FROM facilities').get() as { c: number };
-  if (facCount.c === 0) {
-    const ins = db.prepare(
-      'INSERT INTO facilities (name, type, address, icon, notes) VALUES (?,?,?,?,?)'
-    );
+  const [{ count: facCount }] = await rawQuery<{ count: string }>('SELECT COUNT(*)::int as count FROM facilities');
+  if (Number(facCount) === 0) {
     const facilities: [string, string, string, string, string][] = [
       ['パチンコ店 帯広本店', 'pachinko', '北海道帯広市', '🎰', ''],
       ['パチンコ店 音更店', 'pachinko', '北海道音更町', '🎰', ''],
@@ -162,13 +184,17 @@ function seed(db: Database.Database) {
       ['倉庫 音更', 'warehouse', '北海道音更町', '🏭', ''],
       ['本社', 'hq', '北海道帯広市', '🏬', ''],
     ];
-    for (const f of facilities) ins.run(...f);
+    for (const [name, type, address, icon, notes] of facilities) {
+      await rawQuery(
+        'INSERT INTO facilities (name, type, address, icon, notes) VALUES ($1,$2,$3,$4,$5)',
+        [name, type, address, icon, notes]
+      );
+    }
   }
 
-  const ttCount = db.prepare('SELECT COUNT(*) c FROM trouble_types').get() as { c: number };
-  if (ttCount.c === 0) {
-    const ins = db.prepare('INSERT INTO trouble_types (name, icon, sort_order) VALUES (?,?,?)');
-    const types: [string, string, number][] = [
+  const [{ count: ttCount }] = await rawQuery<{ count: string }>('SELECT COUNT(*)::int as count FROM trouble_types');
+  if (Number(ttCount) === 0) {
+    const types_: [string, string, number][] = [
       ['舗装・アスファルト補修', '🛣️', 1],
       ['屋根修理', '🏚️', 2],
       ['外壁補修・塗装', '🧱', 3],
@@ -181,18 +207,17 @@ function seed(db: Database.Database) {
       ['清掃・共用部', '🧹', 10],
       ['その他', '📋', 99],
     ];
-    for (const t of types) ins.run(...t);
+    for (const [name, icon, sortOrder] of types_) {
+      await rawQuery('INSERT INTO trouble_types (name, icon, sort_order) VALUES ($1,$2,$3)', [
+        name,
+        icon,
+        sortOrder,
+      ]);
+    }
   }
 
-  const catCount = db.prepare('SELECT COUNT(*) c FROM item_categories').get() as { c: number };
-  if (catCount.c === 0) {
-    const insCat = db.prepare(
-      'INSERT INTO item_categories (name, kind, icon, sort_order) VALUES (?,?,?,?)'
-    );
-    const insItem = db.prepare(
-      'INSERT INTO items (category_id, name, tier, icon, storage_location, notes) VALUES (?,?,?,?,?,?)'
-    );
-
+  const [{ count: catCount }] = await rawQuery<{ count: string }>('SELECT COUNT(*)::int as count FROM item_categories');
+  if (Number(catCount) === 0) {
     type ItemSeed = [string, number, string, string];
     const categories: { name: string; kind: 'tool' | 'supply'; icon: string; items: ItemSeed[] }[] = [
       {
@@ -316,74 +341,103 @@ function seed(db: Database.Database) {
     ];
 
     for (const cat of categories) {
-      const res = insCat.run(cat.name, cat.kind, cat.icon, 0);
-      const categoryId = res.lastInsertRowid as number;
+      const [{ id: categoryId }] = await rawQuery<{ id: number }>(
+        'INSERT INTO item_categories (name, kind, icon, sort_order) VALUES ($1,$2,$3,0) RETURNING id',
+        [cat.name, cat.kind, cat.icon]
+      );
       for (const [name, tier, icon, loc] of cat.items) {
-        insItem.run(categoryId, name, tier, icon, loc, null);
+        await rawQuery(
+          'INSERT INTO items (category_id, name, tier, icon, storage_location) VALUES ($1,$2,$3,$4,$5)',
+          [categoryId, name, tier, icon, loc]
+        );
       }
     }
   }
 
-  const vehCount = db.prepare('SELECT COUNT(*) c FROM vehicles').get() as { c: number };
-  if (vehCount.c === 0) {
-    const ins = db.prepare('INSERT INTO vehicles (name, type, icon, plate_no) VALUES (?,?,?,?)');
-    const vehicles: [string, string, string, string][] = [
-      ['高所作業車', 'special', '🚡', ''],
-      ['2トン車', 'truck', '🚛', ''],
-      ['4トン車', 'truck', '🚛', ''],
-      ['軽バン', 'van', '🚐', ''],
-      ['ハイエース', 'van', '🚐', ''],
-      ['軽トラック', 'truck', '🛻', ''],
-      ['除雪車 1号車', 'snow', '🚜', ''],
-      ['除雪車 2号車', 'snow', '🚜', ''],
+  const [{ count: vehCount }] = await rawQuery<{ count: string }>('SELECT COUNT(*)::int as count FROM vehicles');
+  if (Number(vehCount) === 0) {
+    const vehicles: [string, string, string][] = [
+      ['高所作業車', 'special', '🚡'],
+      ['2トン車', 'truck', '🚛'],
+      ['4トン車', 'truck', '🚛'],
+      ['軽バン', 'van', '🚐'],
+      ['ハイエース', 'van', '🚐'],
+      ['軽トラック', 'truck', '🛻'],
+      ['除雪車 1号車', 'snow', '🚜'],
+      ['除雪車 2号車', 'snow', '🚜'],
     ];
-    for (const v of vehicles) ins.run(...v);
+    for (const [name, type, icon] of vehicles) {
+      await rawQuery('INSERT INTO vehicles (name, type, icon) VALUES ($1,$2,$3)', [name, type, icon]);
+    }
   }
 
-  const wrCount = db.prepare('SELECT COUNT(*) c FROM work_records').get() as { c: number };
-  if (wrCount.c === 0) {
-    seedDemoWorkRecords(db);
+  const [{ count: wrCount }] = await rawQuery<{ count: string }>('SELECT COUNT(*)::int as count FROM work_records');
+  if (Number(wrCount) === 0) {
+    await seedDemoWorkRecords();
   }
 }
 
-function seedDemoWorkRecords(db: Database.Database) {
-  const facilities = db.prepare('SELECT id, name, type FROM facilities').all() as {
-    id: number;
-    name: string;
-    type: string;
-  }[];
-  const troubleTypes = db.prepare('SELECT id, name FROM trouble_types').all() as {
-    id: number;
-    name: string;
-  }[];
-  const items = db.prepare('SELECT id, name FROM items').all() as { id: number; name: string }[];
-  const vehicles = db.prepare('SELECT id, name FROM vehicles').all() as {
-    id: number;
-    name: string;
-  }[];
-  const users = db.prepare('SELECT id FROM users').all() as { id: number }[];
+async function seedDemoWorkRecords() {
+  const facilities = await rawQuery<{ id: number; name: string }>('SELECT id, name FROM facilities');
+  const troubleTypes = await rawQuery<{ id: number; name: string }>('SELECT id, name FROM trouble_types');
+  const items = await rawQuery<{ id: number; name: string }>('SELECT id, name FROM items');
+  const vehicles = await rawQuery<{ id: number; name: string }>('SELECT id, name FROM vehicles');
+  const users = await rawQuery<{ id: number }>('SELECT id FROM users ORDER BY id');
 
   const findFacility = (name: string) => facilities.find((f) => f.name === name)!.id;
   const findTrouble = (name: string) => troubleTypes.find((t) => t.name === name)!.id;
   const findItem = (name: string) => items.find((i) => i.name === name)!.id;
   const findVehicle = (name: string) => vehicles.find((v) => v.name === name)!.id;
 
-  const insRecord = db.prepare(`
-    INSERT INTO work_records
-      (facility_id, trouble_type_id, parent_id, title, description, raw_transcript, work_date, assignee_id, duration_minutes, status, created_by)
-    VALUES (@facility_id, @trouble_type_id, @parent_id, @title, @description, @raw_transcript, @work_date, @assignee_id, @duration_minutes, 'done', @created_by)
-  `);
-  const insItemLink = db.prepare(
-    'INSERT INTO work_record_items (work_record_id, item_id, quantity) VALUES (?,?,1)'
-  );
-  const insVehicleLink = db.prepare(
-    'INSERT INTO work_record_vehicles (work_record_id, vehicle_id) VALUES (?,?)'
-  );
-
   const staff1 = users[1]?.id ?? users[0].id;
   const staff2 = users[2]?.id ?? users[0].id;
 
-  const r1 = insRecord.run({
+  async function insertRecord(rec: {
+    facility_id: number;
+    trouble_type_id: number;
+    parent_id: number | null;
+    title: string;
+    description: string;
+    raw_transcript: string;
+    work_date: string;
+    assignee_id: number;
+    duration_minutes: number;
+    created_by: number;
+  }): Promise<number> {
+    const [{ id }] = await rawQuery<{ id: number }>(
+      `INSERT INTO work_records
+        (facility_id, trouble_type_id, parent_id, title, description, raw_transcript, work_date, assignee_id, duration_minutes, status, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'done',$10)
+       RETURNING id`,
+      [
+        rec.facility_id,
+        rec.trouble_type_id,
+        rec.parent_id,
+        rec.title,
+        rec.description,
+        rec.raw_transcript,
+        rec.work_date,
+        rec.assignee_id,
+        rec.duration_minutes,
+        rec.created_by,
+      ]
+    );
+    return id;
+  }
+  async function linkItem(recordId: number, itemId: number) {
+    await rawQuery('INSERT INTO work_record_items (work_record_id, item_id, quantity) VALUES ($1,$2,1)', [
+      recordId,
+      itemId,
+    ]);
+  }
+  async function linkVehicle(recordId: number, vehicleId: number) {
+    await rawQuery('INSERT INTO work_record_vehicles (work_record_id, vehicle_id) VALUES ($1,$2)', [
+      recordId,
+      vehicleId,
+    ]);
+  }
+
+  const r1 = await insertRecord({
     facility_id: findFacility('マンション 帯広第一'),
     trouble_type_id: findTrouble('舗装・アスファルト補修'),
     parent_id: null,
@@ -395,16 +449,13 @@ function seedDemoWorkRecords(db: Database.Database) {
     assignee_id: staff1,
     duration_minutes: 90,
     created_by: staff1,
-  }).lastInsertRowid as number;
-  [
-    findItem('常温合材（補修材）'),
-    findItem('コテ'),
-    findItem('ほうき'),
-    findItem('タンパー（転圧機）'),
-  ].forEach((id) => insItemLink.run(r1, id));
-  insVehicleLink.run(r1, findVehicle('軽トラック'));
+  });
+  for (const name of ['常温合材（補修材）', 'コテ', 'ほうき', 'タンパー（転圧機）']) {
+    await linkItem(r1, findItem(name));
+  }
+  await linkVehicle(r1, findVehicle('軽トラック'));
 
-  const r2 = insRecord.run({
+  const r2 = await insertRecord({
     facility_id: findFacility('マンション 音更グリーン'),
     trouble_type_id: findTrouble('舗装・アスファルト補修'),
     parent_id: r1,
@@ -416,11 +467,13 @@ function seedDemoWorkRecords(db: Database.Database) {
     assignee_id: staff2,
     duration_minutes: 40,
     created_by: staff2,
-  }).lastInsertRowid as number;
-  [findItem('常温合材（補修材）'), findItem('コテ')].forEach((id) => insItemLink.run(r2, id));
-  insVehicleLink.run(r2, findVehicle('軽バン'));
+  });
+  for (const name of ['常温合材（補修材）', 'コテ']) {
+    await linkItem(r2, findItem(name));
+  }
+  await linkVehicle(r2, findVehicle('軽バン'));
 
-  const r3 = insRecord.run({
+  const r3 = await insertRecord({
     facility_id: findFacility('空き地 帯広A'),
     trouble_type_id: findTrouble('除雪'),
     parent_id: null,
@@ -432,13 +485,13 @@ function seedDemoWorkRecords(db: Database.Database) {
     assignee_id: staff1,
     duration_minutes: 120,
     created_by: staff1,
-  }).lastInsertRowid as number;
-  [findItem('スノーダンプ'), findItem('角スコップ'), findItem('融雪剤')].forEach((id) =>
-    insItemLink.run(r3, id)
-  );
-  insVehicleLink.run(r3, findVehicle('除雪車 1号車'));
+  });
+  for (const name of ['スノーダンプ', '角スコップ', '融雪剤']) {
+    await linkItem(r3, findItem(name));
+  }
+  await linkVehicle(r3, findVehicle('除雪車 1号車'));
 
-  const r4 = insRecord.run({
+  const r4 = await insertRecord({
     facility_id: findFacility('空き地 帯広A'),
     trouble_type_id: findTrouble('草刈り・剪定'),
     parent_id: null,
@@ -450,11 +503,13 @@ function seedDemoWorkRecords(db: Database.Database) {
     assignee_id: staff2,
     duration_minutes: 150,
     created_by: staff2,
-  }).lastInsertRowid as number;
-  [findItem('刈払機'), findItem('鎌')].forEach((id) => insItemLink.run(r4, id));
-  insVehicleLink.run(r4, findVehicle('軽トラック'));
+  });
+  for (const name of ['刈払機', '鎌']) {
+    await linkItem(r4, findItem(name));
+  }
+  await linkVehicle(r4, findVehicle('軽トラック'));
 
-  const r5 = insRecord.run({
+  const r5 = await insertRecord({
     facility_id: findFacility('マンション 帯広第一'),
     trouble_type_id: findTrouble('水道トラブル'),
     parent_id: null,
@@ -466,9 +521,9 @@ function seedDemoWorkRecords(db: Database.Database) {
     assignee_id: staff1,
     duration_minutes: 60,
     created_by: staff1,
-  }).lastInsertRowid as number;
-  [findItem('パイプレンチ'), findItem('シールテープ'), findItem('モンキーレンチ')].forEach((id) =>
-    insItemLink.run(r5, id)
-  );
-  insVehicleLink.run(r5, findVehicle('軽バン'));
+  });
+  for (const name of ['パイプレンチ', 'シールテープ', 'モンキーレンチ']) {
+    await linkItem(r5, findItem(name));
+  }
+  await linkVehicle(r5, findVehicle('軽バン'));
 }

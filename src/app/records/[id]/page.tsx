@@ -1,50 +1,48 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getDb } from '@/lib/db';
+import { query, queryOne } from '@/lib/db';
 import { tierLabel } from '@/lib/labels';
 
-export default function RecordDetailPage({ params }: { params: { id: string } }) {
-  const db = getDb();
-  const record = db
-    .prepare(
-      `SELECT wr.*, f.id as facility_id, f.name as facility_name, f.icon as facility_icon,
-              tt.name as trouble_name, tt.icon as trouble_icon, u.name as assignee_name,
-              p.id as parent_record_id, p.title as parent_title
-       FROM work_records wr
-       LEFT JOIN facilities f ON f.id = wr.facility_id
-       LEFT JOIN trouble_types tt ON tt.id = wr.trouble_type_id
-       LEFT JOIN users u ON u.id = wr.assignee_id
-       LEFT JOIN work_records p ON p.id = wr.parent_id
-       WHERE wr.id = ?`
-    )
-    .get(params.id) as any;
+export default async function RecordDetailPage({ params }: { params: { id: string } }) {
+  const recordId = Number(params.id);
+  const record = await queryOne<any>(
+    `SELECT wr.*, f.id as facility_id, f.name as facility_name, f.icon as facility_icon,
+            tt.name as trouble_name, tt.icon as trouble_icon, u.name as assignee_name,
+            p.id as parent_record_id, p.title as parent_title
+     FROM work_records wr
+     LEFT JOIN facilities f ON f.id = wr.facility_id
+     LEFT JOIN trouble_types tt ON tt.id = wr.trouble_type_id
+     LEFT JOIN users u ON u.id = wr.assignee_id
+     LEFT JOIN work_records p ON p.id = wr.parent_id
+     WHERE wr.id = $1`,
+    [recordId]
+  );
 
   if (!record) notFound();
 
-  const items = db
-    .prepare(
+  const [items, vehicles, photos, children] = await Promise.all([
+    query<any>(
       `SELECT i.id, i.name, i.icon, i.tier, c.name as category_name, c.kind as category_kind
        FROM work_record_items wri JOIN items i ON i.id = wri.item_id
        JOIN item_categories c ON c.id = i.category_id
-       WHERE wri.work_record_id = ?
-       ORDER BY i.tier`
-    )
-    .all(params.id) as any[];
-
-  const vehicles = db
-    .prepare(
+       WHERE wri.work_record_id = $1
+       ORDER BY i.tier`,
+      [recordId]
+    ),
+    query<any>(
       `SELECT v.id, v.name, v.icon FROM work_record_vehicles wrv JOIN vehicles v ON v.id = wrv.vehicle_id
-       WHERE wrv.work_record_id = ?`
-    )
-    .all(params.id) as any[];
-
-  const photos = db
-    .prepare('SELECT id, filename FROM work_record_photos WHERE work_record_id = ?')
-    .all(params.id) as { id: number; filename: string }[];
-
-  const children = db
-    .prepare('SELECT id, title, work_date FROM work_records WHERE parent_id = ? ORDER BY work_date DESC')
-    .all(params.id) as any[];
+       WHERE wrv.work_record_id = $1`,
+      [recordId]
+    ),
+    query<{ id: number; url: string }>(
+      'SELECT id, url FROM work_record_photos WHERE work_record_id = $1',
+      [recordId]
+    ),
+    query<any>(
+      'SELECT id, title, work_date FROM work_records WHERE parent_id = $1 ORDER BY work_date DESC',
+      [recordId]
+    ),
+  ]);
 
   const itemsByTier = new Map<number, any[]>();
   for (const it of items) {
@@ -106,7 +104,7 @@ export default function RecordDetailPage({ params }: { params: { id: string } })
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={p.id}
-                src={`/uploads/${p.filename}`}
+                src={p.url}
                 alt="作業写真"
                 className="rounded-xl border-2 border-gray-200 aspect-square object-cover"
               />

@@ -24,7 +24,7 @@ export default function EditRecordPage() {
   const [durationMinutes, setDurationMinutes] = useState<number | ''>('');
   const [selectedItemIds, setSelectedItemIds] = useState<Set<number>>(new Set());
   const [selectedVehicleIds, setSelectedVehicleIds] = useState<Set<number>>(new Set());
-  const [existingPhotos, setExistingPhotos] = useState<{ id: number; filename: string }[]>([]);
+  const [existingPhotos, setExistingPhotos] = useState<{ id: number; url: string }[]>([]);
   const [newPhotos, setNewPhotos] = useState<File[]>([]);
 
   useEffect(() => {
@@ -195,7 +195,7 @@ export default function EditRecordPage() {
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={p.id}
-                src={`/uploads/${p.filename}`}
+                src={p.url}
                 alt="登録済み写真"
                 className="rounded-xl border-2 border-gray-200 aspect-square object-cover"
               />

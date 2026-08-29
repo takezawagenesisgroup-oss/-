@@ -1,11 +1,14 @@
-import { getDb } from '@/lib/db';
+import { query } from '@/lib/db';
 import { addVehicle, deleteVehicle } from './actions';
 
-export default function AdminVehiclesPage() {
-  const db = getDb();
-  const vehicles = db
-    .prepare('SELECT id, name, type, icon, plate_no FROM vehicles ORDER BY id')
-    .all() as { id: number; name: string; type: string | null; icon: string; plate_no: string | null }[];
+export default async function AdminVehiclesPage() {
+  const vehicles = await query<{
+    id: number;
+    name: string;
+    type: string | null;
+    icon: string;
+    plate_no: string | null;
+  }>('SELECT id, name, type, icon, plate_no FROM vehicles ORDER BY id');
 
   return (
     <div className="py-4">

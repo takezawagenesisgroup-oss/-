@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getDb } from '@/lib/db';
+import { query, queryOne } from '@/lib/db';
 import { FACILITY_TYPE_LABELS } from '@/lib/labels';
 import RecordTree, { type RecordNode } from '@/components/RecordTree';
 
@@ -18,30 +18,30 @@ type RecordRow = {
   photo_count: number;
 };
 
-export default function FacilityDetailPage({ params }: { params: { id: string } }) {
-  const db = getDb();
-  const facility = db
-    .prepare('SELECT id, name, type, address, icon, notes FROM facilities WHERE id = ?')
-    .get(params.id) as Facility | undefined;
+export default async function FacilityDetailPage({ params }: { params: { id: string } }) {
+  const facilityId = Number(params.id);
+  const facility = await queryOne<Facility>(
+    'SELECT id, name, type, address, icon, notes FROM facilities WHERE id = $1',
+    [facilityId]
+  );
 
   if (!facility) notFound();
 
-  const rows = db
-    .prepare(
-      `SELECT wr.id, wr.parent_id, wr.title, wr.description, wr.work_date, wr.duration_minutes,
-              tt.name as trouble_name, tt.icon as trouble_icon,
-              u.name as assignee_name,
-              (SELECT COUNT(*) FROM work_record_photos p WHERE p.work_record_id = wr.id) as photo_count
-       FROM work_records wr
-       LEFT JOIN trouble_types tt ON tt.id = wr.trouble_type_id
-       LEFT JOIN users u ON u.id = wr.assignee_id
-       WHERE wr.facility_id = ?
-       ORDER BY wr.work_date DESC`
-    )
-    .all(facility.id) as RecordRow[];
+  const rows = await query<RecordRow>(
+    `SELECT wr.id, wr.parent_id, wr.title, wr.description, wr.work_date, wr.duration_minutes,
+            tt.name as trouble_name, tt.icon as trouble_icon,
+            u.name as assignee_name,
+            (SELECT COUNT(*)::int FROM work_record_photos p WHERE p.work_record_id = wr.id) as photo_count
+     FROM work_records wr
+     LEFT JOIN trouble_types tt ON tt.id = wr.trouble_type_id
+     LEFT JOIN users u ON u.id = wr.assignee_id
+     WHERE wr.facility_id = $1
+     ORDER BY wr.work_date DESC`,
+    [facility.id]
+  );
 
   const idsInFacility = new Set(rows.map((r) => r.id));
-  const byParent = new Map<number | null, RecordRow[]>();
+  const byParent = new Map<number, RecordRow[]>();
   const roots: RecordRow[] = [];
   for (const r of rows) {
     // A record whose parent lives at a different facility has no local

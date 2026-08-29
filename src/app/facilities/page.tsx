@@ -1,14 +1,13 @@
 import Link from 'next/link';
-import { getDb } from '@/lib/db';
+import { query } from '@/lib/db';
 import { FACILITY_TYPE_LABELS } from '@/lib/labels';
 
 type Facility = { id: number; name: string; type: string; address: string; icon: string };
 
-export default function FacilitiesPage() {
-  const db = getDb();
-  const facilities = db
-    .prepare('SELECT id, name, type, address, icon FROM facilities ORDER BY type, id')
-    .all() as Facility[];
+export default async function FacilitiesPage() {
+  const facilities = await query<Facility>(
+    'SELECT id, name, type, address, icon FROM facilities ORDER BY type, id'
+  );
 
   const grouped = new Map<string, Facility[]>();
   for (const f of facilities) {

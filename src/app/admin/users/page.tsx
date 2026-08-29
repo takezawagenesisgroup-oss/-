@@ -1,11 +1,10 @@
-import { getDb } from '@/lib/db';
+import { query } from '@/lib/db';
 import { addUser, toggleActive } from './actions';
 
-export default function AdminUsersPage() {
-  const db = getDb();
-  const users = db
-    .prepare('SELECT id, username, name, role, active FROM users ORDER BY id')
-    .all() as { id: number; username: string; name: string; role: string; active: number }[];
+export default async function AdminUsersPage() {
+  const users = await query<{ id: number; username: string; name: string; role: string; active: boolean }>(
+    'SELECT id, username, name, role, active FROM users ORDER BY id'
+  );
 
   return (
     <div className="py-4">

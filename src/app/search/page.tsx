@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getDb } from '@/lib/db';
+import { query } from '@/lib/db';
 import { FACILITY_TYPE_LABELS, tierLabel } from '@/lib/labels';
 import { getRecommendation } from '@/lib/recommend';
 
@@ -14,18 +14,15 @@ function buildHref(params: { facility_id?: number | null; trouble_type_id?: numb
   return `/search${s ? `?${s}` : ''}`;
 }
 
-export default function SearchPage({
+export default async function SearchPage({
   searchParams,
 }: {
   searchParams: { facility_id?: string; trouble_type_id?: string };
 }) {
-  const db = getDb();
-  const facilities = db
-    .prepare('SELECT id, name, type, icon FROM facilities ORDER BY type, id')
-    .all() as Facility[];
-  const troubleTypes = db
-    .prepare('SELECT id, name, icon FROM trouble_types ORDER BY sort_order, id')
-    .all() as TroubleType[];
+  const [facilities, troubleTypes] = await Promise.all([
+    query<Facility>('SELECT id, name, type, icon FROM facilities ORDER BY type, id'),
+    query<TroubleType>('SELECT id, name, icon FROM trouble_types ORDER BY sort_order, id'),
+  ]);
 
   const facilityId = searchParams.facility_id ? Number(searchParams.facility_id) : null;
   const troubleTypeId = searchParams.trouble_type_id ? Number(searchParams.trouble_type_id) : null;
@@ -36,7 +33,7 @@ export default function SearchPage({
     groupedFacilities.get(f.type)!.push(f);
   }
 
-  const result = troubleTypeId ? getRecommendation(troubleTypeId, facilityId) : null;
+  const result = troubleTypeId ? await getRecommendation(troubleTypeId, facilityId) : null;
 
   const itemsByTier = new Map<number, any[]>();
   if (result) {

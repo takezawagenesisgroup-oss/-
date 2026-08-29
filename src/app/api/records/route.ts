@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { query, queryOne } from '@/lib/db';
 import { saveUploadedPhoto } from '@/lib/uploads';
 import { getSession } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
-  const db = getDb();
   const { searchParams } = new URL(req.url);
   const facilityId = searchParams.get('facility_id');
   const troubleTypeId = searchParams.get('trouble_type_id');
@@ -12,24 +11,23 @@ export async function GET(req: NextRequest) {
   const clauses: string[] = [];
   const args: (string | number)[] = [];
   if (facilityId) {
-    clauses.push('wr.facility_id = ?');
     args.push(Number(facilityId));
+    clauses.push(`wr.facility_id = $${args.length}`);
   }
   if (troubleTypeId) {
-    clauses.push('wr.trouble_type_id = ?');
     args.push(Number(troubleTypeId));
+    clauses.push(`wr.trouble_type_id = $${args.length}`);
   }
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
 
-  const rows = db
-    .prepare(
-      `SELECT wr.id, wr.title, wr.work_date, wr.description, f.name as facility_name
-       FROM work_records wr JOIN facilities f ON f.id = wr.facility_id
-       ${where}
-       ORDER BY wr.work_date DESC
-       LIMIT 20`
-    )
-    .all(...args);
+  const rows = await query(
+    `SELECT wr.id, wr.title, wr.work_date, wr.description, f.name as facility_name
+     FROM work_records wr JOIN facilities f ON f.id = wr.facility_id
+     ${where}
+     ORDER BY wr.work_date DESC
+     LIMIT 20`,
+    args
+  );
 
   return NextResponse.json({ records: rows });
 }
@@ -57,43 +55,43 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '施設とタイトルは必須です' }, { status: 400 });
   }
 
-  const db = getDb();
-  const insert = db.prepare(`
-    INSERT INTO work_records
+  const record = await queryOne<{ id: number }>(
+    `INSERT INTO work_records
       (facility_id, trouble_type_id, parent_id, title, description, raw_transcript, work_date, assignee_id, duration_minutes, created_by)
-    VALUES (@facility_id, @trouble_type_id, @parent_id, @title, @description, @raw_transcript, @work_date, @assignee_id, @duration_minutes, @created_by)
-  `);
-  const result = insert.run({
-    facility_id,
-    trouble_type_id,
-    parent_id,
-    title,
-    description,
-    raw_transcript,
-    work_date,
-    assignee_id,
-    duration_minutes,
-    created_by: session.userId,
-  });
-  const recordId = result.lastInsertRowid as number;
-
-  const insItem = db.prepare(
-    'INSERT INTO work_record_items (work_record_id, item_id, quantity) VALUES (?,?,1)'
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+     RETURNING id`,
+    [
+      facility_id,
+      trouble_type_id,
+      parent_id,
+      title,
+      description,
+      raw_transcript,
+      work_date,
+      assignee_id,
+      duration_minutes,
+      session.userId,
+    ]
   );
-  for (const itemId of itemIds) insItem.run(recordId, itemId);
+  const recordId = record!.id;
 
-  const insVehicle = db.prepare(
-    'INSERT INTO work_record_vehicles (work_record_id, vehicle_id) VALUES (?,?)'
-  );
-  for (const vId of vehicleIds) insVehicle.run(recordId, vId);
+  for (const itemId of itemIds) {
+    await query('INSERT INTO work_record_items (work_record_id, item_id, quantity) VALUES ($1,$2,1)', [
+      recordId,
+      itemId,
+    ]);
+  }
+  for (const vId of vehicleIds) {
+    await query('INSERT INTO work_record_vehicles (work_record_id, vehicle_id) VALUES ($1,$2)', [
+      recordId,
+      vId,
+    ]);
+  }
 
   const photos = form.getAll('photos').filter((p): p is File => p instanceof File && p.size > 0);
-  const insPhoto = db.prepare(
-    'INSERT INTO work_record_photos (work_record_id, filename) VALUES (?,?)'
-  );
   for (const photo of photos) {
-    const filename = await saveUploadedPhoto(photo);
-    insPhoto.run(recordId, filename);
+    const url = await saveUploadedPhoto(photo);
+    await query('INSERT INTO work_record_photos (work_record_id, url) VALUES ($1,$2)', [recordId, url]);
   }
 
   return NextResponse.json({ ok: true, id: recordId });
