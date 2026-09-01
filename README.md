@@ -2,7 +2,11 @@
 
 集中と眠りのためのサウンドタイマー。環境音を好きな組み合わせで再生し、集中タイマー / 就寝タイマー(終了前にフェードアウト)を使えるオフライン完結アプリ。Expo (React Native) 製。
 
-無料枠は雨・波・ホワイトノイズの3種、残り3種(焚き火・カフェ・風鈴)は買い切り¥480で解放するフリーミアム構成(サブスクなし)。企画背景・市場調査・価格戦略・売り方は別途まとめた戦略メモを参照。App Store / Google Play 申請用の文言(タイトル・説明文・ASOキーワード・スクリーンショット案)は [`docs/store-listing.md`](./docs/store-listing.md) にまとめてある。
+無料枠は雨・波・ホワイトノイズの3種、残り3種(焚き火・カフェ・風鈴)は買い切り¥480で解放するフリーミアム構成(サブスクなし)。企画背景・市場調査・価格戦略・売り方は別途まとめた戦略メモを参照。
+
+- [`docs/store-listing.md`](./docs/store-listing.md) — App Store / Google Play 申請用の文言(タイトル・説明文・ASOキーワード・スクリーンショット案)
+- [`docs/legal/privacy-support.html`](./docs/legal/privacy-support.html) — プライバシーポリシー/サポートページ(そのままアーティファクトとして公開しURLをストア申請フォームに設定可能。**公開前に本文中のプレースホルダーのお問い合わせ先メールアドレスを実際のものに差し替えること**)
+- [`docs/launch-copy.md`](./docs/launch-copy.md) — X / note / Product Hunt / Reddit 向けローンチ告知文案(文字数検証済み)
 
 ## セットアップ
 
@@ -56,4 +60,5 @@ scripts/
 1. `assets/sounds/*.wav` を実録音(ロイヤリティフリー/ライセンス取得済み)に差し替える
 2. Apple Developer Program / Google Play Developer 登録。`app.json` の `ios.bundleIdentifier` / `android.package`(現在は仮の `com.nagi.app`)を自分のアカウント規約に合わせて変更
 3. App Store Connect / Play Console で非消耗型商品(例: `unlock_all_sounds` ¥480)を作成し、`app/purchases.ts` を `react-native-iap` 等に差し替え
-4. `npm run ios` / TestFlight で実機確認してから申請
+4. `docs/legal/privacy-support.html` のプレースホルダーのお問い合わせ先メールアドレスを実際のものに差し替え、アーティファクトとして公開してURLを取得(または自前ドメインでホスティング)し、プライバシーポリシーURL / サポートURLとして申請フォームに設定
+5. `npm run ios` / TestFlight で実機確認してから申請
