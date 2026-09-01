@@ -8,20 +8,23 @@ type Props = {
   sound: SoundDef;
   active: boolean;
   volume: number;
+  locked: boolean;
   onToggle: (id: string) => void;
   onVolumeChange: (id: string, value: number) => void;
+  onLockedPress: () => void;
 };
 
-export function SoundTile({ sound, active, volume, onToggle, onVolumeChange }: Props) {
+export function SoundTile({ sound, active, volume, locked, onToggle, onVolumeChange, onLockedPress }: Props) {
   return (
-    <View style={[styles.card, active && styles.cardActive]}>
+    <View style={[styles.card, active && styles.cardActive, locked && styles.cardLocked]}>
       <Pressable
-        onPress={() => onToggle(sound.id)}
+        onPress={() => (locked ? onLockedPress() : onToggle(sound.id))}
         style={styles.pressable}
         accessibilityRole="button"
         accessibilityState={{ selected: active }}
-        accessibilityLabel={`${sound.label}を${active ? '停止' : '再生'}`}
+        accessibilityLabel={locked ? `${sound.label}は購入すると解放されます` : `${sound.label}を${active ? '停止' : '再生'}`}
       >
+        {locked ? <Text style={styles.lockBadge}>🔒</Text> : null}
         <Text style={styles.emoji}>{sound.emoji}</Text>
         <Text style={[styles.label, active && styles.labelActive]}>{sound.label}</Text>
         <Text style={styles.sub}>{sound.sub}</Text>
@@ -58,11 +61,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceActive,
     borderColor: colors.borderActive,
   },
+  cardLocked: {
+    opacity: 0.7,
+  },
   pressable: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.sm,
     alignItems: 'center',
     gap: 2,
+  },
+  lockBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 10,
+    fontSize: 13,
   },
   emoji: {
     fontSize: 28,

@@ -1,15 +1,19 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { setAudioModeAsync } from 'expo-audio';
-import { SOUNDS } from './app/sounds';
+import { SOUNDS, UNLOCK_PRICE_JPY } from './app/sounds';
 import { colors, radius, spacing } from './app/theme';
 import { useSoundEngine } from './app/useSoundEngine';
+import { usePurchase } from './app/purchases';
 import { SoundTile } from './app/components/SoundTile';
 import { TimerPanel } from './app/components/TimerPanel';
+import { PaywallModal } from './app/components/PaywallModal';
 
 export default function App() {
   const engine = useSoundEngine();
+  const purchase = usePurchase();
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   useEffect(() => {
     setAudioModeAsync({
@@ -39,11 +43,19 @@ export default function App() {
               sound={sound}
               active={engine.activeIds.has(sound.id)}
               volume={engine.volumes[sound.id]}
+              locked={!sound.free && !purchase.isUnlocked}
               onToggle={engine.toggle}
               onVolumeChange={engine.setVolume}
+              onLockedPress={() => setPaywallVisible(true)}
             />
           ))}
         </View>
+
+        {!purchase.loading && !purchase.isUnlocked ? (
+          <Pressable style={styles.upgradeBanner} onPress={() => setPaywallVisible(true)}>
+            <Text style={styles.upgradeBannerText}>🔒 残り3種類のサウンドを解放 — 買い切り¥{UNLOCK_PRICE_JPY}</Text>
+          </Pressable>
+        ) : null}
 
         <TimerPanel stopAll={engine.stopAll} fadeOutAndStop={engine.fadeOutAndStop} />
 
@@ -58,6 +70,20 @@ export default function App() {
           ) : null}
         </View>
       </ScrollView>
+
+      <PaywallModal
+        visible={paywallVisible}
+        purchasing={purchase.purchasing}
+        onUnlock={async () => {
+          const success = await purchase.unlock();
+          if (success) setPaywallVisible(false);
+        }}
+        onRestore={async () => {
+          const restored = await purchase.restore();
+          if (restored) setPaywallVisible(false);
+        }}
+        onClose={() => setPaywallVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -113,5 +139,19 @@ const styles = StyleSheet.create({
     color: colors.danger,
     fontWeight: '700',
     fontSize: 12,
+  },
+  upgradeBanner: {
+    backgroundColor: colors.surfaceRaised,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  upgradeBannerText: {
+    color: colors.accent,
+    fontWeight: '700',
+    fontSize: 13,
+    textAlign: 'center',
   },
 });

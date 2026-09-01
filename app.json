@@ -9,9 +9,11 @@
     "backgroundColor": "#0F1614",
     "ios": {
       "supportsTablet": true,
-      "backgroundColor": "#0F1614"
+      "backgroundColor": "#0F1614",
+      "bundleIdentifier": "com.nagi.app"
     },
     "android": {
+      "package": "com.nagi.app",
       "adaptiveIcon": {
         "backgroundColor": "#0F1614",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -29,6 +31,15 @@
         {
           "microphonePermission": false,
           "enableBackgroundPlayback": true
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0F1614",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain"
         }
       ]
     ]
