@@ -7,6 +7,7 @@
 - [`docs/store-listing.md`](./docs/store-listing.md) — App Store / Google Play 申請用の文言(タイトル・説明文・ASOキーワード・スクリーンショット案)
 - [`docs/legal/privacy-support.html`](./docs/legal/privacy-support.html) — プライバシーポリシー/サポートページ(そのままアーティファクトとして公開しURLをストア申請フォームに設定可能。**公開前に本文中のプレースホルダーのお問い合わせ先メールアドレスを実際のものに差し替えること**)
 - [`docs/launch-copy.md`](./docs/launch-copy.md) — X / note / Product Hunt / Reddit 向けローンチ告知文案(文字数検証済み)
+- [`docs/release-runbook.md`](./docs/release-runbook.md) — 開発者アカウント登録から公開・ローンチ告知まで、**人間がやる作業**をフェーズ別にまとめた手順書(Macなしでのビルド方法=EAS Buildも記載)
 
 ## セットアップ
 
