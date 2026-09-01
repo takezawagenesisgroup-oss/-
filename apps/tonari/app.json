@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "隣 -Tonari-",
+    "slug": "tonari-run-voice",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#161A22",
+    "ios": {
+      "supportsTablet": true,
+      "backgroundColor": "#161A22",
+      "bundleIdentifier": "com.tonari.runvoice"
+    },
+    "android": {
+      "package": "com.tonari.runvoice",
+      "adaptiveIcon": {
+        "backgroundColor": "#161A22",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "ランニング/ウォーキング中の距離・ペースを計測するために位置情報を使用します。",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ]
+    ]
+  }
+}
