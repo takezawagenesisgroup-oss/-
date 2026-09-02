@@ -95,6 +95,22 @@ export function pickLine(persona: Persona, trigger: TriggerType, rand: () => num
   return candidates[Math.floor(rand() * candidates.length)];
 }
 
+// 直前に使ったインデックスを避けて選ぶ版。候補が2つ以上あるときだけ重複を避ける。
+export function pickLineAvoidingRepeat(
+  persona: Persona,
+  trigger: TriggerType,
+  lastIndex: number | undefined,
+  rand: () => number = Math.random
+): { text: string; index: number } {
+  const candidates = persona.lines[trigger];
+  if (candidates.length <= 1) return { text: candidates[0], index: 0 };
+  let index = Math.floor(rand() * candidates.length);
+  if (index === lastIndex) {
+    index = (index + 1 + Math.floor(rand() * (candidates.length - 1))) % candidates.length;
+  }
+  return { text: candidates[index], index };
+}
+
 export function formatPaceMinPerKm(paceMinPerKm: number): string {
   if (!Number.isFinite(paceMinPerKm) || paceMinPerKm <= 0) return '計測中';
   const totalSeconds = Math.round(paceMinPerKm * 60);

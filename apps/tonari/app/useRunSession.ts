@@ -17,10 +17,15 @@ export type RunMetrics = {
 };
 
 export type SessionState = 'idle' | 'running' | 'finished';
+export type ActivityMode = 'run' | 'walk';
 
-const PACE_DELTA_MIN_PER_KM = 0.5; // 約30秒/kmの変化で「ペース変化」とみなす
+// ランとウォークではペースの絶対値も変化の出方も違うため、マイルストーンの
+// 刻み幅と「ペースが変わった」と判定する閾値をモードごとに変える。
+const MODE_CONFIG: Record<ActivityMode, { distanceStepKm: number; paceDeltaMinPerKm: number }> = {
+  run: { distanceStepKm: 1, paceDeltaMinPerKm: 0.5 }, // 1kmごと、約30秒/kmの変化で反応
+  walk: { distanceStepKm: 0.5, paceDeltaMinPerKm: 0.3 }, // 0.5kmごと、約18秒/kmの変化で反応
+};
 const LONG_PAUSE_SEC = 45;
-const DISTANCE_STEP_KM = 1;
 const TIME_STEP_SEC = 300; // 5分ごと
 const MOVING_SPEED_THRESHOLD_MPS = 0.4;
 
@@ -35,6 +40,8 @@ const DEMO_KEYFRAMES: Array<[number, number]> = [
   [1500, 4.0],
 ];
 const DEMO_SPEED_MULTIPLIER = 20; // 実時間1秒 = シミュレーション20秒(約75秒でフルラン体験できる)
+// デモの累積距離をモードに応じて縮尺し、ウォーキングでは現実的なペース(平均約13分/km)になるようにする
+const DEMO_DISTANCE_SCALE: Record<ActivityMode, number> = { run: 1, walk: 0.48 };
 
 function haversineMeters(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {
   const R = 6371000;
@@ -68,6 +75,7 @@ export function useRunSession(onTrigger: (event: TriggerEvent) => void) {
     avgPaceMinPerKm: null,
   });
   const [targetDistanceKm, setTargetDistanceKm] = useState<number | null>(3);
+  const [activityMode, setActivityMode] = useState<ActivityMode>('run');
   const [permissionDenied, setPermissionDenied] = useState(false);
 
   const startTsRef = useRef<number>(0);
@@ -104,6 +112,7 @@ export function useRunSession(onTrigger: (event: TriggerEvent) => void) {
 
   const evaluate = useCallback(
     (distanceKm: number, elapsedSec: number, instantSpeedMps: number | null) => {
+      const { distanceStepKm, paceDeltaMinPerKm } = MODE_CONFIG[activityMode];
       const avgPace = distanceKm > 0.02 ? elapsedSec / 60 / distanceKm : null;
       const instantPace = instantSpeedMps && instantSpeedMps > 0.15 ? 1000 / instantSpeedMps / 60 : null;
       const currentPace = instantPace ?? avgPace;
@@ -111,7 +120,7 @@ export function useRunSession(onTrigger: (event: TriggerEvent) => void) {
       setMetrics({ distanceKm, elapsedSec, currentPaceMinPerKm: currentPace, avgPaceMinPerKm: avgPace });
 
       // 距離マイルストーン
-      const flooredKm = Math.floor(distanceKm / DISTANCE_STEP_KM) * DISTANCE_STEP_KM;
+      const flooredKm = Math.floor(distanceKm / distanceStepKm) * distanceStepKm;
       if (flooredKm > lastDistanceMilestoneRef.current) {
         lastDistanceMilestoneRef.current = flooredKm;
         onTrigger({ trigger: 'distance', km: flooredKm, paceMinPerKm: currentPace ?? undefined });
@@ -131,10 +140,10 @@ export function useRunSession(onTrigger: (event: TriggerEvent) => void) {
         } else {
           const prev = smoothedPaceRef.current;
           const delta = currentPace - prev; // 負 = 速くなった(分/kmが減った)
-          if (delta <= -PACE_DELTA_MIN_PER_KM) {
+          if (delta <= -paceDeltaMinPerKm) {
             onTrigger({ trigger: 'paceUp', paceMinPerKm: currentPace });
             smoothedPaceRef.current = currentPace;
-          } else if (delta >= PACE_DELTA_MIN_PER_KM) {
+          } else if (delta >= paceDeltaMinPerKm) {
             onTrigger({ trigger: 'paceDown', paceMinPerKm: currentPace });
             smoothedPaceRef.current = currentPace;
           } else {
@@ -175,7 +184,7 @@ export function useRunSession(onTrigger: (event: TriggerEvent) => void) {
       }
       return false;
     },
-    [onTrigger, targetDistanceKm]
+    [onTrigger, targetDistanceKm, activityMode]
   );
 
   const stopTimers = useCallback(() => {
@@ -199,12 +208,13 @@ export function useRunSession(onTrigger: (event: TriggerEvent) => void) {
     resetRefs();
     setState('running');
     onTrigger({ trigger: 'start' });
+    const scale = DEMO_DISTANCE_SCALE[activityMode];
     demoTimerRef.current = setInterval(() => {
       const prevSimSec = demoSimSecRef.current;
       const nextSimSec = prevSimSec + 0.5 * DEMO_SPEED_MULTIPLIER;
       demoSimSecRef.current = nextSimSec;
-      const prevKm = demoDistanceAtSec(prevSimSec);
-      const nextKm = demoDistanceAtSec(nextSimSec);
+      const prevKm = demoDistanceAtSec(prevSimSec) * scale;
+      const nextKm = demoDistanceAtSec(nextSimSec) * scale;
       const deltaKm = Math.max(0, nextKm - prevKm);
       const instantSpeedMps = (deltaKm * 1000) / (nextSimSec - prevSimSec || 1);
       const finished = evaluate(nextKm, nextSimSec, instantSpeedMps);
@@ -213,7 +223,7 @@ export function useRunSession(onTrigger: (event: TriggerEvent) => void) {
         setState('finished');
       }
     }, 500);
-  }, [evaluate, onTrigger, resetRefs, stopTimers]);
+  }, [evaluate, onTrigger, resetRefs, stopTimers, activityMode]);
 
   const startGps = useCallback(async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -263,6 +273,8 @@ export function useRunSession(onTrigger: (event: TriggerEvent) => void) {
     metrics,
     targetDistanceKm,
     setTargetDistanceKm,
+    activityMode,
+    setActivityMode,
     permissionDenied,
     startDemo,
     startGps,

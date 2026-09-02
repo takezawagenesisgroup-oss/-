@@ -1,45 +1,72 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { setAudioModeAsync } from 'expo-audio';
 import { colors, radius, spacing } from './app/theme';
+import { formatClock, formatPace } from './app/format';
 import { PERSONAS, UNLOCK_PRICE_JPY, getPersona, type ToneId } from './app/personas';
-import { useRunSession } from './app/useRunSession';
+import { useRunSession, type ActivityMode } from './app/useRunSession';
 import { useVoiceCompanion, type VoiceGender } from './app/useVoiceCompanion';
 import { usePurchase } from './app/purchases';
+import { useRunHistory } from './app/history';
 import { PersonaPicker } from './app/components/PersonaPicker';
 import { PaywallModal } from './app/components/PaywallModal';
+import { HistoryModal } from './app/components/HistoryModal';
 
 const DISTANCE_PRESETS_KM = [3, 5, 10];
+const ACTIVITY_OPTIONS: { id: ActivityMode; label: string }[] = [
+  { id: 'run', label: 'ランニング' },
+  { id: 'walk', label: 'ウォーキング' },
+];
 const GENDER_OPTIONS: { id: VoiceGender; label: string }[] = [
   { id: 'feminine', label: '女性寄り' },
   { id: 'neutral', label: 'ナチュラル' },
   { id: 'masculine', label: '男性寄り' },
 ];
 
-function formatClock(totalSec: number): string {
-  const s = Math.max(0, Math.round(totalSec));
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${m}:${sec.toString().padStart(2, '0')}`;
-}
-
-function formatPace(paceMinPerKm: number | null): string {
-  if (paceMinPerKm === null || !Number.isFinite(paceMinPerKm)) return '--\'--"';
-  const totalSec = Math.round(paceMinPerKm * 60);
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  return `${m}'${s.toString().padStart(2, '0')}"`;
-}
-
 export default function App() {
   const purchase = usePurchase();
+  const history = useRunHistory();
   const [toneId, setToneId] = useState<ToneId>('coach');
   const [gender, setGender] = useState<VoiceGender>('neutral');
   const [paywallVisible, setPaywallVisible] = useState(false);
+  const [historyVisible, setHistoryVisible] = useState(false);
 
   const persona = getPersona(toneId);
   const voice = useVoiceCompanion(persona, gender);
   const session = useRunSession(voice.speak);
+
+  const prevSessionStateRef = useRef(session.state);
+  useEffect(() => {
+    const justFinished = prevSessionStateRef.current !== 'finished' && session.state === 'finished';
+    prevSessionStateRef.current = session.state;
+    if (!justFinished) return;
+    if (session.metrics.distanceKm < 0.05) return; // 数十メートルで即終了した記録は保存しない
+    history.addRecord({
+      id: `${Date.now()}`,
+      endedAt: Date.now(),
+      activityMode: session.activityMode,
+      toneId,
+      distanceKm: session.metrics.distanceKm,
+      elapsedSec: session.metrics.elapsedSec,
+      avgPaceMinPerKm: session.metrics.avgPaceMinPerKm,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.state]);
+
+  useEffect(() => {
+    // 音楽アプリ(Spotify等)を止めずに、声だけを重ねて再生する。
+    // iOSはAVAudioSessionのduckOthersでアプリ全体の音声(expo-speechの読み上げ含む)に
+    // 確実に適用される。Androidはexpo-speechがオーディオフォーカスを自前で取得しないため、
+    // OS標準のTTSエンジンの挙動に委ねるベストエフォートとなる点に留意。
+    setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: true,
+      interruptionMode: 'duckOthers',
+    }).catch(() => {
+      // 設定に失敗しても読み上げ自体は継続できる
+    });
+  }, []);
 
   const isIdle = session.state === 'idle';
   const isRunning = session.state === 'running';
@@ -50,12 +77,35 @@ export default function App() {
       <StatusBar style="light" />
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
-          <Text style={styles.title}>隣</Text>
-          <Text style={styles.subtitle}>-Tonari- 一緒に走ってくれる、声の伴走者</Text>
+          <View style={styles.headerRow}>
+            <View>
+              <Text style={styles.title}>隣</Text>
+              <Text style={styles.subtitle}>-Tonari- 一緒に走ってくれる、声の伴走者</Text>
+            </View>
+            {isIdle ? (
+              <Pressable style={styles.historyButton} onPress={() => setHistoryVisible(true)}>
+                <Text style={styles.historyButtonText}>📋 履歴{history.records.length > 0 ? ` (${history.records.length})` : ''}</Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
 
         {isIdle ? (
           <>
+            <Section title="モード">
+              <View style={styles.pillRow}>
+                {ACTIVITY_OPTIONS.map((m) => (
+                  <Pressable
+                    key={m.id}
+                    onPress={() => session.setActivityMode(m.id)}
+                    style={[styles.pill, session.activityMode === m.id && styles.pillActive]}
+                  >
+                    <Text style={[styles.pillText, session.activityMode === m.id && styles.pillTextActive]}>{m.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </Section>
+
             <Section title="口調を選ぶ">
               <PersonaPicker
                 personas={PERSONAS}
@@ -170,6 +220,13 @@ export default function App() {
         }}
         onClose={() => setPaywallVisible(false)}
       />
+
+      <HistoryModal
+        visible={historyVisible}
+        records={history.records}
+        onClear={history.clearHistory}
+        onClose={() => setHistoryVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -199,8 +256,18 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: spacing.lg, paddingTop: Platform.OS === 'android' ? spacing.xl : spacing.md, gap: spacing.lg },
   header: { gap: 2 },
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.sm },
   title: { color: colors.text, fontSize: 34, fontWeight: '800', letterSpacing: 2 },
   subtitle: { color: colors.textMuted, fontSize: 13 },
+  historyButton: {
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingVertical: spacing.xs + 2,
+    paddingHorizontal: spacing.sm + 2,
+  },
+  historyButtonText: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
 
   section: { gap: spacing.sm },
   sectionTitle: { color: colors.textMuted, fontSize: 12.5, fontWeight: '700', letterSpacing: 0.5 },

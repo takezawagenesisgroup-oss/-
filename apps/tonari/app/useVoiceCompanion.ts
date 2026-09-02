@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import * as Speech from 'expo-speech';
-import { fillTemplate, pickLine, type Persona, type TriggerType } from './personas';
+import * as Haptics from 'expo-haptics';
+import { fillTemplate, pickLineAvoidingRepeat, type Persona, type TriggerType } from './personas';
 import type { TriggerEvent } from './useRunSession';
 
 export type VoiceGender = 'neutral' | 'feminine' | 'masculine';
@@ -21,6 +22,7 @@ export function useVoiceCompanion(persona: Persona, gender: VoiceGender) {
   const [lastSpoken, setLastSpoken] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const lastSpokenAtRef = useRef(0);
+  const lastLineIndexRef = useRef<Record<string, number>>({});
 
   const speak = useCallback(
     (event: TriggerEvent) => {
@@ -29,11 +31,24 @@ export function useVoiceCompanion(persona: Persona, gender: VoiceGender) {
       if (now - lastSpokenAtRef.current < minGap) return;
       lastSpokenAtRef.current = now;
 
-      const template = pickLine(persona, event.trigger);
+      const key = `${persona.id}:${event.trigger}`;
+      const { text: template, index } = pickLineAvoidingRepeat(persona, event.trigger, lastLineIndexRef.current[key]);
+      lastLineIndexRef.current[key] = index;
       const text = fillTemplate(template, { km: event.km, paceMinPerKm: event.paceMinPerKm, min: event.min });
 
       setLastSpoken(text);
       setSpeaking(true);
+
+      // 話しかけると同時に軽く振動でも知らせる(イヤホンを外している時や
+      // 音量が小さい時の気づきやすさのため)。失敗しても発話自体は続ける。
+      const haptic =
+        event.trigger === 'finish'
+          ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+          : IMPORTANT_TRIGGERS.has(event.trigger)
+            ? Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+            : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      haptic.catch(() => {});
+
       Speech.stop();
       Speech.speak(text, {
         language: 'ja-JP',
