@@ -267,6 +267,28 @@ function genWindChimes() {
   return normalize(out, 0.55); // no crossfade needed: starts/ends near silence
 }
 
+// --- 7. sleeping breath ----------------------------------------------------
+// 「隣で誰かが眠っている」気配を作る、ゆっくり深い寝息のループ。
+// 気配アプリの breath_loop(4.8秒/回、やや起きている気配)より周期を長く・
+// 帯域を低くこもらせて、熟睡している人の呼吸らしい質感にしている。
+function genSleepingBreath() {
+  const rand = mulberry32(21);
+  const breathHz = 1 / 6.4; // 1分あたり約9.4回、深い眠りのゆったりした呼吸
+  const cycles = 3;
+  const seconds = cycles / breathHz;
+  const n = Math.round(SAMPLE_RATE * seconds) + FADE;
+  let hiss = whiteNoise(rand, n);
+  hiss = onePoleHighPass(hiss, 120);
+  hiss = onePoleLowPass(hiss, 480);
+  const out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const phase = (2 * Math.PI * breathHz * i) / SAMPLE_RATE;
+    const swell = 0.18 + 0.82 * Math.pow((Math.sin(phase - Math.PI / 2) + 1) / 2, 1.8);
+    out[i] = hiss[i] * swell;
+  }
+  return normalize(makeSeamless(out, FADE), 0.35);
+}
+
 function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
   writeWav(path.join(OUT_DIR, 'white_noise.wav'), genWhiteNoise());
@@ -275,6 +297,7 @@ function main() {
   writeWav(path.join(OUT_DIR, 'campfire.wav'), genCampfire());
   writeWav(path.join(OUT_DIR, 'cafe.wav'), genCafe());
   writeWav(path.join(OUT_DIR, 'wind_chimes.wav'), genWindChimes());
+  writeWav(path.join(OUT_DIR, 'sleeping_breath.wav'), genSleepingBreath());
 }
 
 main();

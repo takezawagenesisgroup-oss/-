@@ -53,7 +53,7 @@ export default function App() {
 
         {!purchase.loading && !purchase.isUnlocked ? (
           <Pressable style={styles.upgradeBanner} onPress={() => setPaywallVisible(true)}>
-            <Text style={styles.upgradeBannerText}>🔒 残り3種類のサウンドを解放 — 買い切り¥{UNLOCK_PRICE_JPY}</Text>
+            <Text style={styles.upgradeBannerText}>🔒 残り4種類のサウンドを解放 — 買い切り¥{UNLOCK_PRICE_JPY}</Text>
           </Pressable>
         ) : null}
 

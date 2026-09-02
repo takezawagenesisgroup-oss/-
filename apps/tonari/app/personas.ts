@@ -9,20 +9,28 @@ export type TriggerType =
   | 'nearFinish'
   | 'finish';
 
-export type ToneId = 'coach' | 'friend' | 'romantic';
+export type ToneId = 'coach' | 'friend' | 'romantic' | 'dog' | 'cat';
+export type PersonaCategory = 'human' | 'animal';
 
 export type Persona = {
   id: ToneId;
+  category: PersonaCategory;
   label: string;
   tagline: string;
   free: boolean;
   lines: Record<TriggerType, string[]>;
 };
 
+export const CATEGORY_LABEL: Record<PersonaCategory, string> = {
+  human: '人物',
+  animal: 'どうぶつ',
+};
+
 // {km} {pace} {min} はプレースホルダー。speakLine() で実際の値に置換する。
 export const PERSONAS: Persona[] = [
   {
     id: 'coach',
+    category: 'human',
     label: 'コーチ',
     tagline: '落ち着いた口調で、フォームとペースを見てくれる',
     free: true,
@@ -48,6 +56,7 @@ export const PERSONAS: Persona[] = [
   },
   {
     id: 'friend',
+    category: 'human',
     label: '友人',
     tagline: 'テンション高めに、一緒に走ってくれる仲間',
     free: false,
@@ -65,6 +74,7 @@ export const PERSONAS: Persona[] = [
   },
   {
     id: 'romantic',
+    category: 'human',
     label: '恋人',
     tagline: '隣にいるような、親密で気遣う口調',
     free: false,
@@ -80,7 +90,49 @@ export const PERSONAS: Persona[] = [
       finish: ['お疲れさま。今日も一緒に走れて嬉しかった。', 'ゴールだね、よく頑張ったね。ゆっくり休んで。'],
     },
   },
+  {
+    id: 'dog',
+    category: 'animal',
+    label: '犬',
+    tagline: '元気でまっすぐな、犬らしい口調',
+    free: false,
+    lines: {
+      start: ['はじめるわん!今日も一緒に走るよ!', 'よし出発!ボクもついていくわん!', 'スタート!元気いっぱい行こう!'],
+      distance: ['{km}キロ来たよ!すごいわん!', 'もう{km}キロ!その調子だわん!', '{km}キロ地点!順調順調!'],
+      time: ['{min}分経ったよ!調子どう?', 'もう{min}分!頑張ってるね!'],
+      paceUp: ['お、速い!その調子だわん!', 'いいペース!テンション上がるね!', 'スピード上がったね!かっこいいわん!'],
+      paceDown: ['ちょっとゆっくりでも大丈夫だよ!', '無理しないでね、ボクはずっと隣にいるわん!', '疲れた?ゆっくりでいいよ!'],
+      longPause: ['止まってる?お水飲んでね!', '休憩中?無理しないでね!'],
+      midpoint: ['半分来た!その調子だわん!', '折り返し!後半も一緒に頑張ろう!'],
+      nearFinish: ['あと少し!ラストスパートだわん!', 'ゴールもうすぐ!頑張れ!'],
+      finish: ['おつかれさま!今日もよく走ったわん!', 'ゴール!えらいえらい!'],
+    },
+  },
+  {
+    id: 'cat',
+    category: 'animal',
+    label: '猫',
+    tagline: '気まぐれでマイペースな、猫らしい口調',
+    free: false,
+    lines: {
+      start: ['はじめるにゃ〜。気が向いたらついていくにゃ。', 'よし、スタートにゃ。見ててあげるにゃ。', '行くにゃ。無理しないでにゃ。'],
+      distance: ['{km}キロにゃ。まあまあ頑張ってるにゃ。', 'もう{km}キロにゃ?やるにゃね。', '{km}キロ地点にゃ。悪くないにゃ。'],
+      time: ['{min}分経ったにゃ。疲れてないにゃ?', 'もう{min}分にゃ。休みたくなったら言うにゃ。'],
+      paceUp: ['お、速いにゃ。ちょっと見直したにゃ。', 'いいペースにゃ、その調子にゃ。', 'やるにゃね、かっこいいにゃ。'],
+      paceDown: ['無理しなくていいにゃ。', '疲れたにゃ?ゆっくりでいいにゃよ。', '焦らなくていいにゃ、マイペースでいいにゃ。'],
+      longPause: ['休憩にゃ?ボクも眠くなってきたにゃ。', '止まってるにゃ。無理しないでにゃ。'],
+      midpoint: ['半分にゃ。ここまでは悪くないにゃ。', '折り返しにゃ。あとちょっと付き合うにゃ。'],
+      nearFinish: ['あと少しにゃ。頑張るにゃ。', 'もうすぐゴールにゃ。ファイトにゃ。'],
+      finish: ['おつかれにゃ〜。よく頑張ったにゃ。', 'ゴールにゃ。えらいにゃ、なでてあげるにゃ。'],
+    },
+  },
 ];
+
+export const CATEGORIES: PersonaCategory[] = ['human', 'animal'];
+
+export function personasByCategory(category: PersonaCategory): Persona[] {
+  return PERSONAS.filter((p) => p.category === category);
+}
 
 export const UNLOCK_PRICE_JPY = 480;
 

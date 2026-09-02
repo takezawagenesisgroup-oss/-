@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import * as Speech from 'expo-speech';
 import * as Haptics from 'expo-haptics';
 import { fillTemplate, pickLineAvoidingRepeat, type Persona, type TriggerType } from './personas';
+import type { Situation } from './situations';
 import type { TriggerEvent } from './useRunSession';
 
 export type VoiceGender = 'neutral' | 'feminine' | 'masculine';
@@ -18,7 +19,11 @@ const IMPORTANT_TRIGGERS = new Set<TriggerType>(['start', 'finish', 'distance', 
 const IMPORTANT_MIN_GAP_MS = 8000;
 const CHATTER_MIN_GAP_MS = 25000;
 
-export function useVoiceCompanion(persona: Persona, gender: VoiceGender) {
+// 「時間経過」トリガーが来た時、シチュエーションを選んでいればこの確率で
+// キャラの通常セリフの代わりにシチュエーション別の一言を話す。
+const SITUATIONAL_SUBSTITUTION_RATE = 0.5;
+
+export function useVoiceCompanion(persona: Persona, gender: VoiceGender, situation: Situation | null) {
   const [lastSpoken, setLastSpoken] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const lastSpokenAtRef = useRef(0);
@@ -31,10 +36,22 @@ export function useVoiceCompanion(persona: Persona, gender: VoiceGender) {
       if (now - lastSpokenAtRef.current < minGap) return;
       lastSpokenAtRef.current = now;
 
-      const key = `${persona.id}:${event.trigger}`;
-      const { text: template, index } = pickLineAvoidingRepeat(persona, event.trigger, lastLineIndexRef.current[key]);
-      lastLineIndexRef.current[key] = index;
-      const text = fillTemplate(template, { km: event.km, paceMinPerKm: event.paceMinPerKm, min: event.min });
+      let text: string;
+      if (event.trigger === 'time' && situation && Math.random() < SITUATIONAL_SUBSTITUTION_RATE) {
+        const key = `situational:${situation.id}`;
+        const candidates = situation.lines;
+        let index = Math.floor(Math.random() * candidates.length);
+        if (index === lastLineIndexRef.current[key] && candidates.length > 1) {
+          index = (index + 1) % candidates.length;
+        }
+        lastLineIndexRef.current[key] = index;
+        text = candidates[index];
+      } else {
+        const key = `${persona.id}:${event.trigger}`;
+        const { text: template, index } = pickLineAvoidingRepeat(persona, event.trigger, lastLineIndexRef.current[key]);
+        lastLineIndexRef.current[key] = index;
+        text = fillTemplate(template, { km: event.km, paceMinPerKm: event.paceMinPerKm, min: event.min });
+      }
 
       setLastSpoken(text);
       setSpeaking(true);
@@ -59,7 +76,7 @@ export function useVoiceCompanion(persona: Persona, gender: VoiceGender) {
         onError: () => setSpeaking(false),
       });
     },
-    [persona, gender]
+    [persona, gender, situation]
   );
 
   const stop = useCallback(() => {
@@ -67,5 +84,24 @@ export function useVoiceCompanion(persona: Persona, gender: VoiceGender) {
     setSpeaking(false);
   }, []);
 
-  return { speak, stop, lastSpoken, speaking };
+  // 天気連動など、通常のトリガー/クールダウンの仕組みを介さずに一度だけ
+  // 話したい時に使う(例: ラン開始直後の天気コメント)。
+  const speakCustom = useCallback(
+    (text: string) => {
+      setLastSpoken(text);
+      setSpeaking(true);
+      Speech.stop();
+      Speech.speak(text, {
+        language: 'ja-JP',
+        pitch: PITCH_BY_GENDER[gender],
+        rate: 1.0,
+        onDone: () => setSpeaking(false),
+        onStopped: () => setSpeaking(false),
+        onError: () => setSpeaking(false),
+      });
+    },
+    [gender]
+  );
+
+  return { speak, speakCustom, stop, lastSpoken, speaking };
 }

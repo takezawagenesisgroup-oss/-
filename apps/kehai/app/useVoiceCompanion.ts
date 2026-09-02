@@ -59,5 +59,24 @@ export function useVoiceCompanion(persona: Persona, gender: VoiceGender, situati
     setSpeaking(false);
   }, []);
 
-  return { speak, stop, lastSpoken, speaking };
+  // AIと話すモードなど、通常のトリガーの仕組みを介さずに任意のテキストを
+  // 一度だけ話したい時に使う。
+  const speakCustom = useCallback(
+    (text: string) => {
+      setLastSpoken(text);
+      setSpeaking(true);
+      Speech.stop();
+      Speech.speak(text, {
+        language: 'ja-JP',
+        pitch: PITCH_BY_GENDER[gender],
+        rate: 1.0,
+        onDone: () => setSpeaking(false),
+        onStopped: () => setSpeaking(false),
+        onError: () => setSpeaking(false),
+      });
+    },
+    [gender]
+  );
+
+  return { speak, speakCustom, stop, lastSpoken, speaking };
 }

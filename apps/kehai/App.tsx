@@ -9,9 +9,11 @@ import { SITUATIONS, getSituation, type SituationId } from './app/situations';
 import { usePresenceSession } from './app/usePresenceSession';
 import { useVoiceCompanion, type VoiceGender } from './app/useVoiceCompanion';
 import { useAmbientPresence } from './app/useAmbientPresence';
-import { usePurchase } from './app/purchases';
+import { usePurchase, useAiChatPurchase } from './app/purchases';
 import { PersonaPicker } from './app/components/PersonaPicker';
 import { PaywallModal } from './app/components/PaywallModal';
+import { ChatPaywallModal } from './app/components/ChatPaywallModal';
+import { ChatModal } from './app/components/ChatModal';
 
 const DURATION_PRESETS = [
   { label: 'お試し5分', sec: 5 * 60 },
@@ -27,10 +29,13 @@ const GENDER_OPTIONS: { id: VoiceGender; label: string }[] = [
 
 export default function App() {
   const purchase = usePurchase();
+  const aiChatPurchase = useAiChatPurchase();
   const ambient = useAmbientPresence();
   const [toneId, setToneId] = useState<ToneId>('seiso');
   const [gender, setGender] = useState<VoiceGender>('neutral');
   const [paywallVisible, setPaywallVisible] = useState(false);
+  const [chatPaywallVisible, setChatPaywallVisible] = useState(false);
+  const [chatVisible, setChatVisible] = useState(false);
 
   const persona = getPersona(toneId);
   const session = usePresenceSession((event) => voice.speak(event));
@@ -62,6 +67,14 @@ export default function App() {
 
   function handleReset() {
     session.reset();
+  }
+
+  function handleOpenChat() {
+    if (aiChatPurchase.isUnlocked) {
+      setChatVisible(true);
+    } else {
+      setChatPaywallVisible(true);
+    }
   }
 
   return (
@@ -152,6 +165,10 @@ export default function App() {
               <Text style={styles.captionText}>{voice.lastSpoken ?? '静かに、隣にいます。'}</Text>
             </View>
 
+            <Pressable style={styles.chatButton} onPress={handleOpenChat}>
+              <Text style={styles.chatButtonText}>{aiChatPurchase.isUnlocked ? '💬 AIと話す' : '🔒 AIと話す(¥300)'}</Text>
+            </Pressable>
+
             <Pressable style={styles.stopButton} onPress={handleStop}>
               <Text style={styles.stopButtonText}>終了する</Text>
             </Pressable>
@@ -181,6 +198,30 @@ export default function App() {
           if (restored) setPaywallVisible(false);
         }}
         onClose={() => setPaywallVisible(false)}
+      />
+
+      <ChatPaywallModal
+        visible={chatPaywallVisible}
+        purchasing={aiChatPurchase.purchasing}
+        onUnlock={async () => {
+          const success = await aiChatPurchase.unlock();
+          if (success) {
+            setChatPaywallVisible(false);
+            setChatVisible(true);
+          }
+        }}
+        onRestore={async () => {
+          const restored = await aiChatPurchase.restore();
+          if (restored) setChatPaywallVisible(false);
+        }}
+        onClose={() => setChatPaywallVisible(false)}
+      />
+
+      <ChatModal
+        visible={chatVisible}
+        personaLabel={persona.label}
+        onClose={() => setChatVisible(false)}
+        onSpeak={(text) => voice.speakCustom(text)}
       />
     </SafeAreaView>
   );
@@ -225,6 +266,9 @@ const styles = StyleSheet.create({
   captionCard: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.borderActive, borderRadius: radius.lg, padding: spacing.lg, gap: spacing.xs },
   captionEyebrow: { color: colors.accent2, fontSize: 11.5, fontWeight: '700', letterSpacing: 0.5 },
   captionText: { color: colors.text, fontSize: 16, lineHeight: 24 },
+
+  chatButton: { borderRadius: radius.pill, borderWidth: 1, borderColor: colors.accent2, paddingVertical: spacing.sm + 2, alignItems: 'center' },
+  chatButtonText: { color: colors.accent2, fontWeight: '700', fontSize: 14 },
 
   stopButton: { borderRadius: radius.pill, borderWidth: 1, borderColor: colors.danger, paddingVertical: spacing.sm + 2, alignItems: 'center' },
   stopButtonText: { color: colors.danger, fontWeight: '700', fontSize: 14 },
