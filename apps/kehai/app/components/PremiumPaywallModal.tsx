@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '../theme';
-import { AI_CHAT_UNLOCK_PRICE_JPY } from '../purchases';
+import { PREMIUM_PRICE_LABEL } from '../purchases';
 
 type Props = {
   visible: boolean;
@@ -11,22 +11,26 @@ type Props = {
   onClose: () => void;
 };
 
-export function ChatPaywallModal({ visible, purchasing, onUnlock, onRestore, onClose }: Props) {
+export function PremiumPaywallModal({ visible, purchasing, onUnlock, onRestore, onClose }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
-          <Text style={styles.eyebrow}>AIと話すモード</Text>
-          <Text style={styles.title}>¥{AI_CHAT_UNLOCK_PRICE_JPY}</Text>
-          <Text style={styles.body}>
-            気配の声を聴きながら、AIと会話できるモードです。話しかけると、選んだキャラの声で返事をします。
-          </Text>
+          <Text style={styles.eyebrow}>プレミアムプラン</Text>
+          <Text style={styles.title}>{PREMIUM_PRICE_LABEL}</Text>
+          <Text style={styles.body}>キャラ解放とは別枠の月額プランです。以下の2つの機能が使えるようになります。</Text>
+
+          <View style={styles.featureList}>
+            <Text style={styles.featureItem}>💬 AIと話すモード — 気配の声を聴きながらAIと会話</Text>
+            <Text style={styles.featureItem}>📛 名前で呼んでもらう — 設定したニックネームで応援してくれる</Text>
+          </View>
+
           <Text style={styles.note}>
             ※現在はお試し版です。AI応答は簡易的な固定フレーズで返っています。本格的な会話生成には別途サーバー連携が必要なため、今後のアップデートで順次強化していきます。
           </Text>
 
           <Pressable style={[styles.primaryButton, purchasing && styles.buttonDisabled]} onPress={onUnlock} disabled={purchasing}>
-            {purchasing ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.primaryButtonText}>¥{AI_CHAT_UNLOCK_PRICE_JPY} で解放する</Text>}
+            {purchasing ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.primaryButtonText}>{PREMIUM_PRICE_LABEL} で解放する</Text>}
           </Pressable>
           <Pressable onPress={onRestore} disabled={purchasing} style={styles.restoreButton}>
             <Text style={styles.restoreText}>購入を復元</Text>
@@ -46,6 +50,8 @@ const styles = StyleSheet.create({
   eyebrow: { color: colors.accent2, fontSize: 12, fontWeight: '700', letterSpacing: 1 },
   title: { color: colors.text, fontSize: 26, fontWeight: '800' },
   body: { color: colors.textMuted, fontSize: 13.5, lineHeight: 20 },
+  featureList: { gap: spacing.xs, marginVertical: spacing.xs },
+  featureItem: { color: colors.text, fontSize: 13.5, lineHeight: 19 },
   note: { color: colors.textMuted, fontSize: 11.5, lineHeight: 17, marginBottom: spacing.xs },
   primaryButton: { backgroundColor: colors.accent, borderRadius: radius.pill, paddingVertical: spacing.sm + 2, alignItems: 'center', marginTop: spacing.xs },
   buttonDisabled: { opacity: 0.7 },

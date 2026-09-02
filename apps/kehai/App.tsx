@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { setAudioModeAsync } from 'expo-audio';
 import { colors, radius, spacing } from './app/theme';
@@ -9,10 +9,11 @@ import { SITUATIONS, getSituation, type SituationId } from './app/situations';
 import { usePresenceSession } from './app/usePresenceSession';
 import { useVoiceCompanion, type VoiceGender } from './app/useVoiceCompanion';
 import { useAmbientPresence } from './app/useAmbientPresence';
-import { usePurchase, useAiChatPurchase } from './app/purchases';
+import { usePurchase, usePremiumPurchase, PREMIUM_PRICE_LABEL } from './app/purchases';
+import { useNickname } from './app/nickname';
 import { PersonaPicker } from './app/components/PersonaPicker';
 import { PaywallModal } from './app/components/PaywallModal';
-import { ChatPaywallModal } from './app/components/ChatPaywallModal';
+import { PremiumPaywallModal } from './app/components/PremiumPaywallModal';
 import { ChatModal } from './app/components/ChatModal';
 
 const DURATION_PRESETS = [
@@ -29,18 +30,19 @@ const GENDER_OPTIONS: { id: VoiceGender; label: string }[] = [
 
 export default function App() {
   const purchase = usePurchase();
-  const aiChatPurchase = useAiChatPurchase();
+  const premium = usePremiumPurchase();
+  const nickname = useNickname();
   const ambient = useAmbientPresence();
   const [toneId, setToneId] = useState<ToneId>('seiso');
   const [gender, setGender] = useState<VoiceGender>('neutral');
   const [paywallVisible, setPaywallVisible] = useState(false);
-  const [chatPaywallVisible, setChatPaywallVisible] = useState(false);
+  const [premiumPaywallVisible, setPremiumPaywallVisible] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
 
   const persona = getPersona(toneId);
   const session = usePresenceSession((event) => voice.speak(event));
   const situation = session.situationId ? getSituation(session.situationId) : null;
-  const voice = useVoiceCompanion(persona, gender, situation);
+  const voice = useVoiceCompanion(persona, gender, situation, nickname.nickname, premium.isUnlocked);
 
   useEffect(() => {
     setAudioModeAsync({
@@ -70,10 +72,10 @@ export default function App() {
   }
 
   function handleOpenChat() {
-    if (aiChatPurchase.isUnlocked) {
+    if (premium.isUnlocked) {
       setChatVisible(true);
     } else {
-      setChatPaywallVisible(true);
+      setPremiumPaywallVisible(true);
     }
   }
 
@@ -104,6 +106,22 @@ export default function App() {
                 <Text style={styles.upgradeBannerText}>🔒 清楚系以外の8キャラを解放 — 買い切り¥{UNLOCK_PRICE_JPY}</Text>
               </Pressable>
             ) : null}
+
+            <Section title="呼んでほしい名前(任意)">
+              <TextInput
+                style={styles.nicknameInput}
+                value={nickname.nickname}
+                onChangeText={nickname.setNickname}
+                placeholder="ニックネームを入力"
+                placeholderTextColor={colors.textMuted}
+                maxLength={12}
+              />
+              <Text style={styles.hint}>
+                {premium.isUnlocked
+                  ? '応援のセリフに、時々この名前で呼びかけます。'
+                  : `🔒 名前で呼んでもらうにはプレミアムプラン(${PREMIUM_PRICE_LABEL})が必要です。名前の設定自体は無料です。`}
+              </Text>
+            </Section>
 
             <Section title="シチュエーション(任意)">
               <View style={styles.pillRow}>
@@ -166,7 +184,7 @@ export default function App() {
             </View>
 
             <Pressable style={styles.chatButton} onPress={handleOpenChat}>
-              <Text style={styles.chatButtonText}>{aiChatPurchase.isUnlocked ? '💬 AIと話す' : '🔒 AIと話す(¥300)'}</Text>
+              <Text style={styles.chatButtonText}>{premium.isUnlocked ? '💬 AIと話す' : `🔒 AIと話す(プレミアム ${PREMIUM_PRICE_LABEL})`}</Text>
             </Pressable>
 
             <Pressable style={styles.stopButton} onPress={handleStop}>
@@ -200,21 +218,21 @@ export default function App() {
         onClose={() => setPaywallVisible(false)}
       />
 
-      <ChatPaywallModal
-        visible={chatPaywallVisible}
-        purchasing={aiChatPurchase.purchasing}
+      <PremiumPaywallModal
+        visible={premiumPaywallVisible}
+        purchasing={premium.purchasing}
         onUnlock={async () => {
-          const success = await aiChatPurchase.unlock();
+          const success = await premium.unlock();
           if (success) {
-            setChatPaywallVisible(false);
+            setPremiumPaywallVisible(false);
             setChatVisible(true);
           }
         }}
         onRestore={async () => {
-          const restored = await aiChatPurchase.restore();
-          if (restored) setChatPaywallVisible(false);
+          const restored = await premium.restore();
+          if (restored) setPremiumPaywallVisible(false);
         }}
-        onClose={() => setChatPaywallVisible(false)}
+        onClose={() => setPremiumPaywallVisible(false)}
       />
 
       <ChatModal
@@ -245,6 +263,8 @@ const styles = StyleSheet.create({
 
   section: { gap: spacing.sm },
   sectionTitle: { color: colors.textMuted, fontSize: 12.5, fontWeight: '700', letterSpacing: 0.5 },
+
+  nicknameInput: { color: colors.text, borderWidth: 1, borderColor: colors.border, borderRadius: radius.pill, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, fontSize: 14, backgroundColor: colors.surfaceRaised },
 
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   pill: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceRaised },
