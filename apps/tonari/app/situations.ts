@@ -66,3 +66,58 @@ export function getSituation(id: SituationId): Situation {
   if (!situation) throw new Error(`Unknown situation: ${id}`);
   return situation;
 }
+
+// 多言語対応: 英語のみ翻訳済み(app/i18n.ts参照)。
+const SITUATION_TRANSLATIONS_EN: Record<SituationId, { label: string; lines: string[] }> = {
+  walk: {
+    label: 'Walk',
+    lines: [
+      "No rush, enjoy the scenery too.",
+      "Take your time, feel that nice breeze.",
+      "Look up at the sky once in a while, not just your feet.",
+      "Perfect day for a walk.",
+    ],
+  },
+  commute: {
+    label: 'Commute',
+    lines: [
+      "Let's make it a good day.",
+      "Almost at the station.",
+      "Looks like a great start to the day.",
+      "Got everything? Watch your step.",
+    ],
+  },
+  training: {
+    label: 'Training',
+    lines: [
+      "Time to push yourself.",
+      "A little more, right to the limit.",
+      "Keep an eye on your form too.",
+      "You're really pushing hard today.",
+    ],
+  },
+  diet: {
+    label: 'Weight goal',
+    lines: [
+      "Keeping it up steadily, that's what matters most.",
+      "No rush, just keep at it.",
+      "Another step today, it all adds up.",
+      "Slow and steady beats crash dieting.",
+    ],
+  },
+  relax: {
+    label: 'Relax',
+    lines: [
+      "Feeling refreshed?",
+      "Breathe deep, take it slow.",
+      "Head feeling a bit clearer?",
+      "Hope you're getting some good relief.",
+    ],
+  },
+};
+
+export function localizeSituation(situation: Situation, locale: 'ja' | 'en'): Situation {
+  if (locale === 'ja') return situation;
+  const t = SITUATION_TRANSLATIONS_EN[situation.id];
+  return { ...situation, label: t.label, lines: t.lines };
+}

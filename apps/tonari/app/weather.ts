@@ -63,12 +63,33 @@ const COLD_LINES = ['今日は寒いね、体はあったまってきた?', '防
 const NIGHT_LINES = ['もう暗くなってきたね、足元と車に気をつけて。', '夜は視界が悪いから、無理せずいこうね。'];
 const WINDY_LINES = ['今日は風が強いね、気をつけて。'];
 
-export function buildWeatherLine(weather: WeatherInfo, rand: () => number = Math.random): string {
-  const pools: string[][] = [CONDITION_LINES[weather.condition]];
-  if (weather.temperatureC >= 28) pools.push(HOT_LINES);
-  if (weather.temperatureC <= 5) pools.push(COLD_LINES);
-  if (!weather.isDay) pools.push(NIGHT_LINES);
-  if (weather.windSpeedKmh >= 30) pools.push(WINDY_LINES);
+// 多言語対応: 英語のみ翻訳済み(app/i18n.ts参照)。
+const CONDITION_LINES_EN: Record<WeatherCondition, string[]> = {
+  clear: ["It's a beautiful day out.", 'That sunshine feels great.', "The sky's so clear it's lovely."],
+  cloudy: ["It's cloudy but a comfortable temperature.", 'Nice calm sky today.'],
+  fog: ["It's foggy out, watch your step and surroundings.", 'Visibility is low, take it easy and slow.'],
+  rain: ['Great job out here in the rain, watch your footing.', "Running in the rain, that's dedication. Careful not to slip."],
+  snow: ["Nice work pushing through the snow, watch for slips.", "Your feet must be cold, don't push too hard."],
+  storm: ["Weather's a bit rough, it's fine to turn back if needed.", 'If lightning worries you, wrap up early.'],
+};
+
+const HOT_LINES_EN = ["It's hot today, don't forget to hydrate.", 'Watch out for heat exhaustion, take it easy.'];
+const COLD_LINES_EN = ["It's cold today, are you warming up?", 'Staying warm enough?'];
+const NIGHT_LINES_EN = ['Getting dark now, watch your step and traffic.', "Visibility's low at night, take it easy."];
+const WINDY_LINES_EN = ["It's pretty windy today, be careful."];
+
+export function buildWeatherLine(weather: WeatherInfo, locale: 'ja' | 'en' = 'ja', rand: () => number = Math.random): string {
+  const condition = locale === 'en' ? CONDITION_LINES_EN : CONDITION_LINES;
+  const hot = locale === 'en' ? HOT_LINES_EN : HOT_LINES;
+  const cold = locale === 'en' ? COLD_LINES_EN : COLD_LINES;
+  const night = locale === 'en' ? NIGHT_LINES_EN : NIGHT_LINES;
+  const windy = locale === 'en' ? WINDY_LINES_EN : WINDY_LINES;
+
+  const pools: string[][] = [condition[weather.condition]];
+  if (weather.temperatureC >= 28) pools.push(hot);
+  if (weather.temperatureC <= 5) pools.push(cold);
+  if (!weather.isDay) pools.push(night);
+  if (weather.windSpeedKmh >= 30) pools.push(windy);
 
   const pool = pools[Math.floor(rand() * pools.length)];
   return pool[Math.floor(rand() * pool.length)];

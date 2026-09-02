@@ -23,7 +23,13 @@ const CHATTER_MIN_GAP_MS = 25000;
 // キャラの通常セリフの代わりにシチュエーション別の一言を話す。
 const SITUATIONAL_SUBSTITUTION_RATE = 0.5;
 
-export function useVoiceCompanion(persona: Persona, gender: VoiceGender, situation: Situation | null) {
+export function useVoiceCompanion(
+  persona: Persona,
+  gender: VoiceGender,
+  situation: Situation | null,
+  speechLanguage: string = 'ja-JP',
+  contentLocale: 'ja' | 'en' = 'ja'
+) {
   const [lastSpoken, setLastSpoken] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const lastSpokenAtRef = useRef(0);
@@ -50,7 +56,7 @@ export function useVoiceCompanion(persona: Persona, gender: VoiceGender, situati
         const key = `${persona.id}:${event.trigger}`;
         const { text: template, index } = pickLineAvoidingRepeat(persona, event.trigger, lastLineIndexRef.current[key]);
         lastLineIndexRef.current[key] = index;
-        text = fillTemplate(template, { km: event.km, paceMinPerKm: event.paceMinPerKm, min: event.min });
+        text = fillTemplate(template, { km: event.km, paceMinPerKm: event.paceMinPerKm, min: event.min }, contentLocale);
       }
 
       setLastSpoken(text);
@@ -68,7 +74,7 @@ export function useVoiceCompanion(persona: Persona, gender: VoiceGender, situati
 
       Speech.stop();
       Speech.speak(text, {
-        language: 'ja-JP',
+        language: speechLanguage,
         pitch: PITCH_BY_GENDER[gender],
         rate: 1.0,
         onDone: () => setSpeaking(false),
@@ -76,7 +82,7 @@ export function useVoiceCompanion(persona: Persona, gender: VoiceGender, situati
         onError: () => setSpeaking(false),
       });
     },
-    [persona, gender, situation]
+    [persona, gender, situation, speechLanguage, contentLocale]
   );
 
   const stop = useCallback(() => {
@@ -92,7 +98,7 @@ export function useVoiceCompanion(persona: Persona, gender: VoiceGender, situati
       setSpeaking(true);
       Speech.stop();
       Speech.speak(text, {
-        language: 'ja-JP',
+        language: speechLanguage,
         pitch: PITCH_BY_GENDER[gender],
         rate: 1.0,
         onDone: () => setSpeaking(false),
@@ -100,7 +106,7 @@ export function useVoiceCompanion(persona: Persona, gender: VoiceGender, situati
         onError: () => setSpeaking(false),
       });
     },
-    [gender]
+    [gender, speechLanguage]
   );
 
   return { speak, speakCustom, stop, lastSpoken, speaking };

@@ -5,31 +5,27 @@ import { setAudioModeAsync } from 'expo-audio';
 import * as Location from 'expo-location';
 import { colors, radius, spacing } from './app/theme';
 import { formatClock, formatPace } from './app/format';
-import { CATEGORIES, CATEGORY_LABEL, UNLOCK_PRICE_JPY, getPersona, personasByCategory, type ToneId } from './app/personas';
-import { SITUATIONS, getSituation, type SituationId } from './app/situations';
+import { CATEGORIES, UNLOCK_PRICE_JPY, getPersona, localizePersona, personasByCategory, type ToneId } from './app/personas';
+import { SITUATIONS, getSituation, localizeSituation, type SituationId } from './app/situations';
 import { useRunSession, type ActivityMode } from './app/useRunSession';
 import { useVoiceCompanion, type VoiceGender } from './app/useVoiceCompanion';
 import { usePurchase } from './app/purchases';
 import { useRunHistory } from './app/history';
 import { buildWeatherLine, fetchCurrentWeather } from './app/weather';
+import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS, SPEECH_LANGUAGE } from './app/i18n';
 import { PersonaPicker } from './app/components/PersonaPicker';
 import { PaywallModal } from './app/components/PaywallModal';
 import { HistoryModal } from './app/components/HistoryModal';
+import { LanguagePicker } from './app/components/LanguagePicker';
 
 const DISTANCE_PRESETS_KM = [3, 5, 10];
-const ACTIVITY_OPTIONS: { id: ActivityMode; label: string }[] = [
-  { id: 'run', label: 'ランニング' },
-  { id: 'walk', label: 'ウォーキング' },
-];
-const GENDER_OPTIONS: { id: VoiceGender; label: string }[] = [
-  { id: 'feminine', label: '女性寄り' },
-  { id: 'neutral', label: 'ナチュラル' },
-  { id: 'masculine', label: '男性寄り' },
-];
+const PRICE_LABEL = `¥${UNLOCK_PRICE_JPY}`;
 
 export default function App() {
   const purchase = usePurchase();
   const history = useRunHistory();
+  const i18n = useI18n();
+  const { t, contentLocale } = i18n;
   const [toneId, setToneId] = useState<ToneId>('coach');
   const [gender, setGender] = useState<VoiceGender>('neutral');
   const [situationId, setSituationId] = useState<SituationId | null>(null);
@@ -37,9 +33,19 @@ export default function App() {
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
 
-  const persona = getPersona(toneId);
-  const situation = situationId ? getSituation(situationId) : null;
-  const voice = useVoiceCompanion(persona, gender, situation);
+  const ACTIVITY_OPTIONS: { id: ActivityMode; label: string }[] = [
+    { id: 'run', label: t('activityRun') },
+    { id: 'walk', label: t('activityWalk') },
+  ];
+  const GENDER_OPTIONS: { id: VoiceGender; label: string }[] = [
+    { id: 'feminine', label: t('genderFeminine') },
+    { id: 'neutral', label: t('genderNeutral') },
+    { id: 'masculine', label: t('genderMasculine') },
+  ];
+
+  const persona = localizePersona(getPersona(toneId), contentLocale);
+  const situation = situationId ? localizeSituation(getSituation(situationId), contentLocale) : null;
+  const voice = useVoiceCompanion(persona, gender, situation, SPEECH_LANGUAGE[contentLocale], contentLocale);
   const session = useRunSession(voice.speak);
 
   // リアルタイム天気連動: GPS開始時に現在地の天気を一度だけ取得し、スタートの
@@ -53,7 +59,7 @@ export default function App() {
       const weather = await fetchCurrentWeather(position.coords.latitude, position.coords.longitude);
       if (!weather) return;
       setTimeout(() => {
-        voice.speakCustom(buildWeatherLine(weather));
+        voice.speakCustom(buildWeatherLine(weather, contentLocale));
       }, 6000);
     } catch {
       // 位置情報取得やAPI呼び出しに失敗しても、通常のランは続行する
@@ -109,19 +115,28 @@ export default function App() {
           <View style={styles.headerRow}>
             <View>
               <Text style={styles.title}>隣</Text>
-              <Text style={styles.subtitle}>-Tonari- 一緒に走ってくれる、声の伴走者</Text>
+              <Text style={styles.subtitle}>{t('appSubtitle')}</Text>
             </View>
-            {isIdle ? (
-              <Pressable style={styles.historyButton} onPress={() => setHistoryVisible(true)}>
-                <Text style={styles.historyButtonText}>📋 履歴{history.records.length > 0 ? ` (${history.records.length})` : ''}</Text>
-              </Pressable>
-            ) : null}
+            <View style={styles.headerActions}>
+              <LanguagePicker
+                locale={i18n.locale}
+                locales={SUPPORTED_LOCALES}
+                labels={LOCALE_LABELS}
+                onSelect={i18n.setLocale}
+                languageLabel={t('languageLabel')}
+              />
+              {isIdle ? (
+                <Pressable style={styles.historyButton} onPress={() => setHistoryVisible(true)}>
+                  <Text style={styles.historyButtonText}>{t('historyLabel')}{history.records.length > 0 ? ` (${history.records.length})` : ''}</Text>
+                </Pressable>
+              ) : null}
+            </View>
           </View>
         </View>
 
         {isIdle ? (
           <>
-            <Section title="モード">
+            <Section title={t('modeSectionTitle')}>
               <View style={styles.pillRow}>
                 {ACTIVITY_OPTIONS.map((m) => (
                   <Pressable
@@ -136,9 +151,9 @@ export default function App() {
             </Section>
 
             {CATEGORIES.map((category) => (
-              <Section key={category} title={`口調を選ぶ — ${CATEGORY_LABEL[category]}`}>
+              <Section key={category} title={t('toneSectionTitle', { category: t(category === 'human' ? 'categoryHuman' : 'categoryAnimal') })}>
                 <PersonaPicker
-                  personas={personasByCategory(category)}
+                  personas={personasByCategory(category).map((p) => localizePersona(p, contentLocale))}
                   selectedId={toneId}
                   isUnlocked={purchase.isUnlocked}
                   onSelect={setToneId}
@@ -148,14 +163,14 @@ export default function App() {
             ))}
             {!purchase.loading && !purchase.isUnlocked ? (
               <Pressable style={styles.upgradeBanner} onPress={() => setPaywallVisible(true)}>
-                <Text style={styles.upgradeBannerText}>🔒 「友人」「恋人」「犬」「猫」を解放 — 買い切り¥{UNLOCK_PRICE_JPY}</Text>
+                <Text style={styles.upgradeBannerText}>{t('upgradeBanner', { price: PRICE_LABEL })}</Text>
               </Pressable>
             ) : null}
 
-            <Section title="シチュエーション(任意)">
+            <Section title={t('situationSectionTitle')}>
               <View style={styles.pillRow}>
                 <Pressable onPress={() => setSituationId(null)} style={[styles.pill, situationId === null && styles.pillActive]}>
-                  <Text style={[styles.pillText, situationId === null && styles.pillTextActive]}>なし</Text>
+                  <Text style={[styles.pillText, situationId === null && styles.pillTextActive]}>{t('situationNone')}</Text>
                 </Pressable>
                 {SITUATIONS.map((s) => (
                   <Pressable
@@ -163,25 +178,25 @@ export default function App() {
                     onPress={() => setSituationId(s.id as SituationId)}
                     style={[styles.pill, situationId === s.id && styles.pillActive]}
                   >
-                    <Text style={[styles.pillText, situationId === s.id && styles.pillTextActive]}>{s.label}</Text>
+                    <Text style={[styles.pillText, situationId === s.id && styles.pillTextActive]}>{localizeSituation(s, contentLocale).label}</Text>
                   </Pressable>
                 ))}
               </View>
             </Section>
 
-            <Section title="天気連動(GPS開始時のみ)">
+            <Section title={t('weatherSectionTitle')}>
               <Pressable
                 onPress={() => setWeatherEnabled((v) => !v)}
                 style={[styles.pill, weatherEnabled && styles.pillActive, styles.weatherToggle]}
               >
                 <Text style={[styles.pillText, weatherEnabled && styles.pillTextActive]}>
-                  {weatherEnabled ? '✓ 現在地の天気に合わせてコメント' : '現在地の天気に合わせてコメントする'}
+                  {weatherEnabled ? t('weatherToggleOn') : t('weatherToggleOff')}
                 </Text>
               </Pressable>
-              <Text style={styles.hint}>気温・天候・時間帯(昼/夜)を見て、開始直後に一言添えます。ネットワークが無い場合は通常の声かけのみになります。</Text>
+              <Text style={styles.hint}>{t('weatherHint')}</Text>
             </Section>
 
-            <Section title="声の高さ">
+            <Section title={t('genderSectionTitle')}>
               <View style={styles.pillRow}>
                 {GENDER_OPTIONS.map((g) => (
                   <Pressable
@@ -195,7 +210,7 @@ export default function App() {
               </View>
             </Section>
 
-            <Section title="目標距離">
+            <Section title={t('distanceSectionTitle')}>
               <View style={styles.pillRow}>
                 {DISTANCE_PRESETS_KM.map((km) => (
                   <Pressable
@@ -210,58 +225,58 @@ export default function App() {
                   onPress={() => session.setTargetDistanceKm(null)}
                   style={[styles.pill, session.targetDistanceKm === null && styles.pillActive]}
                 >
-                  <Text style={[styles.pillText, session.targetDistanceKm === null && styles.pillTextActive]}>目標なし</Text>
+                  <Text style={[styles.pillText, session.targetDistanceKm === null && styles.pillTextActive]}>{t('distanceNone')}</Text>
                 </Pressable>
               </View>
             </Section>
 
             {session.permissionDenied ? (
               <View style={styles.warnBox}>
-                <Text style={styles.warnText}>位置情報の利用が許可されていません。端末の設定からこのアプリの位置情報アクセスを許可してください。</Text>
+                <Text style={styles.warnText}>{t('permissionDenied')}</Text>
               </View>
             ) : null}
 
             <View style={styles.startRow}>
               <Pressable style={styles.startButtonPrimary} onPress={handleStartGps}>
-                <Text style={styles.startButtonPrimaryText}>GPSで開始</Text>
+                <Text style={styles.startButtonPrimaryText}>{t('startGps')}</Text>
               </Pressable>
               <Pressable style={styles.startButtonSecondary} onPress={session.startDemo}>
-                <Text style={styles.startButtonSecondaryText}>デモで体験(約75秒)</Text>
+                <Text style={styles.startButtonSecondaryText}>{t('startDemo')}</Text>
               </Pressable>
             </View>
-            <Text style={styles.hint}>デモは実際に歩かなくても、口調と声の雰囲気を試せるプレビューモードです。</Text>
+            <Text style={styles.hint}>{t('demoHint')}</Text>
           </>
         ) : null}
 
         {isRunning ? (
           <>
             <View style={styles.statGrid}>
-              <Stat label="距離" value={`${session.metrics.distanceKm.toFixed(2)}`} unit="km" />
-              <Stat label="経過時間" value={formatClock(session.metrics.elapsedSec)} unit="" />
-              <Stat label="ペース" value={formatPace(session.metrics.currentPaceMinPerKm)} unit="/km" />
+              <Stat label={t('statDistance')} value={`${session.metrics.distanceKm.toFixed(2)}`} unit="km" />
+              <Stat label={t('statElapsed')} value={formatClock(session.metrics.elapsedSec)} unit="" />
+              <Stat label={t('statPace')} value={formatPace(session.metrics.currentPaceMinPerKm)} unit="/km" />
             </View>
 
             <View style={styles.captionCard}>
-              <Text style={styles.captionEyebrow}>{voice.speaking ? '🔊 話しています' : `${persona.label}の声`}</Text>
-              <Text style={styles.captionText}>{voice.lastSpoken ?? '走り始めると、話しかけてくれます。'}</Text>
+              <Text style={styles.captionEyebrow}>{voice.speaking ? t('speakingNow') : t('voiceOf', { persona: persona.label })}</Text>
+              <Text style={styles.captionText}>{voice.lastSpoken ?? t('runningPlaceholder')}</Text>
             </View>
 
             <Pressable style={styles.stopButton} onPress={session.stop}>
-              <Text style={styles.stopButtonText}>終了する</Text>
+              <Text style={styles.stopButtonText}>{t('stop')}</Text>
             </Pressable>
           </>
         ) : null}
 
         {isFinished ? (
           <View style={styles.finishedCard}>
-            <Text style={styles.finishedTitle}>お疲れさまでした</Text>
+            <Text style={styles.finishedTitle}>{t('finishedTitle')}</Text>
             <View style={styles.statGrid}>
-              <Stat label="距離" value={`${session.metrics.distanceKm.toFixed(2)}`} unit="km" />
-              <Stat label="時間" value={formatClock(session.metrics.elapsedSec)} unit="" />
-              <Stat label="平均ペース" value={formatPace(session.metrics.avgPaceMinPerKm)} unit="/km" />
+              <Stat label={t('statDistance')} value={`${session.metrics.distanceKm.toFixed(2)}`} unit="km" />
+              <Stat label={t('statTime')} value={formatClock(session.metrics.elapsedSec)} unit="" />
+              <Stat label={t('statAvgPace')} value={formatPace(session.metrics.avgPaceMinPerKm)} unit="/km" />
             </View>
             <Pressable style={styles.startButtonPrimary} onPress={session.reset}>
-              <Text style={styles.startButtonPrimaryText}>もう一度</Text>
+              <Text style={styles.startButtonPrimaryText}>{t('again')}</Text>
             </Pressable>
           </View>
         ) : null}
@@ -270,6 +285,8 @@ export default function App() {
       <PaywallModal
         visible={paywallVisible}
         purchasing={purchase.purchasing}
+        t={t}
+        priceLabel={PRICE_LABEL}
         onUnlock={async () => {
           const success = await purchase.unlock();
           if (success) setPaywallVisible(false);
@@ -286,6 +303,8 @@ export default function App() {
         records={history.records}
         onClear={history.clearHistory}
         onClose={() => setHistoryVisible(false)}
+        t={t}
+        contentLocale={contentLocale}
       />
     </SafeAreaView>
   );
@@ -317,6 +336,7 @@ const styles = StyleSheet.create({
   scroll: { padding: spacing.lg, paddingTop: Platform.OS === 'android' ? spacing.xl : spacing.md, gap: spacing.lg },
   header: { gap: 2 },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.sm },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   title: { color: colors.text, fontSize: 34, fontWeight: '800', letterSpacing: 2 },
   subtitle: { color: colors.textMuted, fontSize: 13 },
   historyButton: {

@@ -3,34 +3,36 @@ import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native
 import { colors, radius, spacing } from '../theme';
 import { formatClock, formatPace } from '../format';
 import { computeStreakDays, formatRecordDate, summarizeLastDays, type RunRecord } from '../history';
-import { getPersona } from '../personas';
+import { getPersona, localizePersona } from '../personas';
+import type { TranslationKey } from '../i18n';
 
 type Props = {
   visible: boolean;
   records: RunRecord[];
   onClear: () => void;
   onClose: () => void;
+  t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
+  contentLocale: 'ja' | 'en';
 };
 
-const MODE_LABEL = { run: 'ラン', walk: 'ウォーク' } as const;
-
-export function HistoryModal({ visible, records, onClear, onClose }: Props) {
+export function HistoryModal({ visible, records, onClear, onClose, t, contentLocale }: Props) {
+  const modeLabel = { run: t('modeRun'), walk: t('modeWalk') } as const;
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
           <View style={styles.headRow}>
-            <Text style={styles.title}>これまでの記録</Text>
+            <Text style={styles.title}>{t('historyTitle')}</Text>
             <Pressable onPress={onClose}>
-              <Text style={styles.closeText}>閉じる</Text>
+              <Text style={styles.closeText}>{t('historyClose')}</Text>
             </Pressable>
           </View>
 
           {records.length === 0 ? (
-            <Text style={styles.empty}>まだ記録がありません。走り終えるとここに残ります。</Text>
+            <Text style={styles.empty}>{t('historyEmpty')}</Text>
           ) : (
             <>
-              <SummaryRow records={records} />
+              <SummaryRow records={records} t={t} />
               <FlatList
               data={records}
               keyExtractor={(r) => r.id}
@@ -40,7 +42,7 @@ export function HistoryModal({ visible, records, onClear, onClose }: Props) {
                   <View style={styles.rowLeft}>
                     <Text style={styles.rowDate}>{formatRecordDate(item.endedAt)}</Text>
                     <Text style={styles.rowMeta}>
-                      {MODE_LABEL[item.activityMode]} ・ {getPersona(item.toneId).label}
+                      {modeLabel[item.activityMode]} ・ {localizePersona(getPersona(item.toneId), contentLocale).label}
                     </Text>
                   </View>
                   <View style={styles.rowRight}>
@@ -57,7 +59,7 @@ export function HistoryModal({ visible, records, onClear, onClose }: Props) {
 
           {records.length > 0 ? (
             <Pressable onPress={onClear} style={styles.clearButton}>
-              <Text style={styles.clearText}>履歴を消去</Text>
+              <Text style={styles.clearText}>{t('historyClear')}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -66,18 +68,18 @@ export function HistoryModal({ visible, records, onClear, onClose }: Props) {
   );
 }
 
-function SummaryRow({ records }: { records: RunRecord[] }) {
+function SummaryRow({ records, t }: { records: RunRecord[]; t: (key: TranslationKey, vars?: Record<string, string | number>) => string }) {
   const week = summarizeLastDays(records, 7);
   const streak = computeStreakDays(records);
   return (
     <View style={styles.summaryRow}>
       <View style={styles.summaryTile}>
         <Text style={styles.summaryValue}>{week.totalKm.toFixed(1)}km</Text>
-        <Text style={styles.summaryLabel}>過去7日間・{week.count}回</Text>
+        <Text style={styles.summaryLabel}>{t('historyWeekSummary', { count: week.count })}</Text>
       </View>
       <View style={styles.summaryTile}>
-        <Text style={styles.summaryValue}>{streak}日</Text>
-        <Text style={styles.summaryLabel}>連続記録</Text>
+        <Text style={styles.summaryValue}>{t('historyStreakDays', { n: streak })}</Text>
+        <Text style={styles.summaryLabel}>{t('historyStreak')}</Text>
       </View>
     </View>
   );
