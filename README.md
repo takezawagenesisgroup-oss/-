@@ -1,4 +1,4 @@
-> このリポジトリは複数アプリを並行開発する構成になっている。ルート直下は「凪」、2本目のアプリ「隣 -Tonari-」(ランニング音声伴走アプリ)は [`apps/tonari/`](./apps/tonari/README.md) を参照。
+> このリポジトリは複数アプリを並行開発する構成になっている。ルート直下は「凪」、2本目のアプリ「隣 -Tonari-」(ランニング音声伴走アプリ)は [`apps/tonari/`](./apps/tonari/README.md)、3本目のアプリ「気配 -Kehai-」(勉強・作業・就寝前など汎用の音声伴侶アプリ)は [`apps/kehai/`](./apps/kehai/README.md) を参照。
 
 # 凪 -Nagi-
 
