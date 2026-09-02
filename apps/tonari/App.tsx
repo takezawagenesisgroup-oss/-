@@ -36,6 +36,7 @@ export default function App() {
   const ACTIVITY_OPTIONS: { id: ActivityMode; label: string }[] = [
     { id: 'run', label: t('activityRun') },
     { id: 'walk', label: t('activityWalk') },
+    { id: 'cycle', label: t('activityCycle') },
   ];
   const GENDER_OPTIONS: { id: VoiceGender; label: string }[] = [
     { id: 'feminine', label: t('genderFeminine') },

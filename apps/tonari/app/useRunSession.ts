@@ -17,13 +17,14 @@ export type RunMetrics = {
 };
 
 export type SessionState = 'idle' | 'running' | 'finished';
-export type ActivityMode = 'run' | 'walk';
+export type ActivityMode = 'run' | 'walk' | 'cycle';
 
-// ランとウォークではペースの絶対値も変化の出方も違うため、マイルストーンの
-// 刻み幅と「ペースが変わった」と判定する閾値をモードごとに変える。
+// ラン・ウォーク・サイクリングではペースの絶対値も変化の出方も違うため、
+// マイルストーンの刻み幅と「ペースが変わった」と判定する閾値をモードごとに変える。
 const MODE_CONFIG: Record<ActivityMode, { distanceStepKm: number; paceDeltaMinPerKm: number }> = {
   run: { distanceStepKm: 1, paceDeltaMinPerKm: 0.5 }, // 1kmごと、約30秒/kmの変化で反応
   walk: { distanceStepKm: 0.5, paceDeltaMinPerKm: 0.3 }, // 0.5kmごと、約18秒/kmの変化で反応
+  cycle: { distanceStepKm: 2, paceDeltaMinPerKm: 0.35 }, // 2kmごと、進みが速いので間隔を広く取る
 };
 const LONG_PAUSE_SEC = 45;
 const TIME_STEP_SEC = 300; // 5分ごと
@@ -40,8 +41,9 @@ const DEMO_KEYFRAMES: Array<[number, number]> = [
   [1500, 4.0],
 ];
 const DEMO_SPEED_MULTIPLIER = 20; // 実時間1秒 = シミュレーション20秒(約75秒でフルラン体験できる)
-// デモの累積距離をモードに応じて縮尺し、ウォーキングでは現実的なペース(平均約13分/km)になるようにする
-const DEMO_DISTANCE_SCALE: Record<ActivityMode, number> = { run: 1, walk: 0.48 };
+// デモの累積距離をモードに応じて縮尺し、それぞれ現実的な平均ペースになるようにする
+// (ラン約6分/km、ウォーク約13分/km、サイクリング約3分/km)
+const DEMO_DISTANCE_SCALE: Record<ActivityMode, number> = { run: 1, walk: 0.48, cycle: 2.08 };
 
 function haversineMeters(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {
   const R = 6371000;

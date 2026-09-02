@@ -16,7 +16,7 @@ type Props = {
 };
 
 export function HistoryModal({ visible, records, onClear, onClose, t, contentLocale }: Props) {
-  const modeLabel = { run: t('modeRun'), walk: t('modeWalk') } as const;
+  const modeLabel = { run: t('modeRun'), walk: t('modeWalk'), cycle: t('modeCycle') } as const;
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
