@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { TriggerType } from './personas';
+import type { SpeakEvent } from './useVoiceCompanion';
+import type { SituationId } from './situations';
 
 export type SessionState = 'idle' | 'running' | 'finished';
 
-const CHEER_CARE_MIN_INTERVAL_MS = 90_000; // 1分30秒
-const CHEER_CARE_MAX_INTERVAL_MS = 240_000; // 4分
-const CHEER_WEIGHT = 0.6; // 応援60% / 気遣い40%
+const LINE_MIN_INTERVAL_MS = 90_000; // 1分30秒
+const LINE_MAX_INTERVAL_MS = 240_000; // 4分
 
-export function usePresenceSession(onTrigger: (trigger: TriggerType) => void) {
+export function usePresenceSession(onTrigger: (event: SpeakEvent) => void) {
   const [state, setState] = useState<SessionState>('idle');
   const [durationSec, setDurationSec] = useState(30 * 60);
   const [remainingSec, setRemainingSec] = useState(0);
+  const [situationId, setSituationId] = useState<SituationId | null>(null);
 
   const endAtRef = useRef(0);
   const tickTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const nextLineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const situationIdRef = useRef<SituationId | null>(null);
+  situationIdRef.current = situationId;
 
   const clearTimers = useCallback(() => {
     if (tickTimerRef.current) clearInterval(tickTimerRef.current);
@@ -24,12 +27,22 @@ export function usePresenceSession(onTrigger: (trigger: TriggerType) => void) {
   }, []);
 
   // 声かけの間隔をランダムにすることで、毎回同じタイミング・同じ内容に
-  // ならないようにする(pickLineAvoidingRepeatと合わせて「マンネリ回避」)。
+  // ならないようにする。シチュエーションを選んでいる場合は、応援/気遣いに
+  // 加えてシチュエーション別の一言も混ぜる。
   const scheduleNextLine = useCallback(() => {
-    const delay = CHEER_CARE_MIN_INTERVAL_MS + Math.random() * (CHEER_CARE_MAX_INTERVAL_MS - CHEER_CARE_MIN_INTERVAL_MS);
+    const delay = LINE_MIN_INTERVAL_MS + Math.random() * (LINE_MAX_INTERVAL_MS - LINE_MIN_INTERVAL_MS);
     nextLineTimerRef.current = setTimeout(() => {
-      const trigger: TriggerType = Math.random() < CHEER_WEIGHT ? 'cheer' : 'care';
-      onTrigger(trigger);
+      const hasSituation = situationIdRef.current !== null;
+      const roll = Math.random();
+      let event: SpeakEvent;
+      if (hasSituation && roll < 0.2) {
+        event = { kind: 'situational' };
+      } else if (roll < (hasSituation ? 0.2 + 0.48 : 0.6)) {
+        event = { kind: 'persona', trigger: 'cheer' };
+      } else {
+        event = { kind: 'persona', trigger: 'care' };
+      }
+      onTrigger(event);
       scheduleNextLine();
     }, delay);
   }, [onTrigger]);
@@ -39,7 +52,7 @@ export function usePresenceSession(onTrigger: (trigger: TriggerType) => void) {
     endAtRef.current = Date.now() + durationSec * 1000;
     setRemainingSec(durationSec);
     setState('running');
-    onTrigger('start');
+    onTrigger({ kind: 'persona', trigger: 'start' });
     scheduleNextLine();
     tickTimerRef.current = setInterval(() => {
       const remaining = Math.max(0, Math.round((endAtRef.current - Date.now()) / 1000));
@@ -47,7 +60,7 @@ export function usePresenceSession(onTrigger: (trigger: TriggerType) => void) {
       if (remaining <= 0) {
         clearTimers();
         setState('finished');
-        onTrigger('finish');
+        onTrigger({ kind: 'persona', trigger: 'finish' });
       }
     }, 500);
   }, [clearTimers, durationSec, onTrigger, scheduleNextLine]);
@@ -55,7 +68,7 @@ export function usePresenceSession(onTrigger: (trigger: TriggerType) => void) {
   const stop = useCallback(() => {
     clearTimers();
     setState('finished');
-    onTrigger('finish');
+    onTrigger({ kind: 'persona', trigger: 'finish' });
   }, [clearTimers, onTrigger]);
 
   const reset = useCallback(() => {
@@ -66,5 +79,5 @@ export function usePresenceSession(onTrigger: (trigger: TriggerType) => void) {
 
   useEffect(() => clearTimers, [clearTimers]);
 
-  return { state, durationSec, setDurationSec, remainingSec, start, stop, reset };
+  return { state, durationSec, setDurationSec, remainingSec, situationId, setSituationId, start, stop, reset };
 }

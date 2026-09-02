@@ -17,8 +17,8 @@ App Store Connect / Google Play Console にそのまま貼り付ける文言。�
 
 - **App名**(上限30字・16字): `気配 -Kehai- 隣にいる声`
 - **サブタイトル**(上限30字・13字): `応援と気遣いの声が時々届く`
-- **プロモーション用テキスト**(上限170字・68字):
-  `清楚系は無料。ギャル系・後輩系・お姉さん系は買い切り¥480で解放。サブスクなし。5分〜2時間、呼吸の音を土台に時々声をかけてくれます。`
+- **プロモーション用テキスト**(上限170字・71字):
+  `清楚系は無料。ギャル系・お姉さん系・男友達3種・どうぶつ2種など全8キャラを買い切り¥480で解放。シチュエーションも選べます。サブスクなし。`
 - **キーワード**(上限100字・57字):
   `作業用,勉強用,音声,応援,気遣い,癒し,一人,孤独,BGM,伴侶,呼吸音,ASMR,集中,就寝前,声かけ,ボイス`
 
@@ -29,8 +29,11 @@ App Store Connect / Google Play Console にそのまま貼り付ける文言。�
 
 「気配」は、時間を決めるだけで、呼吸の音を土台に時々応援や気遣いの声をかけてくれる音声伴侶アプリです。
 
-■ 4つの口調から選べる
-清楚系・ギャル系・後輩系・お姉さん系、4つの口調から選べます。丁寧で穏やかな声、テンション高めの応援、元気な後輩、包み込むような大人の声——気分に合わせて選んでください。
+■ 9キャラクターから選べる
+女友達4種(清楚系・ギャル系・後輩系・お姉さん系)、男友達3種(爽やか系・兄貴系・渋め系)、どうぶつ2種(猫・犬)。気分に合わせて選んでください。
+
+■ シチュエーションも選べる
+勉強中・作業中・読書中・家事中・就寝前・フリータイムから選ぶと、その場面に合わせた一言も混ざります。
 
 ■ 毎回同じにならない
 声かけのタイミングは1分30秒〜4分でランダム。台詞も同じものが連続しないよう自動で選ばれます。伸び・ため息・鼻歌などの生活音もランダムに挟まるので、毎回違う時間になります。
@@ -42,7 +45,7 @@ App Store Connect / Google Play Console にそのまま貼り付ける文言。�
 Spotifyなどの音楽を再生しながらでも、声と生活音はその上に重なって聞こえます。
 
 ■ サブスクではなく、買い切り
-清楚系の声は無料。ギャル系・後輩系・お姉さん系を含む全ての口調は、¥480の買い切りで解放できます。月額課金は一切ありません。
+清楚系の声は無料。他の8キャラクターは、¥480の買い切りで一括解放できます。月額課金は一切ありません。
 
 ■ こんな方に
 ・一人で勉強・作業していると集中が続かない方
@@ -59,8 +62,11 @@ Studying or working alone can feel a little too quiet. Kehai gives you a sense t
 
 Set a timer, and Kehai talks to you now and then — cheering you on, checking in — over a soft breathing sound that plays throughout.
 
-■ Four voices to choose from
-Gentle, energetic, cheerful-junior, or calm-and-warm. Pick whichever fits your mood.
+■ Nine characters to choose from
+Four female friends (Gentle, Cheerful, Junior, Elder-sister), three male friends (Casual, Big-brother, Calm), and two animals (Cat, Dog). Pick whichever fits your mood.
+
+■ Pick a situation, too
+Choose Studying, Working, Reading, Chores, Bedtime, or Free time and situation-specific lines get mixed in.
 
 ■ Never the same twice
 Lines arrive at random intervals (90 seconds to 4 minutes) and never repeat back-to-back. Small sounds — a sigh, a stretch, a soft hum — are sprinkled in at random too.
@@ -72,7 +78,7 @@ From a 5-minute trial to 30 minutes, 1 hour, or 2 hours — for studying, workin
 Keep Spotify or your podcast running — the voice and ambience layer on top instead of stopping it.
 
 ■ One-time purchase, not another subscription
-The gentle voice is free. Unlock the other three with a single ¥480 (about $3) purchase. No subscription, ever.
+The Gentle voice is free. Unlock the other eight characters with a single ¥480 (about $3) purchase. No subscription, ever.
 
 Built for anyone who works alone but doesn't want the room to feel empty.
 ```
@@ -86,8 +92,8 @@ Built for anyone who works alone but doesn't want the room to feel empty.
 
 ## スクリーンショット文言(5枚構成)
 
-1. **メイン画面** — 「隣に、誰かがいる気配を。」/ 口調選択画面(清楚系/ギャル系/後輩系/お姉さん系)
-2. **時間選択** — 「5分から2時間まで、自由に」/ 時間プリセット選択画面
+1. **メイン画面** — 「隣に、誰かがいる気配を。」/ カテゴリ別キャラ選択画面(女友達/男友達/どうぶつ)
+2. **シチュエーション** — 「勉強・作業・就寝前、場面に合わせて」/ シチュエーション選択画面
 3. **実行中** — 「時々、応援や気遣いの声が届く」/ カウントダウン+吹き出しキャプション画面
 4. **音楽と一緒に** — 「Spotifyを止めずに、声だけ重なる」/ ダッキング訴求
 5. **価格訴求** — 「サブスクじゃない。買い切り¥480。」/ ペイウォールモーダル

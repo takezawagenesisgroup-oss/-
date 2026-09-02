@@ -4,7 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import { setAudioModeAsync } from 'expo-audio';
 import { colors, radius, spacing } from './app/theme';
 import { formatClock } from './app/format';
-import { PERSONAS, UNLOCK_PRICE_JPY, getPersona, type ToneId } from './app/personas';
+import { CATEGORIES, CATEGORY_LABEL, UNLOCK_PRICE_JPY, getPersona, personasByCategory, type ToneId } from './app/personas';
+import { SITUATIONS, getSituation, type SituationId } from './app/situations';
 import { usePresenceSession } from './app/usePresenceSession';
 import { useVoiceCompanion, type VoiceGender } from './app/useVoiceCompanion';
 import { useAmbientPresence } from './app/useAmbientPresence';
@@ -32,8 +33,9 @@ export default function App() {
   const [paywallVisible, setPaywallVisible] = useState(false);
 
   const persona = getPersona(toneId);
-  const voice = useVoiceCompanion(persona, gender);
-  const session = usePresenceSession(voice.speak);
+  const session = usePresenceSession((event) => voice.speak(event));
+  const situation = session.situationId ? getSituation(session.situationId) : null;
+  const voice = useVoiceCompanion(persona, gender, situation);
 
   useEffect(() => {
     setAudioModeAsync({
@@ -73,19 +75,38 @@ export default function App() {
 
         {isIdle ? (
           <>
-            <Section title="口調を選ぶ">
-              <PersonaPicker
-                personas={PERSONAS}
-                selectedId={toneId}
-                isUnlocked={purchase.isUnlocked}
-                onSelect={setToneId}
-                onLockedPress={() => setPaywallVisible(true)}
-              />
-              {!purchase.loading && !purchase.isUnlocked ? (
-                <Pressable style={styles.upgradeBanner} onPress={() => setPaywallVisible(true)}>
-                  <Text style={styles.upgradeBannerText}>🔒 ギャル系・後輩系・お姉さん系を解放 — 買い切り¥{UNLOCK_PRICE_JPY}</Text>
+            {CATEGORIES.map((category) => (
+              <Section key={category} title={CATEGORY_LABEL[category]}>
+                <PersonaPicker
+                  personas={personasByCategory(category)}
+                  selectedId={toneId}
+                  isUnlocked={purchase.isUnlocked}
+                  onSelect={setToneId}
+                  onLockedPress={() => setPaywallVisible(true)}
+                />
+              </Section>
+            ))}
+            {!purchase.loading && !purchase.isUnlocked ? (
+              <Pressable style={styles.upgradeBanner} onPress={() => setPaywallVisible(true)}>
+                <Text style={styles.upgradeBannerText}>🔒 清楚系以外の8キャラを解放 — 買い切り¥{UNLOCK_PRICE_JPY}</Text>
+              </Pressable>
+            ) : null}
+
+            <Section title="シチュエーション(任意)">
+              <View style={styles.pillRow}>
+                <Pressable onPress={() => session.setSituationId(null)} style={[styles.pill, session.situationId === null && styles.pillActive]}>
+                  <Text style={[styles.pillText, session.situationId === null && styles.pillTextActive]}>なし</Text>
                 </Pressable>
-              ) : null}
+                {SITUATIONS.map((s) => (
+                  <Pressable
+                    key={s.id}
+                    onPress={() => session.setSituationId(s.id as SituationId)}
+                    style={[styles.pill, session.situationId === s.id && styles.pillActive]}
+                  >
+                    <Text style={[styles.pillText, session.situationId === s.id && styles.pillTextActive]}>{s.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
             </Section>
 
             <Section title="声の高さ">

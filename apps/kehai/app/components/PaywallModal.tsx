@@ -16,9 +16,9 @@ export function PaywallModal({ visible, purchasing, onUnlock, onRestore, onClose
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
-          <Text style={styles.eyebrow}>3つの口調を解放</Text>
+          <Text style={styles.eyebrow}>8キャラクターを解放</Text>
           <Text style={styles.title}>買い切り ¥{UNLOCK_PRICE_JPY}</Text>
-          <Text style={styles.body}>サブスクなし。一度購入すれば、ギャル系・後輩系・お姉さん系をずっと使えます。声の高さはいつでも切り替え可能です。</Text>
+          <Text style={styles.body}>サブスクなし。一度購入すれば、ギャル系・後輩系・お姉さん系・男友達3種・どうぶつ2種、全8キャラをずっと使えます。声の高さはいつでも切り替え可能です。</Text>
 
           <Pressable style={[styles.primaryButton, purchasing && styles.buttonDisabled]} onPress={onUnlock} disabled={purchasing}>
             {purchasing ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.primaryButtonText}>¥{UNLOCK_PRICE_JPY} で解放する</Text>}
