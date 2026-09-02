@@ -1,32 +1,35 @@
 import React from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '../theme';
-import { SOUNDS, UNLOCK_PRICE_JPY } from '../sounds';
+import { SOUNDS } from '../sounds';
+import type { TranslationKey } from '../i18n';
 
 type Props = {
   visible: boolean;
   purchasing: boolean;
+  priceLabel: string;
+  t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
   onUnlock: () => void;
   onRestore: () => void;
   onClose: () => void;
 };
 
-export function PaywallModal({ visible, purchasing, onUnlock, onRestore, onClose }: Props) {
+export function PaywallModal({ visible, purchasing, priceLabel, t, onUnlock, onRestore, onClose }: Props) {
   const premiumSounds = SOUNDS.filter((s) => !s.free);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
-          <Text style={styles.eyebrow}>すべてのサウンドを解放</Text>
-          <Text style={styles.title}>買い切り ¥{UNLOCK_PRICE_JPY}</Text>
-          <Text style={styles.body}>サブスクなし。一度購入すれば、追加の環境音をずっと使えます。</Text>
+          <Text style={styles.eyebrow}>{t('paywallEyebrow')}</Text>
+          <Text style={styles.title}>{t('paywallTitle', { price: priceLabel })}</Text>
+          <Text style={styles.body}>{t('paywallBody')}</Text>
 
           <View style={styles.list}>
             {premiumSounds.map((s) => (
               <View key={s.id} style={styles.listRow}>
                 <Text style={styles.listEmoji}>{s.emoji}</Text>
-                <Text style={styles.listLabel}>{s.label}</Text>
+                <Text style={styles.listLabel}>{t(`sound.${s.id}` as TranslationKey)}</Text>
               </View>
             ))}
           </View>
@@ -39,16 +42,16 @@ export function PaywallModal({ visible, purchasing, onUnlock, onRestore, onClose
             {purchasing ? (
               <ActivityIndicator color={colors.bg} />
             ) : (
-              <Text style={styles.primaryButtonText}>¥{UNLOCK_PRICE_JPY} で解放する</Text>
+              <Text style={styles.primaryButtonText}>{t('paywallUnlockButton', { price: priceLabel })}</Text>
             )}
           </Pressable>
 
           <Pressable onPress={onRestore} disabled={purchasing} style={styles.restoreButton}>
-            <Text style={styles.restoreText}>購入を復元</Text>
+            <Text style={styles.restoreText}>{t('paywallRestore')}</Text>
           </Pressable>
 
           <Pressable onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeText}>閉じる</Text>
+            <Text style={styles.closeText}>{t('paywallClose')}</Text>
           </Pressable>
         </View>
       </View>

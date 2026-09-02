@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '../theme';
 import { formatClock, useCountdown } from '../useCountdown';
+import type { TranslationKey } from '../i18n';
 
 const FOCUS_PRESETS_MIN = [25, 50];
 const SLEEP_PRESETS_MIN = [15, 30, 45, 60];
@@ -12,9 +13,11 @@ type Mode = 'focus' | 'sleep';
 type Props = {
   stopAll: () => void;
   fadeOutAndStop: (durationMs: number) => void;
+  t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
+  formatMinutes: (n: number) => string;
 };
 
-export function TimerPanel({ stopAll, fadeOutAndStop }: Props) {
+export function TimerPanel({ stopAll, fadeOutAndStop, t, formatMinutes }: Props) {
   const [mode, setMode] = useState<Mode>('focus');
   const [customMinutes, setCustomMinutes] = useState(90);
   const [customOpen, setCustomOpen] = useState(false);
@@ -60,8 +63,8 @@ export function TimerPanel({ stopAll, fadeOutAndStop }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.tabs}>
-        <ModeTab label="集中" active={mode === 'focus'} disabled={running} onPress={() => switchMode('focus')} />
-        <ModeTab label="就寝" active={mode === 'sleep'} disabled={running} onPress={() => switchMode('sleep')} />
+        <ModeTab label={t('tabFocus')} active={mode === 'focus'} disabled={running} onPress={() => switchMode('focus')} />
+        <ModeTab label={t('tabSleep')} active={mode === 'sleep'} disabled={running} onPress={() => switchMode('sleep')} />
       </View>
 
       {running ? (
@@ -70,11 +73,9 @@ export function TimerPanel({ stopAll, fadeOutAndStop }: Props) {
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${Math.min(100, progress * 100)}%` }]} />
           </View>
-          <Text style={styles.runningHint}>
-            {mode === 'focus' ? '終了時にサウンドを止めます' : '終了前にゆっくりフェードアウトします'}
-          </Text>
+          <Text style={styles.runningHint}>{t(mode === 'focus' ? 'hintFocusRunning' : 'hintSleepRunning')}</Text>
           <Pressable style={styles.stopButton} onPress={handleStop}>
-            <Text style={styles.stopButtonText}>タイマーを止める</Text>
+            <Text style={styles.stopButtonText}>{t('stopTimer')}</Text>
           </Pressable>
         </View>
       ) : (
@@ -82,14 +83,14 @@ export function TimerPanel({ stopAll, fadeOutAndStop }: Props) {
           <View style={styles.presetsRow}>
             {presets.map((m) => (
               <Pressable key={m} style={styles.chip} onPress={() => beginTimer(m)}>
-                <Text style={styles.chipText}>{m}分</Text>
+                <Text style={styles.chipText}>{formatMinutes(m)}</Text>
               </Pressable>
             ))}
             <Pressable
               style={[styles.chip, customOpen && styles.chipActive]}
               onPress={() => setCustomOpen((v) => !v)}
             >
-              <Text style={styles.chipText}>カスタム</Text>
+              <Text style={styles.chipText}>{t('custom')}</Text>
             </Pressable>
           </View>
 
@@ -98,12 +99,12 @@ export function TimerPanel({ stopAll, fadeOutAndStop }: Props) {
               <Pressable style={styles.stepButton} onPress={() => setCustomMinutes((v) => Math.max(5, v - 5))}>
                 <Text style={styles.stepButtonText}>−5</Text>
               </Pressable>
-              <Text style={styles.customMinutes}>{customMinutes}分</Text>
+              <Text style={styles.customMinutes}>{formatMinutes(customMinutes)}</Text>
               <Pressable style={styles.stepButton} onPress={() => setCustomMinutes((v) => Math.min(240, v + 5))}>
                 <Text style={styles.stepButtonText}>+5</Text>
               </Pressable>
               <Pressable style={styles.startButton} onPress={() => beginTimer(customMinutes)}>
-                <Text style={styles.startButtonText}>開始</Text>
+                <Text style={styles.startButtonText}>{t('start')}</Text>
               </Pressable>
             </View>
           ) : null}

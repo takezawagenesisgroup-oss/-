@@ -6,13 +6,19 @@ import { SOUNDS, UNLOCK_PRICE_JPY } from './app/sounds';
 import { colors, radius, spacing } from './app/theme';
 import { useSoundEngine } from './app/useSoundEngine';
 import { usePurchase } from './app/purchases';
+import { useI18n, SUPPORTED_LOCALES, LOCALE_LABELS, type TranslationKey } from './app/i18n';
 import { SoundTile } from './app/components/SoundTile';
 import { TimerPanel } from './app/components/TimerPanel';
 import { PaywallModal } from './app/components/PaywallModal';
+import { LanguagePicker } from './app/components/LanguagePicker';
+
+const PRICE_LABEL = `¥${UNLOCK_PRICE_JPY}`;
 
 export default function App() {
   const engine = useSoundEngine();
   const purchase = usePurchase();
+  const i18n = useI18n();
+  const { t } = i18n;
   const [paywallVisible, setPaywallVisible] = useState(false);
 
   useEffect(() => {
@@ -32,8 +38,17 @@ export default function App() {
       <StatusBar style="light" />
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
-          <Text style={styles.title}>凪</Text>
-          <Text style={styles.subtitle}>集中と眠りのサウンドタイマー</Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>凪</Text>
+            <LanguagePicker
+              locale={i18n.locale}
+              locales={SUPPORTED_LOCALES}
+              labels={LOCALE_LABELS}
+              onSelect={i18n.setLocale}
+              languageLabel={t('languageLabel')}
+            />
+          </View>
+          <Text style={styles.subtitle}>{t('appSubtitle')}</Text>
         </View>
 
         <View style={styles.grid}>
@@ -41,31 +56,33 @@ export default function App() {
             <SoundTile
               key={sound.id}
               sound={sound}
+              label={t(`sound.${sound.id}` as TranslationKey)}
               active={engine.activeIds.has(sound.id)}
               volume={engine.volumes[sound.id]}
               locked={!sound.free && !purchase.isUnlocked}
               onToggle={engine.toggle}
               onVolumeChange={engine.setVolume}
               onLockedPress={() => setPaywallVisible(true)}
+              t={t}
             />
           ))}
         </View>
 
         {!purchase.loading && !purchase.isUnlocked ? (
           <Pressable style={styles.upgradeBanner} onPress={() => setPaywallVisible(true)}>
-            <Text style={styles.upgradeBannerText}>🔒 残り4種類のサウンドを解放 — 買い切り¥{UNLOCK_PRICE_JPY}</Text>
+            <Text style={styles.upgradeBannerText}>
+              {t('upgradeBanner', { count: SOUNDS.filter((s) => !s.free).length, price: PRICE_LABEL })}
+            </Text>
           </Pressable>
         ) : null}
 
-        <TimerPanel stopAll={engine.stopAll} fadeOutAndStop={engine.fadeOutAndStop} />
+        <TimerPanel stopAll={engine.stopAll} fadeOutAndStop={engine.fadeOutAndStop} t={t} formatMinutes={i18n.formatMinutes} />
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            {activeCount > 0 ? `${activeCount}個のサウンドを再生中` : '音を選んでタップすると再生します'}
-          </Text>
+          <Text style={styles.footerText}>{activeCount > 0 ? i18n.formatPlayingCount(activeCount) : t('footerIdle')}</Text>
           {activeCount > 0 ? (
             <Pressable onPress={engine.stopAll} style={styles.stopAllButton}>
-              <Text style={styles.stopAllText}>全て停止</Text>
+              <Text style={styles.stopAllText}>{t('stopAll')}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -74,6 +91,8 @@ export default function App() {
       <PaywallModal
         visible={paywallVisible}
         purchasing={purchase.purchasing}
+        t={t}
+        priceLabel={PRICE_LABEL}
         onUnlock={async () => {
           const success = await purchase.unlock();
           if (success) setPaywallVisible(false);
@@ -100,6 +119,11 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: 2,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   title: {
     color: colors.text,

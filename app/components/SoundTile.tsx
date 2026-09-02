@@ -3,18 +3,22 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { colors, radius, spacing } from '../theme';
 import type { SoundDef } from '../sounds';
+import type { TranslationKey } from '../i18n';
 
 type Props = {
   sound: SoundDef;
+  label: string;
   active: boolean;
   volume: number;
   locked: boolean;
   onToggle: (id: string) => void;
   onVolumeChange: (id: string, value: number) => void;
   onLockedPress: () => void;
+  t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
 };
 
-export function SoundTile({ sound, active, volume, locked, onToggle, onVolumeChange, onLockedPress }: Props) {
+export function SoundTile({ sound, label, active, volume, locked, onToggle, onVolumeChange, onLockedPress, t }: Props) {
+  const action = t(active ? 'actionStop' : 'actionPlay');
   return (
     <View style={[styles.card, active && styles.cardActive, locked && styles.cardLocked]}>
       <Pressable
@@ -22,12 +26,12 @@ export function SoundTile({ sound, active, volume, locked, onToggle, onVolumeCha
         style={styles.pressable}
         accessibilityRole="button"
         accessibilityState={{ selected: active }}
-        accessibilityLabel={locked ? `${sound.label}は購入すると解放されます` : `${sound.label}を${active ? '停止' : '再生'}`}
+        accessibilityLabel={locked ? t('a11yLocked', { label }) : t('a11yToggle', { label, action })}
       >
         {locked ? <Text style={styles.lockBadge}>🔒</Text> : null}
         <Text style={styles.emoji}>{sound.emoji}</Text>
-        <Text style={[styles.label, active && styles.labelActive]}>{sound.label}</Text>
-        <Text style={styles.sub}>{sound.sub}</Text>
+        <Text style={[styles.label, active && styles.labelActive]}>{label}</Text>
+        {sound.sub !== label ? <Text style={styles.sub}>{sound.sub}</Text> : null}
       </Pressable>
       {active ? (
         <Slider
