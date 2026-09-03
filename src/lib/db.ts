@@ -196,20 +196,24 @@ async function seed() {
 
   const [{ count: facCount }] = await rawQuery<{ count: string }>('SELECT COUNT(*)::int as count FROM facilities');
   if (Number(facCount) === 0) {
+    // Real portfolio, as provided by the customer (2026-09). Addresses for
+    // the three pachinko halls were sourced from public web business
+    // listings (not directly confirmed by the customer) — worth double
+    // checking before relying on them for anything official.
     const facilities: [string, string, string, string, string][] = [
-      ['パチンコ店 帯広本店', 'pachinko', '北海道帯広市', '🎰', ''],
-      ['パチンコ店 音更店', 'pachinko', '北海道音更町', '🎰', ''],
-      ['パチンコ店 帯広西店', 'pachinko', '北海道帯広市', '🎰', ''],
-      ['マンション 帯広第一', 'mansion', '北海道帯広市', '🏢', ''],
-      ['マンション 音更グリーン', 'mansion', '北海道音更町', '🏢', ''],
-      ['マンション 帯広第二', 'mansion', '北海道帯広市', '🏢', ''],
-      ['戸建て住宅 帯広（庭付き）', 'house', '北海道帯広市', '🏡', '庭あり'],
-      ['戸建て住宅 音更（庭付き）', 'house', '北海道音更町', '🏡', '庭あり'],
-      ['空き地 帯広A', 'lot', '北海道帯広市', '🌾', ''],
-      ['空き地 音更B', 'lot', '北海道音更町', '🌾', ''],
-      ['倉庫 帯広', 'warehouse', '北海道帯広市', '🏭', ''],
-      ['倉庫 音更', 'warehouse', '北海道音更町', '🏭', ''],
-      ['本社', 'hq', '北海道帯広市', '🏬', ''],
+      ['オペラ', 'pachinko', '北海道帯広市西21条南4丁目3', '🎰', 'パチンコ店'],
+      ['ゴッサムシティ', 'pachinko', '北海道帯広市西2条南16丁目1-2', '🎰', 'パチンコ店（スロット専門）。上層階はホワイトパレス（マンション）'],
+      ['エルシティ', 'pachinko', '北海道河東郡音更町木野大通東11丁目1-4', '🎰', 'パチンコ店'],
+      ['ホワイトパレス', 'mansion', '北海道帯広市西2条南16丁目1-2', '🏢', 'ゴッサムシティと同建物・上層階'],
+      ['大通8丁目マンション', 'mansion', '北海道帯広市大通南八丁目1番地2、3番地2', '🏢', '共同住宅・店舗・事務所／SRC10階建・全19戸'],
+      ['ベルピア18', 'mansion', '北海道帯広市東一条南十八丁目7番地2、9番地2', '🏢', '一棟マンション／RC3階建・全12戸'],
+      ['わかばビル', 'commercial', '北海道帯広市西十六条南六丁目2番地5、2番地181', '🏬', '事務所・居宅／RC4階建。敷地内に戸建て2棟・ログハウス1棟を含む'],
+      ['生活市場パレット', 'commercial', '北海道帯広市西21条南3丁目17番地1〜5号', '🏬', '商業施設（複数テナント）／S造2階建、大型平面駐車場付き'],
+      ['ラジオシティ跡地', 'lot', '北海道帯広市西22条南3丁目21番11他1筆', '🌾', '敷地面積 約991.49坪'],
+      ['音更の空地（木野大通東）', 'lot', '北海道河東郡音更町木野大通東13丁目3番11、4番1', '🌾', '地積合計 約4018.71坪（約13,285㎡）'],
+      ['わかばビル敷地内 戸建てA', 'house', '北海道帯広市西十六条南六丁目（わかばビル敷地内）', '🏡', '庭付き戸建て。賃貸中'],
+      ['わかばビル敷地内 戸建てB', 'house', '北海道帯広市西十六条南六丁目（わかばビル敷地内）', '🏡', '庭付き戸建て。賃貸中'],
+      ['わかばビル敷地内 ログハウス', 'house', '北海道帯広市西十六条南六丁目（わかばビル敷地内）', '🏡', 'ログハウス。賃貸中'],
     ];
     for (const [name, type, address, icon, notes] of facilities) {
       await rawQuery(
@@ -398,168 +402,12 @@ async function seed() {
     }
   }
 
-  const [{ count: wrCount }] = await rawQuery<{ count: string }>('SELECT COUNT(*)::int as count FROM work_records');
-  if (Number(wrCount) === 0) {
-    await seedDemoWorkRecords();
-  }
-
   const [{ count: guideCount }] = await rawQuery<{ count: string }>(
     'SELECT COUNT(*)::int as count FROM reference_guides'
   );
   if (Number(guideCount) === 0) {
     await seedReferenceGuides();
   }
-}
-
-async function seedDemoWorkRecords() {
-  const facilities = await rawQuery<{ id: number; name: string }>('SELECT id, name FROM facilities');
-  const troubleTypes = await rawQuery<{ id: number; name: string }>('SELECT id, name FROM trouble_types');
-  const items = await rawQuery<{ id: number; name: string }>('SELECT id, name FROM items');
-  const vehicles = await rawQuery<{ id: number; name: string }>('SELECT id, name FROM vehicles');
-  const users = await rawQuery<{ id: number }>('SELECT id FROM users ORDER BY id');
-
-  const findFacility = (name: string) => facilities.find((f) => f.name === name)!.id;
-  const findTrouble = (name: string) => troubleTypes.find((t) => t.name === name)!.id;
-  const findItem = (name: string) => items.find((i) => i.name === name)!.id;
-  const findVehicle = (name: string) => vehicles.find((v) => v.name === name)!.id;
-
-  const staff1 = users[1]?.id ?? users[0].id;
-  const staff2 = users[2]?.id ?? users[0].id;
-
-  async function insertRecord(rec: {
-    facility_id: number;
-    trouble_type_id: number;
-    parent_id: number | null;
-    title: string;
-    description: string;
-    raw_transcript: string;
-    work_date: string;
-    assignee_id: number;
-    duration_minutes: number;
-    created_by: number;
-  }): Promise<number> {
-    const [{ id }] = await rawQuery<{ id: number }>(
-      `INSERT INTO work_records
-        (facility_id, trouble_type_id, parent_id, title, description, raw_transcript, work_date, assignee_id, duration_minutes, status, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'done',$10)
-       RETURNING id`,
-      [
-        rec.facility_id,
-        rec.trouble_type_id,
-        rec.parent_id,
-        rec.title,
-        rec.description,
-        rec.raw_transcript,
-        rec.work_date,
-        rec.assignee_id,
-        rec.duration_minutes,
-        rec.created_by,
-      ]
-    );
-    return id;
-  }
-  async function linkItem(recordId: number, itemId: number) {
-    await rawQuery('INSERT INTO work_record_items (work_record_id, item_id, quantity) VALUES ($1,$2,1)', [
-      recordId,
-      itemId,
-    ]);
-  }
-  async function linkVehicle(recordId: number, vehicleId: number) {
-    await rawQuery('INSERT INTO work_record_vehicles (work_record_id, vehicle_id) VALUES ($1,$2)', [
-      recordId,
-      vehicleId,
-    ]);
-  }
-
-  const r1 = await insertRecord({
-    facility_id: findFacility('マンション 帯広第一'),
-    trouble_type_id: findTrouble('舗装・アスファルト補修'),
-    parent_id: null,
-    title: '駐車場アスファルト陥没補修',
-    description: '駐車場出入口付近のアスファルトが陥没。常温合材で補修しタンパーで転圧。',
-    raw_transcript:
-      '駐車場の入り口のアスファルトが陥没していたので常温合材とコテとタンパーを使って補修しました。ほうきで掃除してから作業しました。',
-    work_date: '2026-05-12',
-    assignee_id: staff1,
-    duration_minutes: 90,
-    created_by: staff1,
-  });
-  for (const name of ['常温合材（補修材）', 'コテ', 'ほうき', 'タンパー（転圧機）']) {
-    await linkItem(r1, findItem(name));
-  }
-  await linkVehicle(r1, findVehicle('軽トラック'));
-
-  const r2 = await insertRecord({
-    facility_id: findFacility('マンション 音更グリーン'),
-    trouble_type_id: findTrouble('舗装・アスファルト補修'),
-    parent_id: r1,
-    title: '共用通路アスファルトひび割れ補修',
-    description: '通路のひび割れを常温合材で補修。範囲が狭いため大型工具は不要だった。',
-    raw_transcript:
-      '通路に細いひび割れがあったので常温合材とコテで簡単に補修しました。範囲が小さいので大きい工具は使いませんでした。',
-    work_date: '2026-06-03',
-    assignee_id: staff2,
-    duration_minutes: 40,
-    created_by: staff2,
-  });
-  for (const name of ['常温合材（補修材）', 'コテ']) {
-    await linkItem(r2, findItem(name));
-  }
-  await linkVehicle(r2, findVehicle('軽バン'));
-
-  const r3 = await insertRecord({
-    facility_id: findFacility('空き地 帯広A'),
-    trouble_type_id: findTrouble('除雪'),
-    parent_id: null,
-    title: '積雪後の空き地除雪対応',
-    description: '大雪後、隣地への雪の越境を防ぐためスノーダンプで除雪し融雪剤を散布。',
-    raw_transcript:
-      'まとまった雪が降ったのでスノーダンプと角スコップで除雪しました。凍結防止のために融雪剤も撒きました。',
-    work_date: '2026-01-20',
-    assignee_id: staff1,
-    duration_minutes: 120,
-    created_by: staff1,
-  });
-  for (const name of ['スノーダンプ', '角スコップ', '融雪剤']) {
-    await linkItem(r3, findItem(name));
-  }
-  await linkVehicle(r3, findVehicle('除雪車 1号車'));
-
-  const r4 = await insertRecord({
-    facility_id: findFacility('空き地 帯広A'),
-    trouble_type_id: findTrouble('草刈り・剪定'),
-    parent_id: null,
-    title: '夏季定期草刈り',
-    description: '空き地全体の草刈りを刈払機で実施。境界付近は鎌で仕上げ。',
-    raw_transcript:
-      '空き地の草が伸びていたので刈払機で全体を刈りました。境界のフェンス際は鎌で丁寧に仕上げました。',
-    work_date: '2026-07-15',
-    assignee_id: staff2,
-    duration_minutes: 150,
-    created_by: staff2,
-  });
-  for (const name of ['刈払機', '鎌']) {
-    await linkItem(r4, findItem(name));
-  }
-  await linkVehicle(r4, findVehicle('軽トラック'));
-
-  const r5 = await insertRecord({
-    facility_id: findFacility('マンション 帯広第一'),
-    trouble_type_id: findTrouble('水道トラブル'),
-    parent_id: null,
-    title: '共用部給水管からの水漏れ修理',
-    description: 'パイプレンチとシールテープで接続部を締め直し、水漏れ停止を確認。',
-    raw_transcript:
-      '共用部の給水管の接続部から水が漏れていたのでパイプレンチで締め直してシールテープを巻き直しました。',
-    work_date: '2026-03-08',
-    assignee_id: staff1,
-    duration_minutes: 60,
-    created_by: staff1,
-  });
-  for (const name of ['パイプレンチ', 'シールテープ', 'モンキーレンチ']) {
-    await linkItem(r5, findItem(name));
-  }
-  await linkVehicle(r5, findVehicle('軽バン'));
 }
 
 // General reference knowledge (not real recorded work): typical trouble
@@ -821,12 +669,23 @@ async function seedReferenceGuides() {
       vehicleNames: ['軽トラック'],
     },
 
-    // --- 倉庫 ---
+    // --- 商業施設（わかばビル・生活市場パレット等：複数テナントの事務所・店舗ビル） ---
     {
-      facility_type: 'warehouse',
+      facility_type: 'commercial',
+      trouble: '舗装・アスファルト補修',
+      title: '大型駐車場のアスファルト補修',
+      procedure: '来客用駐車場の凍上によるひび割れ・陥没箇所を常温合材で補修し、タンパーで転圧する。範囲が広いため区画ごとに順次対応する。',
+      caution_note: null,
+      min: 60,
+      max: 150,
+      itemNames: ['常温合材（補修材）', 'コテ', 'ほうき', 'タンパー（転圧機）'],
+      vehicleNames: ['2トン車'],
+    },
+    {
+      facility_type: 'commercial',
       trouble: '屋根修理',
-      title: '大型屋根・シャッターの点検補修',
-      procedure: '屋根の雨漏り箇所・シャッターの動作不良を点検し、防水シートとコーキングガンで補修する。',
+      title: '大型屋根の雨漏り点検・補修',
+      procedure: '雨漏り箇所を特定し、防水シートとコーキングガンで補修する。テナント天井への影響がないか併せて確認する。',
       caution_note: '大型屋根での作業は高所作業車を使い、単独作業を避ける。',
       min: 120,
       max: 240,
@@ -834,61 +693,48 @@ async function seedReferenceGuides() {
       vehicleNames: ['高所作業車'],
     },
     {
-      facility_type: 'warehouse',
-      trouble: '除雪',
-      title: '敷地・搬入口の除雪と屋根雪下ろし',
-      procedure: '搬入車両の動線を優先して除雪車で除雪する。屋根は積雪荷重による倒壊リスクがあるため、積雪量を定期的に確認し必要に応じて雪下ろしを行う。',
-      caution_note: '大型屋根の積雪荷重は建物への負担が大きいため、放置せず定期点検を行う。',
-      min: 120,
-      max: 180,
-      itemNames: ['スノーダンプ', '大型ブロワー'],
-      vehicleNames: ['除雪車 1号車', '4トン車'],
-    },
-    {
-      facility_type: 'warehouse',
+      facility_type: 'commercial',
       trouble: '電気トラブル',
-      title: '照明・シャッター電動部の点検',
-      procedure: 'テスターと検電器で電源系統を確認し、断線・接触不良を特定して補修する。',
+      title: 'テナント共用部・看板照明の電源トラブル',
+      procedure: 'テスターと検電器で通電を確認し、断線・接触不良箇所を絶縁ドライバーと圧着ペンチで補修する。テナントごとの契約範囲か共用部かを先に確認する。',
       caution_note: null,
       min: 30,
-      max: 60,
-      itemNames: ['テスター', '検電器'],
-      vehicleNames: ['軽バン'],
-    },
-
-    // --- 本社 ---
-    {
-      facility_type: 'hq',
-      trouble: '水道トラブル',
-      title: 'トイレ・給湯室の水漏れ',
-      procedure: '止水栓を閉めて漏水箇所を特定し、パイプレンチ・モンキーレンチで補修する。',
-      caution_note: null,
-      min: 30,
-      max: 60,
-      itemNames: ['モンキーレンチ', 'パイプレンチ', 'シールテープ'],
-      vehicleNames: ['軽バン'],
-    },
-    {
-      facility_type: 'hq',
-      trouble: '電気トラブル',
-      title: '照明・コンセント・OA機器の電源トラブル',
-      procedure: 'テスターと検電器で通電確認を行い、圧着ペンチで端子を補修する。',
-      caution_note: null,
-      min: 30,
-      max: 60,
-      itemNames: ['テスター', '検電器', '圧着ペンチ'],
-      vehicleNames: ['軽バン'],
-    },
-    {
-      facility_type: 'hq',
-      trouble: '除雪',
-      title: '玄関前・駐車場の除雪',
-      procedure: '来客・従業員の動線を優先してスノーダンプで除雪し、凍結しやすい場所に融雪剤を散布する。',
-      caution_note: null,
-      min: 60,
       max: 90,
+      itemNames: ['テスター', '絶縁ドライバー', '圧着ペンチ', '検電器'],
+      vehicleNames: ['軽バン'],
+    },
+    {
+      facility_type: 'commercial',
+      trouble: '水道トラブル',
+      title: 'テナント共用部トイレ・給湯設備の水漏れ',
+      procedure: '止水栓を閉めて漏水箇所を特定し、パイプレンチ・モンキーレンチで補修する。詰まりはドレンクリーナーで対応する。',
+      caution_note: null,
+      min: 30,
+      max: 90,
+      itemNames: ['モンキーレンチ', 'パイプレンチ', 'シールテープ', '電動ドレンクリーナー'],
+      vehicleNames: ['軽バン'],
+    },
+    {
+      facility_type: 'commercial',
+      trouble: '除雪',
+      title: '大型駐車場・テナント入口の除雪',
+      procedure: '来客動線とテナント搬入口を優先して除雪車で除雪し、凍結しやすい歩行部分に融雪剤を散布する。',
+      caution_note: null,
+      min: 90,
+      max: 180,
       itemNames: ['スノーダンプ', '角スコップ', '融雪剤'],
-      vehicleNames: ['軽トラック'],
+      vehicleNames: ['除雪車 1号車', '2トン車'],
+    },
+    {
+      facility_type: 'commercial',
+      trouble: '清掃・共用部',
+      title: '共用部清掃・電球交換',
+      procedure: 'テナント共用部・駐車場の清掃と、切れている照明の電球交換をまとめて行う。',
+      caution_note: null,
+      min: 30,
+      max: 60,
+      itemNames: ['ゴミ袋', '洗剤・モップ', 'LED電球（一般型）'],
+      vehicleNames: ['軽バン'],
     },
 
     // --- 施設種別を問わない一般共通 ---

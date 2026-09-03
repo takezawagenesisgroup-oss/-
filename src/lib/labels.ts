@@ -1,10 +1,9 @@
 export const FACILITY_TYPE_LABELS: Record<string, { label: string; icon: string }> = {
   pachinko: { label: 'パチンコ店', icon: '🎰' },
   mansion: { label: 'マンション', icon: '🏢' },
-  house: { label: '戸建て住宅', icon: '🏡' },
+  commercial: { label: '商業施設', icon: '🏬' },
+  house: { label: '戸建て・ログハウス', icon: '🏡' },
   lot: { label: '空き地', icon: '🌾' },
-  warehouse: { label: '倉庫', icon: '🏭' },
-  hq: { label: '本社', icon: '🏬' },
 };
 
 export function tierLabel(kind: 'tool' | 'supply', tier: number): string {
