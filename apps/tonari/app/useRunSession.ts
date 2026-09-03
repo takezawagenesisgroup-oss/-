@@ -231,7 +231,7 @@ export function useRunSession(onTrigger: (event: TriggerEvent) => void) {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       setPermissionDenied(true);
-      return;
+      return false;
     }
     setPermissionDenied(false);
     resetRefs();
@@ -258,7 +258,12 @@ export function useRunSession(onTrigger: (event: TriggerEvent) => void) {
         }
       }
     );
+    return true;
   }, [evaluate, onTrigger, resetRefs, stopTimers]);
+
+  // GPS開始後にwatchPositionAsyncが少なくとも1回位置を取得済みなら、それを返す。
+  // 天気連動機能が別途GPS取得をやり直さずに済むようにするため。
+  const getLastLocation = useCallback(() => lastLocationRef.current, []);
 
   const stop = useCallback(() => {
     if (state === 'running') finish();
@@ -280,6 +285,7 @@ export function useRunSession(onTrigger: (event: TriggerEvent) => void) {
     permissionDenied,
     startDemo,
     startGps,
+    getLastLocation,
     stop,
     reset,
   };

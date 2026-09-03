@@ -52,12 +52,16 @@ export default function App() {
   // リアルタイム天気連動: GPS開始時に現在地の天気を一度だけ取得し、スタートの
   // 声かけが終わった頃合いを見て天気コメントを追加する。取得に失敗しても
   // 通常の声かけには影響しない(weather.ts参照)。デモモードでは実行しない
-  // (実際の位置情報が無いため)。
+  // (実際の位置情報が無いため)。呼び出し元でGPS権限が確定してから呼ぶこと
+  // (権限確定前に呼ぶとgetCurrentPositionAsyncが失敗する)。
   async function announceWeatherIfEnabled() {
     if (!weatherEnabled) return;
     try {
-      const position = await Location.getCurrentPositionAsync({ accuracy: Location.LocationAccuracy.Balanced });
-      const weather = await fetchCurrentWeather(position.coords.latitude, position.coords.longitude);
+      // ランセッション側のwatchPositionAsyncがすでに位置を取得済みならそれを使い、
+      // 重複したGPS取得(バッテリー消費・取得待ち時間)を避ける。
+      const known = session.getLastLocation();
+      const position = known ?? (await Location.getCurrentPositionAsync({ accuracy: Location.LocationAccuracy.Balanced })).coords;
+      const weather = await fetchCurrentWeather(position.latitude, position.longitude);
       if (!weather) return;
       setTimeout(() => {
         voice.speakCustom(buildWeatherLine(weather, contentLocale));
@@ -67,9 +71,9 @@ export default function App() {
     }
   }
 
-  function handleStartGps() {
-    session.startGps();
-    announceWeatherIfEnabled();
+  async function handleStartGps() {
+    const granted = await session.startGps();
+    if (granted) announceWeatherIfEnabled();
   }
 
   const prevSessionStateRef = useRef(session.state);

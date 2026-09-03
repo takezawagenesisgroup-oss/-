@@ -21,10 +21,7 @@ export type Persona = {
   lines: Record<TriggerType, string[]>;
 };
 
-export const CATEGORY_LABEL: Record<PersonaCategory, string> = {
-  human: '人物',
-  animal: 'どうぶつ',
-};
+// カテゴリ表示名は app/i18n.ts の categoryHuman/categoryAnimal を参照(多言語対応のため)。
 
 // {km} {pace} {min} はプレースホルダー。speakLine() で実際の値に置換する。
 export const PERSONAS: Persona[] = [
