@@ -8,10 +8,10 @@ App Store Connect / Google Play Console にそのまま貼り付ける文言。�
 |---|---|
 | プライマリカテゴリ | ヘルスケア/フィットネス(または ライフスタイル) |
 | セカンダリカテゴリ | ライフスタイル |
-| 価格モデル | 無料(アプリ内課金 ¥480・非消耗型) |
+| 価格モデル | 無料(アプリ内課金: キャラ解放¥480・非消耗型 / プレミアムプラン¥480月額・自動更新サブスクリプション) |
 | 年齢制限 | 4+ / 全年齢(恋愛・扇情的表現なし、応援・気遣いのみの内容) |
 | 対応言語 | 日本語、English |
-| 使用データ | なし(位置情報・アカウント登録不要。凪と同じく「データ収集なし」で申告可能) |
+| 使用データ | 基本機能は位置情報・アカウント登録不要でデータ収集なし。ただし「AIと話すモード」でWeb版のマイク入力(音声入力)を使った場合のみ、音声がブラウザ提供元の音声認識サービスに送信される — App Privacy申告時に要注意(下記参照) |
 
 ## iOS App Store
 
@@ -44,8 +44,17 @@ App Store Connect / Google Play Console にそのまま貼り付ける文言。�
 ■ 音楽を止めない
 Spotifyなどの音楽を再生しながらでも、声と生活音はその上に重なって聞こえます。
 
-■ サブスクではなく、買い切り
-清楚系の声は無料。他の8キャラクターは、¥480の買い切りで一括解放できます。月額課金は一切ありません。
+■ 仕事中もそばに
+「仕事中」シチュエーションを選べば、会議前のひと息、締め切り前の肩ほぐし、コーヒー休憩の合図など、デスクワークに寄り添う一言も混ざります。
+
+■ 名前を呼んでもらえる(プレミアム)
+呼んでほしいニックネームを設定しておくと、応援のセリフに時々あなたの名前が混ざるようになります(設定は無料、実際に呼んでもらうにはプレミアムプランが必要)。
+
+■ AIと話せる(プレミアム・お試し版)
+気配の声を聴きながら、テキストや音声でAIに話しかけられるモードも用意しています(現在はお試し版)。
+
+■ キャラ解放は買い切り、AI機能はプレミアムプラン
+清楚系の声は無料。他の8キャラクターは¥480の買い切りで一括解放。「AIと話すモード」と「名前呼び機能」は、継続的なコストのかかる機能のため月額¥480のプレミアムプランとして提供しています。
 
 ■ こんな方に
 ・一人で勉強・作業していると集中が続かない方
@@ -77,8 +86,17 @@ From a 5-minute trial to 30 minutes, 1 hour, or 2 hours — for studying, workin
 ■ Doesn't fight your music
 Keep Spotify or your podcast running — the voice and ambience layer on top instead of stopping it.
 
-■ One-time purchase, not another subscription
-The Gentle voice is free. Unlock the other eight characters with a single ¥480 (about $3) purchase. No subscription, ever.
+■ There for your workday too
+Pick the "Work" situation for lines that fit desk work — a breath before a meeting, a shoulder-roll before a deadline, a coffee-break nudge.
+
+■ Get called by name (Premium)
+Set a nickname and cheer-up lines will sometimes call you by it (setting it is free; actually hearing it requires the Premium plan).
+
+■ Talk with AI (Premium, early beta)
+Listen to Kehai's voice while chatting with an AI by text or voice (currently an early beta).
+
+■ Characters are one-time, AI features are a subscription
+The Gentle voice is free. Unlock the other eight characters with a single ¥480 (about $3) purchase. "Talk with AI" and "name-calling" carry ongoing costs, so they're offered as a ¥480/month Premium plan instead.
 
 Built for anyone who works alone but doesn't want the room to feel empty.
 ```
@@ -100,10 +118,14 @@ Built for anyone who works alone but doesn't want the room to feel empty.
 
 ## App Privacy(データ収集の申告)
 
-凪と同じく、アカウント機能・位置情報・分析SDK・広告SDKを一切含まないため、両ストアとも **「データ収集なし」** で申告できる。
+**注意(AIと話すモード追加により変更): 単純な「データ収集なし」は申告できなくなった。** 基本機能(呼吸音・声かけ・シチュエーション・キャラ選択)はアカウント機能・位置情報・分析SDK・広告SDKを一切含まないため引き続き収集なし。ただし「AIと話すモード」でWeb版のマイク入力(音声入力)を使うと、ブラウザ標準の音声認識機能(Web Speech API)経由で音声データがブラウザ提供元(Google等)のサーバーに送信される。iOS/Androidネイティブ版では音声入力は未実装(テキスト入力のみ)のため、この項目は主にWeb版が対象。
 
 | 質問項目(Apple) | 回答 |
 |---|---|
-| 位置情報・連絡先・利用状況データの収集 | 収集しない |
+| 位置情報・連絡先の収集 | 収集しない |
+| 音声データの収集 | **Web版のマイク入力使用時のみ収集**(ブラウザの音声認識サービスに送信、文字起こし目的) |
+| 利用状況データの収集 | 収集しない |
 | 識別子(広告ID等)・診断データの収集 | 収集しない |
-| 総合結果 | **"Data Not Collected"** |
+| 総合結果 | 基本機能は "Data Not Collected"。ただしWeb版でマイク入力を提供する場合、App Store Connect側では「音声データを収集する場合がある」機能として個別申告が必要になる可能性が高いため、申請前に最新のガイドラインを確認すること |
+
+iOSネイティブアプリとして審査に出す場合、Web Speech APIはブラウザ機能であり厳密にはネイティブアプリの範囲外だが、アプリ内WebViewやReact Native Web経由でマイク機能を提供する構成である場合は、Appleの審査担当者から音声データの取り扱いについて追加説明を求められる可能性がある。ネイティブ版でマイク入力を正式に実装する際は、この節を実装内容に合わせて全面的に見直すこと。
