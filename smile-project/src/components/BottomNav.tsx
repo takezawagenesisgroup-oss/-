@@ -13,7 +13,7 @@ const TABS: TabDef[] = [
   { id: 'home', label: 'ホーム', icon: Home },
   { id: 'post', label: '投稿する', icon: Camera },
   { id: 'events', label: 'イベント', icon: PartyPopper },
-  { id: 'exchange', label: 'コイン交換', icon: Coins },
+  { id: 'exchange', label: 'ポイント交換', icon: Coins },
   { id: 'mypage', label: 'マイページ', icon: CalendarDays },
 ];
 

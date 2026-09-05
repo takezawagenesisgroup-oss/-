@@ -1,10 +1,12 @@
-import type { SmilePost } from '../types';
-import { APPROVALS_REQUIRED, APPROVAL_BONUS_COINS, CHECKLIST_ITEMS, STAMP_OPTIONS } from '../types';
+import { useState } from 'react';
+import type { EventPost } from '../types';
+import { findEventAction } from '../types';
 import { useStore } from '../data/store';
 import Avatar from './Avatar';
 import { isImageSrc } from '../utils/media';
 import { cn } from '@/lib/utils';
-import { Heart, Target } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Heart, Award } from 'lucide-react';
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -19,19 +21,21 @@ function timeAgo(iso: string): string {
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-export default function PostCard({ post }: { post: SmilePost }) {
-  const { currentUser, toggleApproval, colleagues, memberById } = useStore();
-  const isMine = post.userId === currentUser.id;
-  const myApproval = post.approvals.some((a) => a.userId === currentUser.id);
-  const remaining = Math.max(0, APPROVALS_REQUIRED - post.approvals.length);
-  const stamp = post.stampKey ? STAMP_OPTIONS.find((s) => s.key === post.stampKey) : undefined;
-  const buddies = (post.buddyIds ?? []).map((id) => memberById(id)).filter((m): m is NonNullable<typeof m> => Boolean(m));
+export default function PostCard({ post }: { post: EventPost }) {
+  const { currentUser, toggleLike, grantPoints } = useStore();
+  const [showGrantForm, setShowGrantForm] = useState(false);
+  const [grantComment, setGrantComment] = useState('');
 
-  function simulateColleagueApproval() {
-    const notYet = colleagues.filter((c) => !post.approvals.some((a) => a.userId === c.id));
-    if (notYet.length === 0) return;
-    const picked = notYet[Math.floor(Math.random() * notYet.length)];
-    toggleApproval(post.id, picked.id);
+  const isMine = post.userId === currentUser.id;
+  const iLiked = post.likes.includes(currentUser.id);
+  const action = findEventAction(post.actionKey);
+  const canGrant = currentUser.role === 'manager' && !isMine && !post.grant;
+
+  function handleGrant() {
+    if (!grantComment.trim()) return;
+    grantPoints(post.id, grantComment.trim());
+    setShowGrantForm(false);
+    setGrantComment('');
   }
 
   return (
@@ -44,101 +48,83 @@ export default function PostCard({ post }: { post: SmilePost }) {
           <p className="truncate text-sm font-semibold text-foreground">{post.userName}</p>
           <p className="text-[11px] text-muted-foreground">{timeAgo(post.createdAt)}</p>
         </div>
-        <span className="font-display shrink-0 text-xs font-bold text-coin">🪙 {post.score}</span>
+        {action && (
+          <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-primary">
+            {post.phase === 'prep' ? '事前編' : '当日編'}・{action.emoji} {action.label}
+          </span>
+        )}
       </div>
-
-      {post.missionTitle && (
-        <div className="mx-4 mb-2 flex w-fit items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-primary">
-          <Target className="size-3" />
-          「{post.missionTitle}」達成
-        </div>
-      )}
 
       <div className="relative flex items-center justify-center overflow-hidden bg-muted">
         {isImageSrc(post.photo) ? (
-          <img src={post.photo} alt="スマイル投稿" className="aspect-[4/5] w-full object-cover" />
+          <img src={post.photo} alt="イベント報告" className="aspect-[4/5] w-full object-cover" />
         ) : (
           <div className="flex aspect-[4/5] w-full items-center justify-center text-8xl">{post.photo}</div>
         )}
-        {post.prop && (
-          <div className="absolute left-2.5 top-2.5 max-w-[75%] rounded-2xl rounded-tl-sm bg-white/95 px-2.5 py-1.5 text-[11px] font-bold text-neutral-900 shadow-sm">
-            {post.prop}
-          </div>
-        )}
-        {stamp && (
-          <div
-            title={stamp.label}
-            className="absolute right-2.5 top-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-lg shadow-sm"
-          >
-            {stamp.emoji}
+        {action && (
+          <div className="absolute right-2.5 top-2.5 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold text-neutral-900 shadow-sm">
+            +{action.points}P
           </div>
         )}
       </div>
 
       <div className="px-4 pt-2.5">
         <div className="flex items-center justify-between">
-          {isMine ? (
-            <button
-              onClick={simulateColleagueApproval}
-              disabled={post.approvalBonusAwarded}
-              title="デモ用：タップすると同僚が承認した想定で進みます"
-              className="flex items-center gap-1.5 text-muted-foreground disabled:opacity-40"
-            >
-              <Heart className="size-6" strokeWidth={1.8} />
-            </button>
-          ) : (
-            <button
-              onClick={() => toggleApproval(post.id, currentUser.id)}
-              className={cn('transition-transform active:scale-90', myApproval ? 'text-story-2' : 'text-foreground')}
-            >
-              <Heart className="size-6" strokeWidth={1.8} fill={myApproval ? 'currentColor' : 'none'} />
-            </button>
-          )}
-          {post.approvalBonusAwarded && (
-            <span className="text-[11px] font-bold text-coin">🪙 +{APPROVAL_BONUS_COINS} GCボーナス獲得</span>
-          )}
+          <button
+            onClick={() => toggleLike(post.id)}
+            className={cn('transition-transform active:scale-90', iLiked ? 'text-story-2' : 'text-foreground')}
+          >
+            <Heart className="size-6" strokeWidth={1.8} fill={iLiked ? 'currentColor' : 'none'} />
+          </button>
+
+          {post.grant ? (
+            <span className="flex items-center gap-1 text-[11px] font-bold text-coin">
+              <Award className="size-3.5" />+{post.grant.points}P承認済み
+            </span>
+          ) : canGrant && !showGrantForm ? (
+            <Button onClick={() => setShowGrantForm(true)} size="sm" variant="coin">
+              ポイントを送る
+            </Button>
+          ) : isMine && !post.grant ? (
+            <span className="text-[11px] text-muted-foreground">ポイント承認待ち</span>
+          ) : null}
         </div>
 
-        <div className="mt-1.5 flex items-center gap-1">
-          <div className="flex -space-x-1.5">
-            {post.approvals.map((a) => (
-              <Avatar
-                key={a.userId}
-                src={a.avatar}
-                alt={a.userName}
-                className="h-4 w-4 rounded-full border border-card bg-secondary text-[9px]"
-              />
-            ))}
+        {post.likes.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{post.likes.length}件のいいね</p>}
+
+        {showGrantForm && (
+          <div className="mt-2 flex flex-col gap-2 rounded-xl border border-border bg-secondary/40 p-2.5">
+            <textarea
+              value={grantComment}
+              onChange={(e) => setGrantComment(e.target.value)}
+              placeholder="承認コメントを入力（必須）：例）お客様対応が素晴らしかったです！"
+              rows={2}
+              className="w-full resize-none rounded-lg border border-border bg-card p-2 text-xs text-foreground outline-none focus:border-primary"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <button onClick={() => setShowGrantForm(false)} className="text-xs text-muted-foreground">
+                キャンセル
+              </button>
+              <Button onClick={handleGrant} disabled={!grantComment.trim()} size="sm" variant="coin">
+                +{action?.points}P を承認して送る
+              </Button>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {post.approvals.length === 0
-              ? isMine
-                ? `承認待ち・あと${remaining}人`
-                : 'いいねしよう'
-              : `${post.approvals.length}/${APPROVALS_REQUIRED}人が承認`}
-          </p>
-        </div>
-
-        {post.comment && (
-          <p className="mt-1 text-sm leading-snug text-foreground">
-            <span className="font-semibold">{post.userName}</span> {post.comment}
-          </p>
         )}
 
-        <div className="mt-1.5 flex flex-wrap gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground">
-          {post.checklist.map((key) => {
-            const item = CHECKLIST_ITEMS.find((c) => c.key === key);
-            if (!item) return null;
-            return (
-              <span key={key}>
-                {item.emoji} {item.label}
-              </span>
-            );
-          })}
-        </div>
+        {post.grant && (
+          <div className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-coin/10 px-2.5 py-1.5 text-xs text-coin">
+            <Avatar src={post.grant.managerAvatar} alt={post.grant.managerName} className="h-4 w-4 rounded-full text-[9px]" />
+            <span>
+              {post.grant.managerName}（店長）「{post.grant.comment}」
+            </span>
+          </div>
+        )}
 
-        {buddies.length > 0 && (
-          <p className="mt-1 text-xs text-muted-foreground">🤝 {buddies.map((b) => b.name).join('、')} さんと一緒に</p>
+        {post.comment && (
+          <p className="mt-1.5 text-sm leading-snug text-foreground">
+            <span className="font-semibold">{post.userName}</span> {post.comment}
+          </p>
         )}
       </div>
     </div>

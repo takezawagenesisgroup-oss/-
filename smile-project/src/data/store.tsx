@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { EventAction, Member, Redemption, SmilePost } from '../types';
-import { APPROVALS_REQUIRED, APPROVAL_BONUS_COINS, CHECKLIST_ITEMS, EXCHANGE_ITEMS, SEASONAL_EVENTS } from '../types';
-import { buildSeedPosts, buildSeedEventActions, buildSeedRedemptions, ME, COLLEAGUES } from './seed';
+import type { EventPhase, EventPost, Member, Redemption } from '../types';
+import { EXCHANGE_ITEMS, currentSeasonalEvent, findEventAction } from '../types';
+import { buildSeedEventPosts, buildSeedRedemptions, ME, COLLEAGUES } from './seed';
 
-const POSTS_KEY = 'smile-project-posts-v3';
-const EVENTS_KEY = 'smile-project-events-v1';
-const REDEMPTIONS_KEY = 'smile-project-redemptions-v1';
+const POSTS_KEY = 'smile-project-event-posts-v1';
+const REDEMPTIONS_KEY = 'smile-project-redemptions-v2';
+const ROLE_KEY = 'smile-project-role-v1';
 
 function loadFromStorage<T>(key: string, build: () => T): T {
   try {
@@ -19,238 +19,174 @@ function loadFromStorage<T>(key: string, build: () => T): T {
   return seeded;
 }
 
-function hashString(value: string): number {
-  let h = 0;
-  for (let i = 0; i < value.length; i++) {
-    h = (h * 31 + value.charCodeAt(i)) >>> 0;
+function loadRole(): Member['role'] {
+  try {
+    const raw = localStorage.getItem(ROLE_KEY);
+    if (raw === 'staff' || raw === 'manager') return raw;
+  } catch {
+    // ignore
   }
-  return h;
-}
-
-function startOfWeek(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diffToMonday);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-export interface NewPostExtras {
-  missionTitle?: string;
-  prop?: string;
-  stampKey?: string;
-  buddyIds?: string[];
+  return ME.role;
 }
 
 export interface LeaderboardEntry {
   member: Member;
-  coins: number;
+  points: number;
   postCount: number;
-  approvalBonusCount: number;
 }
 
 interface StoreValue {
-  posts: SmilePost[];
-  eventActions: EventAction[];
+  posts: EventPost[];
   redemptions: Redemption[];
-  currentUser: typeof ME;
-  colleagues: typeof COLLEAGUES;
+  currentUser: Member;
+  colleagues: Member[];
   allMembers: Member[];
-  addPost: (checklist: string[], comment: string, photo: string, extras?: NewPostExtras) => void;
-  toggleApproval: (postId: string, approverId: string) => void;
-  totalCoins: (userId: string) => number;
-  approvalBonusCount: (userId: string) => number;
+  addPost: (phase: EventPhase, actionKey: string, comment: string, photo: string) => void;
+  toggleLike: (postId: string) => void;
+  grantPoints: (postId: string, comment: string) => boolean;
+  totalPoints: (userId: string) => number;
+  monthlyPoints: (userId: string, year: number, month: number) => number;
   monthlyScores: (userId: string, year: number, month: number) => Map<number, number>;
-  todaysBuddy: (userId: string) => Member;
-  weeklyLeaderboard: () => LeaderboardEntry[];
+  monthlyLeaderboard: () => LeaderboardEntry[];
   memberById: (id: string) => Member | undefined;
-  eventParticipants: (eventKey: string) => EventAction[];
-  hasJoinedEvent: (eventKey: string, userId: string) => boolean;
-  eventLeader: (eventKey: string) => EventAction | undefined;
-  joinEvent: (eventKey: string) => void;
-  volunteerAsLeader: (eventKey: string) => void;
+  toggleRole: () => void;
   redeem: (itemKey: string) => boolean;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [posts, setPosts] = useState<SmilePost[]>(() => loadFromStorage(POSTS_KEY, buildSeedPosts));
-  const [eventActions, setEventActions] = useState<EventAction[]>(() => loadFromStorage(EVENTS_KEY, buildSeedEventActions));
+  const [posts, setPosts] = useState<EventPost[]>(() => loadFromStorage(POSTS_KEY, buildSeedEventPosts));
   const [redemptions, setRedemptions] = useState<Redemption[]>(() => loadFromStorage(REDEMPTIONS_KEY, buildSeedRedemptions));
-  const allMembers = useMemo(() => [ME, ...COLLEAGUES], []);
+  const [role, setRole] = useState<Member['role']>(loadRole);
+  const allMembers = useMemo(() => [{ ...ME, role }, ...COLLEAGUES], [role]);
+  const currentUser = allMembers[0];
 
   useEffect(() => {
     localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
   }, [posts]);
   useEffect(() => {
-    localStorage.setItem(EVENTS_KEY, JSON.stringify(eventActions));
-  }, [eventActions]);
-  useEffect(() => {
     localStorage.setItem(REDEMPTIONS_KEY, JSON.stringify(redemptions));
   }, [redemptions]);
+  useEffect(() => {
+    localStorage.setItem(ROLE_KEY, role);
+  }, [role]);
 
   const value = useMemo<StoreValue>(() => {
     function memberById(id: string) {
       return allMembers.find((m) => m.id === id);
     }
 
-    function addPost(checklist: string[], comment: string, photo: string, extras?: NewPostExtras) {
-      const baseScore = checklist.reduce((sum, key) => {
-        const item = CHECKLIST_ITEMS.find((c) => c.key === key);
-        return sum + (item ? item.points : 0);
-      }, 0);
-      const missionBonus = extras?.missionTitle ? 15 : 0;
-      const newPost: SmilePost = {
+    function addPost(phase: EventPhase, actionKey: string, comment: string, photo: string) {
+      const newPost: EventPost = {
         id: `p${Date.now()}`,
-        userId: ME.id,
-        userName: ME.name,
-        avatar: ME.avatar,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        avatar: currentUser.avatar,
+        eventKey: currentSeasonalEvent(new Date()).key,
+        phase,
+        actionKey,
         photo,
-        checklist,
-        score: baseScore + missionBonus,
         comment,
         createdAt: new Date().toISOString(),
-        approvals: [],
-        approvalBonusAwarded: false,
-        ...extras,
+        likes: [],
       };
       setPosts((prev) => [newPost, ...prev]);
     }
 
-    function toggleApproval(postId: string, approverId: string) {
-      const approver = allMembers.find((m) => m.id === approverId);
-      if (!approver) return;
+    function toggleLike(postId: string) {
       setPosts((prev) =>
         prev.map((post) => {
           if (post.id !== postId) return post;
-          const already = post.approvals.some((a) => a.userId === approverId);
-          const approvals = already
-            ? post.approvals.filter((a) => a.userId !== approverId)
-            : [...post.approvals, { userId: approver.id, userName: approver.name, avatar: approver.avatar, approvedAt: new Date().toISOString() }];
-          return {
-            ...post,
-            approvals,
-            approvalBonusAwarded: post.approvalBonusAwarded || approvals.length >= APPROVALS_REQUIRED,
-          };
+          const already = post.likes.includes(currentUser.id);
+          const likes = already ? post.likes.filter((id) => id !== currentUser.id) : [...post.likes, currentUser.id];
+          return { ...post, likes };
         }),
       );
     }
 
-    function totalCoins(userId: string) {
-      const fromPosts = posts
-        .filter((p) => p.userId === userId)
-        .reduce((sum, p) => sum + p.score + (p.approvalBonusAwarded ? APPROVAL_BONUS_COINS : 0), 0);
-      const fromEvents = eventActions.filter((e) => e.userId === userId).reduce((sum, e) => sum + e.coins, 0);
-      const spent = redemptions.filter((r) => r.userId === userId).reduce((sum, r) => sum + r.cost, 0);
-      return fromPosts + fromEvents - spent;
+    function grantPoints(postId: string, comment: string): boolean {
+      if (currentUser.role !== 'manager') return false;
+      const post = posts.find((p) => p.id === postId);
+      if (!post || post.grant || post.userId === currentUser.id) return false;
+      const action = findEventAction(post.actionKey);
+      if (!action) return false;
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                grant: {
+                  managerId: currentUser.id,
+                  managerName: currentUser.name,
+                  managerAvatar: currentUser.avatar,
+                  comment,
+                  points: action.points,
+                  grantedAt: new Date().toISOString(),
+                },
+              }
+            : p,
+        ),
+      );
+      return true;
     }
 
-    function approvalBonusCount(userId: string) {
-      return posts.filter((p) => p.userId === userId && p.approvalBonusAwarded).length;
+    function totalPoints(userId: string) {
+      const earned = posts.filter((p) => p.userId === userId && p.grant).reduce((sum, p) => sum + (p.grant?.points ?? 0), 0);
+      const spent = redemptions.filter((r) => r.userId === userId).reduce((sum, r) => sum + r.cost, 0);
+      return earned - spent;
+    }
+
+    function monthlyPoints(userId: string, year: number, month: number) {
+      return posts
+        .filter((p) => p.userId === userId && p.grant)
+        .filter((p) => {
+          const d = new Date(p.grant!.grantedAt);
+          return d.getFullYear() === year && d.getMonth() === month;
+        })
+        .reduce((sum, p) => sum + (p.grant?.points ?? 0), 0);
     }
 
     function monthlyScores(userId: string, year: number, month: number) {
       const map = new Map<number, number>();
       posts
-        .filter((p) => p.userId === userId)
+        .filter((p) => p.userId === userId && p.grant)
         .forEach((p) => {
-          const d = new Date(p.createdAt);
+          const d = new Date(p.grant!.grantedAt);
           if (d.getFullYear() === year && d.getMonth() === month) {
             const day = d.getDate();
-            const coins = p.score + (p.approvalBonusAwarded ? APPROVAL_BONUS_COINS : 0);
-            map.set(day, (map.get(day) ?? 0) + coins);
+            map.set(day, (map.get(day) ?? 0) + (p.grant?.points ?? 0));
           }
         });
       return map;
     }
 
-    function todaysBuddy(userId: string): Member {
-      const dateKey = new Date().toISOString().slice(0, 10);
-      const pool = allMembers.filter((m) => m.id !== userId);
-      const idx = hashString(dateKey + userId) % pool.length;
-      return pool[idx];
-    }
-
-    function weeklyLeaderboard(): LeaderboardEntry[] {
-      const monday = startOfWeek(new Date());
-      const nextMonday = new Date(monday);
-      nextMonday.setDate(monday.getDate() + 7);
+    function monthlyLeaderboard(): LeaderboardEntry[] {
+      const now = new Date();
       return allMembers
         .map((member) => {
           const memberPosts = posts.filter((p) => {
-            if (p.userId !== member.id) return false;
-            const created = new Date(p.createdAt);
-            return created >= monday && created < nextMonday;
+            if (p.userId !== member.id || !p.grant) return false;
+            const d = new Date(p.grant.grantedAt);
+            return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
           });
-          const coins = memberPosts.reduce((sum, p) => sum + p.score + (p.approvalBonusAwarded ? APPROVAL_BONUS_COINS : 0), 0);
-          return {
-            member,
-            coins,
-            postCount: memberPosts.length,
-            approvalBonusCount: memberPosts.filter((p) => p.approvalBonusAwarded).length,
-          };
+          const points = memberPosts.reduce((sum, p) => sum + (p.grant?.points ?? 0), 0);
+          return { member, points, postCount: memberPosts.length };
         })
-        .sort((a, b) => b.coins - a.coins);
+        .sort((a, b) => b.points - a.points);
     }
 
-    function eventParticipants(eventKey: string) {
-      return eventActions.filter((e) => e.eventKey === eventKey);
-    }
-
-    function hasJoinedEvent(eventKey: string, userId: string) {
-      return eventActions.some((e) => e.eventKey === eventKey && e.userId === userId);
-    }
-
-    function eventLeader(eventKey: string) {
-      return eventActions.find((e) => e.eventKey === eventKey && e.role === 'leader');
-    }
-
-    function joinEvent(eventKey: string) {
-      if (hasJoinedEvent(eventKey, ME.id)) return;
-      const event = SEASONAL_EVENTS.find((e) => e.key === eventKey);
-      if (!event) return;
-      const action: EventAction = {
-        id: `ev${Date.now()}`,
-        userId: ME.id,
-        userName: ME.name,
-        avatar: ME.avatar,
-        eventKey,
-        role: 'participant',
-        coins: event.participateCoins,
-        createdAt: new Date().toISOString(),
-      };
-      setEventActions((prev) => [...prev, action]);
-    }
-
-    function volunteerAsLeader(eventKey: string) {
-      if (eventLeader(eventKey)) return;
-      const event = SEASONAL_EVENTS.find((e) => e.key === eventKey);
-      if (!event) return;
-      setEventActions((prev) => {
-        const withoutMyParticipation = prev.filter((e) => !(e.eventKey === eventKey && e.userId === ME.id));
-        const action: EventAction = {
-          id: `ev${Date.now()}`,
-          userId: ME.id,
-          userName: ME.name,
-          avatar: ME.avatar,
-          eventKey,
-          role: 'leader',
-          coins: event.leaderCoins,
-          createdAt: new Date().toISOString(),
-        };
-        return [...withoutMyParticipation, action];
-      });
+    function toggleRole() {
+      setRole((prev) => (prev === 'staff' ? 'manager' : 'staff'));
     }
 
     function redeem(itemKey: string): boolean {
       const item = EXCHANGE_ITEMS.find((i) => i.key === itemKey);
       if (!item) return false;
-      if (totalCoins(ME.id) < item.cost) return false;
+      if (totalPoints(currentUser.id) < item.cost) return false;
       const redemption: Redemption = {
         id: `rd${Date.now()}`,
-        userId: ME.id,
+        userId: currentUser.id,
         itemKey: item.key,
         label: item.label,
         emoji: item.emoji,
@@ -263,27 +199,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     return {
       posts,
-      eventActions,
       redemptions,
-      currentUser: ME,
+      currentUser,
       colleagues: COLLEAGUES,
       allMembers,
       addPost,
-      toggleApproval,
-      totalCoins,
-      approvalBonusCount,
+      toggleLike,
+      grantPoints,
+      totalPoints,
+      monthlyPoints,
       monthlyScores,
-      todaysBuddy,
-      weeklyLeaderboard,
+      monthlyLeaderboard,
       memberById,
-      eventParticipants,
-      hasJoinedEvent,
-      eventLeader,
-      joinEvent,
-      volunteerAsLeader,
+      toggleRole,
       redeem,
     };
-  }, [posts, eventActions, redemptions, allMembers]);
+  }, [posts, redemptions, allMembers, currentUser]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

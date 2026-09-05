@@ -1,22 +1,39 @@
 import { useStore } from '../data/store';
 import Avatar from '../components/Avatar';
-import { SEASONAL_EVENTS, currentSeasonalEvent } from '../types';
+import { SEASONAL_EVENTS, POINT_LIMITS, currentSeasonalEvent, eventActionsFor } from '../types';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Crown, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
+function ActionList({ phase, title }: { phase: 'prep' | 'day'; title: string }) {
+  const items = eventActionsFor(phase);
+  const subtotal = items.reduce((sum, i) => sum + i.points, 0);
+  return (
+    <div className="rounded-xl border border-border p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <span className="text-xs text-muted-foreground">小計 {subtotal}P</span>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {items.map((item) => (
+          <div key={item.key} className="flex items-center gap-2 text-xs">
+            <span className="text-base">{item.emoji}</span>
+            <span className="flex-1 text-foreground">{item.label}</span>
+            <span className="font-display font-bold text-coin">+{item.points}P</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Events() {
-  const { currentUser, eventParticipants, hasJoinedEvent, eventLeader, joinEvent, volunteerAsLeader, weeklyLeaderboard } = useStore();
+  const { currentUser, monthlyLeaderboard } = useStore();
   const current = currentSeasonalEvent(new Date());
-  const leader = eventLeader(current.key);
-  const participants = eventParticipants(current.key).filter((p) => p.role === 'participant');
-  const iJoined = hasJoinedEvent(current.key, currentUser.id);
-  const iAmLeader = leader?.userId === currentUser.id;
-  const entries = weeklyLeaderboard();
+  const entries = monthlyLeaderboard();
 
   return (
     <div className="mx-auto max-w-md px-4 py-4">
@@ -30,48 +47,35 @@ export default function Events() {
           <Sparkles className="size-3" />
           勝手に身につくスキル：{current.skillTag}
         </Badge>
-
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <Button onClick={() => joinEvent(current.key)} disabled={iJoined} variant={iJoined ? 'coin' : 'default'} className="w-full">
-            {iJoined ? '✓ 参加登録済み' : `参加する（+${current.participateCoins} GC）`}
-          </Button>
-          <Button
-            onClick={() => volunteerAsLeader(current.key)}
-            disabled={Boolean(leader)}
-            variant={iAmLeader ? 'coin' : 'outline'}
-            className={cn('w-full', leader && !iAmLeader && 'text-muted-foreground')}
-          >
-            {iAmLeader ? (
-              <>
-                <Crown className="size-3.5" />
-                あなたがリーダー
-              </>
-            ) : leader ? (
-              `リーダー：${leader.userName}`
-            ) : (
-              `リーダーに挙手（+${current.leaderCoins} GC）`
-            )}
-          </Button>
-        </div>
-
-        {(participants.length > 0 || leader) && (
-          <div className="mt-3 flex items-center gap-1.5 rounded-xl bg-card px-3 py-2">
-            <div className="flex -space-x-2">
-              {leader && <Avatar src={leader.avatar} alt={leader.userName} className="h-6 w-6 rounded-full border-2 border-card bg-coin/30 text-xs" />}
-              {participants.slice(0, 5).map((p) => (
-                <Avatar key={p.id} src={p.avatar} alt={p.userName} className="h-6 w-6 rounded-full border-2 border-card bg-secondary text-xs" />
-              ))}
-            </div>
-            <span className="text-[11px] text-muted-foreground">
-              {leader ? `${leader.userName}（リーダー）ほか` : ''}
-              {participants.length}人が参加中
-            </span>
-          </div>
-        )}
       </div>
 
       <div className="mb-3 mt-4 flex items-center gap-2">
         <span className="h-2 w-2 rounded-full bg-emerald-500" />
+        <p className="text-sm font-semibold text-foreground">報告して獲得できるポイント</p>
+      </div>
+      <p className="mb-3 text-xs text-muted-foreground">「投稿する」から報告し、店長・上長の承認でポイントが付与されます</p>
+      <div className="flex flex-col gap-2">
+        <ActionList phase="prep" title="事前編（準備）" />
+        <ActionList phase="day" title="当日編" />
+      </div>
+
+      <Card className="mt-4 flex-row items-center justify-between p-3 text-center">
+        <div className="flex-1">
+          <p className="font-display text-sm font-bold text-foreground">{POINT_LIMITS.daily}P</p>
+          <p className="text-[10px] text-muted-foreground">1日の目安</p>
+        </div>
+        <div className="flex-1 border-x border-border">
+          <p className="font-display text-sm font-bold text-foreground">{POINT_LIMITS.monthly.toLocaleString()}P</p>
+          <p className="text-[10px] text-muted-foreground">月間上限</p>
+        </div>
+        <div className="flex-1">
+          <p className="font-display text-sm font-bold text-foreground">{POINT_LIMITS.annual.toLocaleString()}P</p>
+          <p className="text-[10px] text-muted-foreground">年間目安</p>
+        </div>
+      </Card>
+
+      <div className="mb-3 mt-5 flex items-center gap-2">
+        <span className="h-2 w-2 rounded-full bg-primary" />
         <p className="text-sm font-semibold text-foreground">年間ロードマップ（四季の成長プロジェクト）</p>
       </div>
       <div className="flex flex-col gap-2">
@@ -88,21 +92,18 @@ export default function Events() {
                 {isCurrent && <Badge>開催中</Badge>}
               </div>
               <p className="text-xs text-muted-foreground">{ev.description}</p>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <Badge variant="secondary">💡 {ev.skillTag}</Badge>
-                <Badge variant="success">参加 +{ev.participateCoins} GC</Badge>
-                <Badge variant="coin">リーダー +{ev.leaderCoins} GC</Badge>
-              </div>
+              <Badge variant="secondary" className="w-fit">
+                💡 {ev.skillTag}
+              </Badge>
             </Card>
           );
         })}
       </div>
 
       <div className="mb-3 mt-5 flex items-center gap-2">
-        <span className="h-2 w-2 rounded-full bg-primary" />
-        <p className="text-sm font-semibold text-foreground">週間コインランキング</p>
+        <span className="h-2 w-2 rounded-full bg-coin" />
+        <p className="text-sm font-semibold text-foreground">今月のポイントランキング</p>
       </div>
-      <p className="mb-3 text-xs text-muted-foreground">今週（月〜日）の獲得Genesisコイン順</p>
       <div className="flex flex-col gap-2">
         {entries.map((entry, idx) => {
           const isMe = entry.member.id === currentUser.id;
@@ -113,11 +114,12 @@ export default function Events() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-foreground">
                   {entry.member.name}
+                  {entry.member.role === 'manager' && <span className="ml-1 text-xs font-normal text-muted-foreground">（店長）</span>}
                   {isMe && <span className="ml-1 text-xs font-normal text-primary">（自分）</span>}
                 </p>
-                <p className="text-xs text-muted-foreground">投稿{entry.postCount}件</p>
+                <p className="text-xs text-muted-foreground">承認{entry.postCount}件</p>
               </div>
-              <p className="font-display shrink-0 text-lg font-bold text-primary">{entry.coins} GC</p>
+              <p className="font-display shrink-0 text-lg font-bold text-coin">{entry.points}P</p>
             </Card>
           );
         })}

@@ -1,37 +1,36 @@
 import { useState } from 'react';
 import { useStore } from '../data/store';
 import Avatar from '../components/Avatar';
-import { APPROVAL_BONUS_COINS, SEASONAL_EVENTS } from '../types';
 import type { Tab } from '../components/BottomNav';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, Coins } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Coins, RefreshCw } from 'lucide-react';
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
 function stampStyle(score: number): string {
   if (score === 0) return '';
-  if (score >= 100) return 'bg-primary text-primary-foreground';
-  if (score >= 60) return 'bg-secondary text-primary';
+  if (score >= 500) return 'bg-primary text-primary-foreground';
+  if (score >= 200) return 'bg-secondary text-primary';
   return 'bg-coin/20 text-coin';
 }
 
 interface ActivityEntry {
   id: string;
   label: string;
-  coins: number;
+  points: number;
   createdAt: string;
 }
 
 export default function MyPage({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
-  const { currentUser, totalCoins, monthlyScores, posts, eventActions } = useStore();
+  const { currentUser, totalPoints, monthlyScores, posts, redemptions, toggleRole } = useStore();
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
 
   const scores = monthlyScores(currentUser.id, viewYear, viewMonth);
   const monthTotal = [...scores.values()].reduce((a, b) => a + b, 0);
-  const daysPosted = scores.size;
+  const daysWithPoints = scores.size;
 
   const firstWeekday = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
@@ -48,24 +47,21 @@ export default function MyPage({ onNavigate }: { onNavigate: (tab: Tab) => void 
   const myPosts = posts.filter((p) => p.userId === currentUser.id);
   const activity: ActivityEntry[] = [
     ...myPosts
-      .filter((p) => p.approvalBonusAwarded)
+      .filter((p) => p.grant)
       .map((p) => ({
-        id: `bonus-${p.id}`,
-        label: `${new Date(p.createdAt).getMonth() + 1}月${new Date(p.createdAt).getDate()}日のスマイル承認ボーナス`,
-        coins: APPROVAL_BONUS_COINS,
-        createdAt: p.createdAt,
+        id: `grant-${p.id}`,
+        label: `${new Date(p.grant!.grantedAt).getMonth() + 1}月${new Date(p.grant!.grantedAt).getDate()}日：${p.grant!.managerName}さんが承認「${p.grant!.comment}」`,
+        points: p.grant!.points,
+        createdAt: p.grant!.grantedAt,
       })),
-    ...eventActions
-      .filter((e) => e.userId === currentUser.id)
-      .map((e) => {
-        const ev = SEASONAL_EVENTS.find((s) => s.key === e.eventKey);
-        return {
-          id: e.id,
-          label: `${ev?.emoji ?? '🎉'} ${ev?.title ?? e.eventKey}${e.role === 'leader' ? '（リーダー）' : '（参加）'}`,
-          coins: e.coins,
-          createdAt: e.createdAt,
-        };
-      }),
+    ...redemptions
+      .filter((r) => r.userId === currentUser.id)
+      .map((r) => ({
+        id: `redeem-${r.id}`,
+        label: `${r.emoji} ${r.label}と交換`,
+        points: -r.cost,
+        createdAt: r.createdAt,
+      })),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
@@ -76,8 +72,13 @@ export default function MyPage({ onNavigate }: { onNavigate: (tab: Tab) => void 
             <Avatar src={currentUser.avatar} alt={currentUser.name} className="h-14 w-14 rounded-full border-2 border-card bg-secondary text-3xl" />
           </span>
           <div>
-            <p className="text-sm text-muted-foreground">{currentUser.name}</p>
-            <p className="font-display text-2xl font-bold text-foreground">🪙 {totalCoins(currentUser.id)} GC</p>
+            <p className="text-sm text-muted-foreground">
+              {currentUser.name}
+              <span className="ml-1.5 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-primary">
+                {currentUser.role === 'manager' ? '店長・上長' : 'スタッフ'}
+              </span>
+            </p>
+            <p className="font-display text-2xl font-bold text-foreground">✨ {totalPoints(currentUser.id)} P</p>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2 text-center">
@@ -87,10 +88,18 @@ export default function MyPage({ onNavigate }: { onNavigate: (tab: Tab) => void 
           </div>
           <button onClick={() => onNavigate('exchange')} className="flex flex-col items-center justify-center gap-0.5 rounded-xl bg-coin py-2 text-coin-foreground active:scale-95">
             <Coins className="size-4" />
-            <p className="text-[11px] font-semibold">コインを使う</p>
+            <p className="text-[11px] font-semibold">ポイントを使う</p>
           </button>
         </div>
       </div>
+
+      <button
+        onClick={toggleRole}
+        className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border py-2 text-xs text-muted-foreground active:scale-95"
+      >
+        <RefreshCw className="size-3.5" />
+        🔧 デモ用：表示モードを「{currentUser.role === 'manager' ? 'スタッフ' : '店長・上長'}」に切り替える
+      </button>
 
       <Card className="mt-4 p-4">
         <div className="flex items-center justify-between">
@@ -98,7 +107,7 @@ export default function MyPage({ onNavigate }: { onNavigate: (tab: Tab) => void 
             <ChevronLeft className="size-4" />
           </button>
           <p className="text-sm font-semibold text-foreground">
-            {viewYear}年{viewMonth + 1}月のスタンプ
+            {viewYear}年{viewMonth + 1}月のポイント獲得
           </p>
           <button onClick={() => changeMonth(1)} className="rounded-full p-1 text-muted-foreground active:scale-95">
             <ChevronRight className="size-4" />
@@ -136,21 +145,30 @@ export default function MyPage({ onNavigate }: { onNavigate: (tab: Tab) => void 
         </div>
 
         <div className="flex items-center justify-between rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
-          <span>今月の投稿日数：{daysPosted}日</span>
-          <span className="font-semibold text-primary">今月の合計：🪙 {monthTotal} GC</span>
+          <span>今月の承認日数：{daysWithPoints}日</span>
+          <span className="font-semibold text-primary">今月の合計：✨ {monthTotal} P</span>
         </div>
       </Card>
 
       <Card className="mt-4 p-4">
-        <p className="text-sm font-semibold text-foreground">🪙 最近のコイン獲得</p>
+        <p className="text-sm font-semibold text-foreground">✨ 最近のポイント履歴</p>
         {activity.length === 0 ? (
-          <p className="py-4 text-center text-xs text-muted-foreground">まだ実績はありません。投稿やイベント参加でコインを貯めましょう！</p>
+          <p className="py-4 text-center text-xs text-muted-foreground">まだ実績はありません。イベント報告で承認を集めましょう！</p>
         ) : (
           <div className="flex flex-col gap-2">
             {activity.slice(0, 6).map((a) => (
-              <div key={a.id} className="flex items-center justify-between rounded-xl bg-coin/10 px-3 py-2 text-xs text-coin">
-                <span>{a.label}</span>
-                <span className="font-bold">+{a.coins} GC</span>
+              <div
+                key={a.id}
+                className={cn(
+                  'flex items-center justify-between rounded-xl px-3 py-2 text-xs',
+                  a.points >= 0 ? 'bg-coin/10 text-coin' : 'bg-muted text-muted-foreground',
+                )}
+              >
+                <span className="truncate pr-2">{a.label}</span>
+                <span className="shrink-0 font-bold">
+                  {a.points >= 0 ? '+' : ''}
+                  {a.points} P
+                </span>
               </div>
             ))}
           </div>

@@ -9,11 +9,11 @@ import Exchange from './pages/Exchange';
 import MyPage from './pages/MyPage';
 
 const TITLES: Record<Tab, { title: string; subtitle: string }> = {
-  home: { title: 'スマイルプロジェクト', subtitle: '今日も1分、笑顔をシェアしよう' },
-  post: { title: 'スマイル投稿', subtitle: '自己採点して仲間に共有' },
-  events: { title: 'イベント', subtitle: '四季の成長プロジェクト＆週間ランキング' },
-  exchange: { title: 'コイン交換', subtitle: 'Genesisコインをご褒美に交換しよう' },
-  mypage: { title: 'マイページ', subtitle: 'コインとスタンプの記録' },
+  home: { title: 'スマイルプロジェクト', subtitle: '四季のイベントを写真でシェアしよう' },
+  post: { title: 'イベント報告', subtitle: '事前準備・当日の様子を投稿' },
+  events: { title: 'イベント', subtitle: '四季の成長プロジェクト＆ポイントランキング' },
+  exchange: { title: 'ポイント交換', subtitle: 'ためたポイントをご褒美に交換しよう' },
+  mypage: { title: 'マイページ', subtitle: 'ポイントの記録' },
 };
 
 function App() {
