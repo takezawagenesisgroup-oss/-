@@ -1,47 +1,65 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 1000" font-family="'IPAGothic','Noto Sans JP',sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1017 1102" font-family="'IPAGothic','Noto Sans JP',sans-serif">
   <style>
     .lbl { font-size: 15px; fill: #1a202c; }
     .lbl-small { font-size: 12px; fill: #4a5568; }
     .lbl-red { font-size: 14px; fill: #c53030; font-weight: bold; }
+    .lbl-purple { font-size: 14px; fill: #6b4fa0; font-weight: bold; }
   </style>
-  <rect x="0" y="0" width="640" height="1000" fill="#fafaf7"/>
-  <text x="320.0" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a202c">
-    木野温泉 半径500m規制円と対象地(木野大通東13丁目)の位置関係(概算)
+  <rect x="0" y="0" width="1017" height="1102" fill="#fafaf7"/>
+  <text x="508.5" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a202c">
+    木野温泉・病院候補の500m円と対象地(木野大通東13丁目)の位置関係(概算)
   </text>
 
-  <!-- 500m規制円 -->
-  <circle cx="292.5" cy="393.0" r="425.0"
+  <!-- 500m規制円: 健康ハウス木野温泉 -->
+  <circle cx="558.0" cy="764.5" r="225.0"
           fill="#e53e3e" fill-opacity="0.10" stroke="#c53030" stroke-width="2" stroke-dasharray="6,4"/>
-  <text x="526.2" y="159.2" class="lbl-red">
+  <text x="681.8" y="640.8" class="lbl-red">
     500m規制円(推定)
   </text>
 
+  <!-- 500m円(候補・未確認): 帯広徳洲会病院 -->
+  <circle cx="343.0" cy="344.6" r="225.0"
+          fill="#6b4fa0" fill-opacity="0.08" stroke="#6b4fa0" stroke-width="2" stroke-dasharray="3,5"/>
+  <text x="140.5" y="220.8" class="lbl-purple">
+    500m円(未確認・候補)
+  </text>
+
   <!-- 対象地 概形矩形(面積等価) -->
-  <rect x="359.0" y="-345.8"
-        width="36.2" height="261.8"
+  <rect x="593.2" y="373.4"
+        width="19.2" height="138.6"
         fill="#2b6cb0" fill-opacity="0.25" stroke="#2b6cb0" stroke-width="2"/>
 
   <!-- 木野温泉→各点の補助線 -->
-  <line x1="292.5" y1="393.0" x2="356.2" y2="-83.9" stroke="#718096" stroke-width="1" stroke-dasharray="4,3"/>
-  <line x1="292.5" y1="393.0" x2="358.6" y2="-212.7" stroke="#718096" stroke-width="1" stroke-dasharray="4,3"/>
-  <line x1="292.5" y1="393.0" x2="398.1" y2="-345.8" stroke="#718096" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="558.0" y1="764.5" x2="591.7" y2="512.0" stroke="#718096" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="558.0" y1="764.5" x2="593.0" y2="443.8" stroke="#718096" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="558.0" y1="764.5" x2="613.9" y2="373.4" stroke="#718096" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- 病院候補→各点の補助線 -->
+  <line x1="343.0" y1="344.6" x2="591.7" y2="512.0" stroke="#6b4fa0" stroke-width="1" stroke-dasharray="2,3" stroke-opacity="0.6"/>
+  <line x1="343.0" y1="344.6" x2="593.0" y2="443.8" stroke="#6b4fa0" stroke-width="1" stroke-dasharray="2,3" stroke-opacity="0.6"/>
+  <line x1="343.0" y1="344.6" x2="613.9" y2="373.4" stroke="#6b4fa0" stroke-width="1" stroke-dasharray="2,3" stroke-opacity="0.6"/>
 
   <!-- 木野温泉 -->
-  <circle cx="292.5" cy="393.0" r="7" fill="#c53030"/>
-  <text x="304.5" y="398.0" class="lbl-red">健康ハウス木野温泉(10丁目)</text>
+  <circle cx="558.0" cy="764.5" r="7" fill="#c53030"/>
+  <text x="570.0" y="769.5" class="lbl-red">健康ハウス木野温泉(10丁目)</text>
+
+  <!-- 帯広徳洲会病院(未確認) -->
+  <circle cx="343.0" cy="344.6" r="7" fill="#6b4fa0"/>
+  <text x="355.0" y="349.6" class="lbl-purple">帯広徳洲会病院(14丁目・未確認)</text>
 
   <!-- 南端 -->
-  <rect x="350.2" y="-89.9" width="12" height="12" fill="#1a365d"/>
-  <text x="368.2" y="-87.9" class="lbl">南端(推定) 565m</text>
+  <rect x="585.7" y="506.0" width="12" height="12" fill="#1a365d"/>
+  <text x="603.7" y="508.0" class="lbl">南端(推定) 木野温泉565m／病院候補665m</text>
 
   <!-- 中心 -->
-  <rect x="352.6" y="-218.7" width="12" height="12" fill="#2f855a"/>
-  <text x="370.6" y="-208.7" class="lbl">中心点 716m</text>
+  <rect x="587.0" y="437.8" width="12" height="12" fill="#2f855a"/>
+  <text x="605.0" y="447.8" class="lbl">中心点 木野温泉716m／病院候補597m</text>
 
   <!-- 北端 -->
-  <rect x="392.1" y="-351.8" width="12" height="12" fill="#553c9a"/>
-  <text x="410.1" y="-341.8" class="lbl">北端(推定) 877m</text>
+  <rect x="607.9" y="367.4" width="12" height="12" fill="#553c9a"/>
+  <text x="625.9" y="377.4" class="lbl">北端(推定) 木野温泉877m／病院候補605m</text>
 
-  <text x="20" y="960" class="lbl-small">凡例: 赤破線円=木野温泉から半径500m(北海道温泉保護対策要綱の推定離隔距離)</text>
-  <text x="20" y="978" class="lbl-small">     青矩形=対象地の概形(面積等価 13,285㎡、実際の筆界形状ではない)</text>
+  <text x="20" y="1044" class="lbl-small">凡例: 赤破線円=健康ハウス木野温泉から半径500m(北海道温泉保護対策要綱の推定離隔距離)</text>
+  <text x="20" y="1062" class="lbl-small">     紫点線円=帯広徳洲会病院を中心と仮定した半径500m(温泉法上の源泉の有無は未確認)</text>
+  <text x="20" y="1080" class="lbl-small">     青矩形=対象地の概形(面積等価 13,285㎡、実際の筆界形状ではない)</text>
 </svg>

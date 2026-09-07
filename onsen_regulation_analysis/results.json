@@ -27,6 +27,11 @@
     "to_center": 1207.5776678313994,
     "to_north_end": 1098.4856270741266
   },
+  "distance_from_hospital_m": {
+    "to_south_end": 665.461853234488,
+    "to_center": 597.0455106123227,
+    "to_north_end": 604.6113990763693
+  },
   "onsen_coords": [
     42.954908,
     143.208316
@@ -34,5 +39,9 @@
   "honomai_coords": [
     42.970846,
     143.202172
+  ],
+  "hospital_coords": [
+    42.963291,
+    143.202452
   ]
 }

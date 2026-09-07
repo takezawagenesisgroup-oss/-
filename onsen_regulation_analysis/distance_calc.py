@@ -14,6 +14,15 @@
   2. 対象地の「南端・中心・北端」の推定座標を、隣接丁目(12丁目/14丁目)の
      代表点から街区スパンを補間して作成し、それぞれの距離を算出
   3. 参考として天然温泉 鳳乃舞 音更 (17丁目)との距離も算出
+  4. 参考として帯広徳洲会病院(木野西通14丁目、温泉利用の有無は未確認)との距離も算出
+
+【帯広徳洲会病院について】
+利用者から「温泉のようだ」との情報提供があったが、2026年9月時点の公開ウェブ情報
+(病院公式サイト・各種医療機関検索サイト等)からは、同院が北海道温泉保護対策要綱上の
+「温泉」(温泉法に基づく源泉)を保有しているか確認できていない。十勝地方はモール泉の
+賦存地域であり、病院・介護施設が独自に源泉を掘削している例もあるため可能性は否定でき
+ないが、本スクリプトでの計算はあくまで「仮に源泉があった場合の位置関係」を把握するため
+の参考値であり、実在・座標とも要確認。
 """
 import json
 import math
@@ -27,6 +36,7 @@ POINTS = {
     "target_13chome":       (42.961309, 143.209271),  # 木野大通東13丁目 代表点(対象地=ここ)
     "target_14chome":       (42.964122, 143.210410),  # 木野大通東14丁目 代表点(補間用)
     "honomai_17chome":      (42.970846, 143.202172),  # 天然温泉 鳳乃舞 音更 (木野西通17丁目)
+    "hospital_14chome_west": (42.963291, 143.202452),  # 帯広徳洲会病院(木野西通14丁目2-1) ※温泉の有無は未確認
 }
 
 
@@ -53,6 +63,7 @@ def main():
     p13 = POINTS["target_13chome"]
     p14 = POINTS["target_14chome"]
     honomai = POINTS["honomai_17chome"]
+    hospital = POINTS["hospital_14chome_west"]
 
     # 対象地(13丁目)の南端/北端を、隣接丁目境界の中点として推定
     south_end = midpoint(p12, p13)
@@ -79,8 +90,14 @@ def main():
             "to_center": haversine_m(honomai, center),
             "to_north_end": haversine_m(honomai, north_end),
         },
+        "distance_from_hospital_m": {
+            "to_south_end": haversine_m(hospital, south_end),
+            "to_center": haversine_m(hospital, center),
+            "to_north_end": haversine_m(hospital, north_end),
+        },
         "onsen_coords": onsen,
         "honomai_coords": honomai,
+        "hospital_coords": hospital,
     }
 
     print(json.dumps(results, indent=2, ensure_ascii=False))
@@ -97,6 +114,9 @@ def main():
     print(f"鳳乃舞   → 対象地 南端   : {results['distance_from_honomai_m']['to_south_end']:.1f} m")
     print(f"鳳乃舞   → 対象地 中心点 : {results['distance_from_honomai_m']['to_center']:.1f} m")
     print(f"鳳乃舞   → 対象地 北端   : {results['distance_from_honomai_m']['to_north_end']:.1f} m")
+    print(f"徳洲会病院(未確認) → 対象地 南端   : {results['distance_from_hospital_m']['to_south_end']:.1f} m")
+    print(f"徳洲会病院(未確認) → 対象地 中心点 : {results['distance_from_hospital_m']['to_center']:.1f} m")
+    print(f"徳洲会病院(未確認) → 対象地 北端   : {results['distance_from_hospital_m']['to_north_end']:.1f} m")
 
 
 if __name__ == "__main__":

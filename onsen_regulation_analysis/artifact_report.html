@@ -16,6 +16,8 @@
     --good-soft:#e3ede4;
     --warn:#9a6b1f;
     --warn-soft:#f4ead4;
+    --candidate:#6b4fa0;
+    --candidate-soft:#ece7f4;
     --font-display:'Shippori Mincho', 'IPAGothic', serif;
     --font-body:'Zen Kaku Gothic New', 'Noto Sans JP', 'IPAGothic', sans-serif;
   }
@@ -36,6 +38,8 @@
       --good-soft:#1f3324;
       --warn:#e0b463;
       --warn-soft:#3a2f16;
+      --candidate:#b3a0dd;
+      --candidate-soft:#2c2740;
     }
   }
   :root[data-theme="dark"]{
@@ -54,6 +58,8 @@
     --good-soft:#1f3324;
     --warn:#e0b463;
     --warn-soft:#3a2f16;
+    --candidate:#b3a0dd;
+    --candidate-soft:#2c2740;
   }
 
   *{box-sizing:border-box;}
@@ -182,6 +188,7 @@
   }
   .pill.out{ background:var(--good-soft); color:var(--good); }
   .pill.ref{ background:var(--site-soft); color:var(--site); }
+  .pill.warn{ background:var(--candidate-soft); color:var(--candidate); }
 
   /* ---------- callout ---------- */
   .callout{
@@ -241,10 +248,11 @@
   <header>
     <div class="eyebrow">北海道温泉保護対策要綱 &middot; 離隔距離500m 検証</div>
     <h1>健康ハウス木野温泉 500m規制 距離検証</h1>
-    <p class="subhead">音更町木野大通東13丁目3番11・4番1（滞在型スパ開発用地、計13,285㎡）と、既存源泉「健康ハウス木野温泉」との直線距離を、公開座標データを用いて試算した。</p>
+    <p class="subhead">音更町木野大通東13丁目3番11・4番1（滞在型スパ開発用地、計13,285㎡）と、既存源泉「健康ハウス木野温泉」、および温泉の有無が未確認の「帯広徳洲会病院」との直線距離を、公開座標データを用いて試算した。</p>
     <div class="meta-row">
       <span>対象地 <b>木野大通東13丁目3番11・4番1</b></span>
       <span>基準源泉 <b>健康ハウス木野温泉（木野大通東10丁目6-1）</b></span>
+      <span>候補地点 <b>帯広徳洲会病院（木野西通14丁目2-1・未確認）</b></span>
       <span>検証日 <b>2026年9月</b></span>
     </div>
   </header>
@@ -252,7 +260,8 @@
   <section aria-label="結論">
     <div class="finding">
       <span class="tag">主要な発見</span>
-      <p>試算では、対象地の温泉に最も近い<strong>「南端」推定点でも約565m</strong>となり、南端・中心・北端のいずれも<strong>500m規制ラインの外側</strong>という結果になった。仮説にあった「約350〜450m、南側が規制円に抵触」とは<strong>約120〜200mの乖離</strong>があり、この差自体が実測データでの再確認の必要性を示している（下記「精度に関する重要な注記」参照）。</p>
+      <p>試算では、対象地の木野温泉に最も近い<strong>「南端」推定点でも約565m</strong>となり、南端・中心・北端のいずれも<strong>500m規制ラインの外側</strong>という結果になった。仮説にあった「約350〜450m、南側が規制円に抵触」とは<strong>約120〜200mの乖離</strong>があり、この差自体が実測データでの再確認の必要性を示している（下記「精度に関する重要な注記」参照）。</p>
+      <p>あわせて、「帯広徳洲会病院にも温泉があるらしい」との情報を受けて座標を試算に加えたところ、<strong>中心点で約597m・北端で約605m</strong>と、木野温泉より<strong>規制ラインまでの余裕が小さい</strong>結果になった。ただし同院が温泉法上の源泉を保有しているかは公開情報から確認できておらず、この点は振興局での確認が必要（05章参照）。</p>
     </div>
   </section>
 
@@ -279,80 +288,98 @@
 
   <section aria-label="位置関係図">
     <h2><span class="no">02</span>500m規制円と敷地の位置関係</h2>
-    <p class="lede">健康ハウス木野温泉を中心とする半径500m円（赤）と、対象地の概形（青、面積等価モデル）。木野温泉を原点とする実距離（メートル）で作図している。</p>
+    <p class="lede">健康ハウス木野温泉を中心とする半径500m円（赤）、帯広徳洲会病院を中心とする半径500m円（紫・温泉の有無は未確認）、対象地の概形（青、面積等価モデル）。いずれかの原点からの実距離（メートル）で作図している。</p>
 
     <div class="diagram-card">
-      <svg viewBox="-560 -930 1120 1500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="木野温泉を中心とした半径500m円と対象地の位置関係図">
+      <svg viewBox="-1040 -1480 1600 2040" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="健康ハウス木野温泉・帯広徳洲会病院を中心とした半径500m円と対象地の位置関係図">
         <defs>
-          <marker id="northArrow" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto">
-            <path d="M5,0 L9,9 L5,7 L1,9 Z" fill="var(--ink-soft)"/>
+          <marker id="northArrow" markerWidth="14" markerHeight="14" refX="7" refY="13" orient="auto">
+            <path d="M7,0 L13,13 L7,10 L1,13 Z" fill="var(--ink-soft)"/>
           </marker>
         </defs>
 
-        <!-- distance grid rings (100m) for scale reading -->
-        <g stroke="var(--line)" fill="none" stroke-width="1.5">
+        <!-- distance grid rings (100m) around the onsen, for scale reading -->
+        <g stroke="var(--line)" fill="none" stroke-width="2.1">
           <circle cx="0" cy="0" r="100"/>
           <circle cx="0" cy="0" r="200"/>
           <circle cx="0" cy="0" r="300"/>
           <circle cx="0" cy="0" r="400"/>
         </g>
 
-        <!-- 500m regulation circle -->
+        <!-- 500m regulation circle: 健康ハウス木野温泉 -->
         <circle cx="0" cy="0" r="500" fill="var(--regulation-soft)" fill-opacity="0.55"
-                stroke="var(--regulation)" stroke-width="3" stroke-dasharray="10 7"/>
-        <text x="316" y="-330" font-family="var(--font-body)" font-size="17" font-weight="700" fill="var(--regulation)">500m規制円（推定）</text>
-        <text x="316" y="-308" font-family="var(--font-body)" font-size="12.5" fill="var(--regulation)">北海道温泉保護対策要綱・原則離隔距離</text>
+                stroke="var(--regulation)" stroke-width="4.3" stroke-dasharray="14 10"/>
+        <text x="290" y="-470" font-family="var(--font-body)" font-size="24" font-weight="700" fill="var(--regulation)">500m規制円（推定）</text>
+        <text x="290" y="-440" font-family="var(--font-body)" font-size="18" fill="var(--regulation)">健康ハウス木野温泉を中心</text>
 
-        <!-- connecting lines onsen -> site points -->
-        <g stroke="var(--ink-soft)" stroke-width="1.5" stroke-dasharray="3 4">
+        <!-- 500m candidate circle: 帯広徳洲会病院(温泉の有無は未確認) -->
+        <circle cx="-477.8" cy="-933.2" r="500" fill="var(--candidate-soft)" fill-opacity="0.55"
+                stroke="var(--candidate)" stroke-width="3.6" stroke-dasharray="6 9"/>
+        <text x="-985" y="-955" font-family="var(--font-body)" font-size="24" font-weight="700" fill="var(--candidate)">500m円（未確認・候補）</text>
+        <text x="-985" y="-925" font-family="var(--font-body)" font-size="18" fill="var(--candidate)">帯広徳洲会病院を中心と仮定</text>
+
+        <!-- connecting lines: 健康ハウス木野温泉 -> site points -->
+        <g stroke="var(--ink-soft)" stroke-width="2.1" stroke-dasharray="4.3 5.7">
           <line x1="0" y1="0" x2="74.9" y2="-561.1"/>
           <line x1="0" y1="0" x2="77.8" y2="-712.6"/>
           <line x1="0" y1="0" x2="124.2" y2="-869.1"/>
         </g>
 
+        <!-- connecting lines: 帯広徳洲会病院 -> site points -->
+        <g stroke="var(--candidate)" stroke-width="2.1" stroke-dasharray="4.3 5.7" stroke-opacity="0.75">
+          <line x1="-477.8" y1="-933.2" x2="74.9" y2="-561.1"/>
+          <line x1="-477.8" y1="-933.2" x2="77.8" y2="-712.6"/>
+          <line x1="-477.8" y1="-933.2" x2="124.2" y2="-869.1"/>
+        </g>
+
         <!-- site footprint (area-equivalent model) -->
         <rect x="77.99" y="-869.13" width="43.13" height="308.02"
-              fill="var(--site-soft)" stroke="var(--site)" stroke-width="2.5"/>
+              fill="var(--site-soft)" stroke="var(--site)" stroke-width="3.6"/>
 
-        <!-- onsen point -->
-        <circle cx="0" cy="0" r="9" fill="var(--regulation)"/>
-        <text x="16" y="5" font-family="var(--font-body)" font-size="14.5" font-weight="700" fill="var(--regulation)">健康ハウス木野温泉（10丁目）</text>
+        <!-- onsen point: 健康ハウス木野温泉 -->
+        <circle cx="0" cy="0" r="12.9" fill="var(--regulation)"/>
+        <text x="20" y="7" font-family="var(--font-body)" font-size="20.7" font-weight="700" fill="var(--regulation)">健康ハウス木野温泉（10丁目）</text>
+
+        <!-- candidate point: 帯広徳洲会病院 -->
+        <circle cx="-477.8" cy="-933.2" r="12.9" fill="var(--candidate)"/>
+        <text x="-460" y="-940" font-family="var(--font-body)" font-size="20.7" font-weight="700" fill="var(--candidate)">帯広徳洲会病院（木野西通14丁目）</text>
+        <text x="-460" y="-912" font-family="var(--font-body)" font-size="16" fill="var(--candidate)">※温泉法上の源泉の有無は未確認</text>
 
         <!-- south point -->
-        <rect x="68.9" y="-568.1" width="14" height="14" fill="var(--site)"/>
-        <text x="90" y="-590" font-family="var(--font-body)" font-size="14" font-weight="700" fill="var(--ink)">南端（推定）</text>
-        <text x="90" y="-570" font-family="var(--font-body)" font-size="13" fill="var(--ink-soft)">565m</text>
+        <rect x="64.9" y="-571.1" width="20" height="20" fill="var(--site)"/>
+        <text x="100" y="-598" font-family="var(--font-body)" font-size="20" font-weight="700" fill="var(--ink)">南端（推定）</text>
+        <text x="100" y="-573" font-family="var(--font-body)" font-size="18.6" fill="var(--ink-soft)">木野温泉から565m／病院候補から665m</text>
 
         <!-- center point -->
-        <rect x="70.8" y="-719.6" width="14" height="14" fill="var(--site)"/>
-        <text x="93" y="-736" font-family="var(--font-body)" font-size="14" font-weight="700" fill="var(--ink)">中心点</text>
-        <text x="93" y="-716" font-family="var(--font-body)" font-size="13" fill="var(--ink-soft)">716m</text>
+        <rect x="67.8" y="-722.6" width="20" height="20" fill="var(--site)"/>
+        <text x="103" y="-748" font-family="var(--font-body)" font-size="20" font-weight="700" fill="var(--ink)">中心点</text>
+        <text x="103" y="-723" font-family="var(--font-body)" font-size="18.6" fill="var(--ink-soft)">木野温泉から716m／病院候補から597m</text>
 
         <!-- north point -->
-        <rect x="117.2" y="-876.1" width="14" height="14" fill="var(--site)"/>
-        <text x="139" y="-893" font-family="var(--font-body)" font-size="14" font-weight="700" fill="var(--ink)">北端（推定）</text>
-        <text x="139" y="-873" font-family="var(--font-body)" font-size="13" fill="var(--ink-soft)">877m</text>
+        <rect x="114.2" y="-879.1" width="20" height="20" fill="var(--site)"/>
+        <text x="150" y="-905" font-family="var(--font-body)" font-size="20" font-weight="700" fill="var(--ink)">北端（推定）</text>
+        <text x="150" y="-880" font-family="var(--font-body)" font-size="18.6" fill="var(--ink-soft)">木野温泉から877m／病院候補から605m</text>
 
         <!-- scale bar -->
-        <g transform="translate(-520,470)">
-          <line x1="0" y1="0" x2="200" y2="0" stroke="var(--ink)" stroke-width="2"/>
-          <line x1="0" y1="-6" x2="0" y2="6" stroke="var(--ink)" stroke-width="2"/>
-          <line x1="200" y1="-6" x2="200" y2="6" stroke="var(--ink)" stroke-width="2"/>
-          <text x="100" y="22" text-anchor="middle" font-family="var(--font-body)" font-size="13" fill="var(--ink-soft)">200 m</text>
+        <g transform="translate(-990,500)">
+          <line x1="0" y1="0" x2="200" y2="0" stroke="var(--ink)" stroke-width="2.9"/>
+          <line x1="0" y1="-8.6" x2="0" y2="8.6" stroke="var(--ink)" stroke-width="2.9"/>
+          <line x1="200" y1="-8.6" x2="200" y2="8.6" stroke="var(--ink)" stroke-width="2.9"/>
+          <text x="100" y="30" text-anchor="middle" font-family="var(--font-body)" font-size="18.6" fill="var(--ink-soft)">200 m</text>
         </g>
 
         <!-- north arrow -->
-        <g transform="translate(500,-860)">
-          <line x1="0" y1="20" x2="0" y2="-20" stroke="var(--ink-soft)" stroke-width="2" marker-end="url(#northArrow)"/>
-          <text x="0" y="38" text-anchor="middle" font-family="var(--font-body)" font-size="13" fill="var(--ink-soft)">N</text>
+        <g transform="translate(500,-1400)">
+          <line x1="0" y1="28" x2="0" y2="-28" stroke="var(--ink-soft)" stroke-width="2.9" marker-end="url(#northArrow)"/>
+          <text x="0" y="54" text-anchor="middle" font-family="var(--font-body)" font-size="18.6" fill="var(--ink-soft)">N</text>
         </g>
       </svg>
 
       <div class="legend">
-        <div class="item"><span class="swatch reg"></span>500m規制円（木野温泉を中心）</div>
+        <div class="item"><span class="swatch reg"></span>500m規制円（健康ハウス木野温泉を中心）</div>
+        <div class="item"><span class="swatch" style="background:var(--candidate-soft);border:2px solid var(--candidate);"></span>500m円（帯広徳洲会病院・温泉の有無は未確認）</div>
         <div class="item"><span class="swatch site"></span>対象地 概形（面積等価モデル）</div>
-        <div class="item"><span class="swatch line"></span>木野温泉からの直線距離</div>
-        <div class="item">グレーの同心円は100m間隔の目盛り</div>
+        <div class="item">グレーの同心円は木野温泉から100m間隔の目盛り</div>
       </div>
     </div>
   </section>
@@ -382,10 +409,16 @@
             <td>1,207.6 m</td>
             <td>1,098.5 m</td>
           </tr>
+          <tr>
+            <td>帯広徳洲会病院（木野西通14丁目）<br><span class="pill warn">温泉の有無：未確認</span></td>
+            <td class="hero">665.5 m</td>
+            <td class="hero">597.0 m</td>
+            <td class="hero">604.6 m</td>
+          </tr>
         </tbody>
       </table>
     </div>
-    <p class="lede">鳳乃舞は距離が大きいため上の図には縮尺を合わせて描いていない（参考値として表にのみ記載）。</p>
+    <p class="lede">鳳乃舞は距離が大きいため上の図には縮尺を合わせて描いていない（参考値として表にのみ記載）。帯広徳洲会病院（音更町木野西通14丁目2-1）は「温泉のようだ」との情報提供を受け座標を試算に加えたが、2026年9月時点の公開ウェブ情報からは温泉法上の源泉を保有しているか確認できていない。仮に該当する場合、木野温泉より規制ラインとの余裕（マージン）が小さい（+97〜+165m）点に注意。</p>
   </section>
 
   <section aria-label="精度に関する注記">
@@ -397,6 +430,7 @@
         <li>木野温泉の座標＝10丁目という区画全体の代表点であり、実際の掘削井戸の位置ではない</li>
         <li>対象地の南端・北端＝隣接丁目（12丁目・14丁目）代表点との中点による補間値であり、3番11・4番1の実際の筆界座標ではない</li>
         <li>敷地形状も面積等価の矩形モデルであり、公図上の実形状とは異なる</li>
+        <li>帯広徳洲会病院＝そもそも温泉法上の源泉を保有しているか自体が未確認（座標は病院所在地の丁目代表点を仮に用いたもの）</li>
       </ul>
       <p>仮説（約350〜450m）との120〜200mの乖離は、この推定精度の限界を反映している可能性が高い。<b>音更町の公図・地積測量図</b>と、<b>十勝総合振興局が保有する木野温泉の実掘削位置座標</b>を取得し、同じ手法で再計算することを最優先で推奨する。</p>
     </div>
@@ -422,7 +456,7 @@
         <li><span class="idx">05</span><span>音更町から3番11・4番1の<b>公図・地積測量図（座標付き）</b>を取得する。</span></li>
         <li><span class="idx">06</span><span>木野温泉の<b>実際の掘削位置（井戸位置）</b>を、温泉法上の許可申請情報や振興局の温泉台帳から特定する。</span></li>
         <li><span class="idx">07</span><span>上記2点を基に<b>土地家屋調査士等による実測</b>を行い、本レポートとの乖離を解消して再計算する。</span></li>
-        <li><span class="idx">08</span><span>鳳乃舞以外にも、半径500m圏に<b>未把握の源泉井戸</b>がないか温泉台帳で網羅確認する。</span></li>
+        <li><span class="idx">08</span><span>鳳乃舞以外にも、半径500m圏に<b>未把握の源泉井戸</b>がないか温泉台帳で網羅確認する。特に<b>帯広徳洲会病院（木野西通14丁目）</b>が温泉法上の源泉を保有しているかを最優先で確認する（試算では中心点まで約597mと余裕が小さい）。</span></li>
       </ol>
     </div>
 

@@ -30,6 +30,7 @@ with open("results.json", "r", encoding="utf-8") as f:
 
 ONSEN = tuple(R["onsen_coords"])
 HONOMAI = tuple(R["honomai_coords"])
+HOSPITAL = tuple(R["hospital_coords"])  # 帯広徳洲会病院(木野西通14丁目) ※温泉の有無は未確認
 SOUTH = tuple(R["target_points_latlng"]["south_end"])
 CENTER = tuple(R["target_points_latlng"]["center"])
 NORTH = tuple(R["target_points_latlng"]["north_end"])
@@ -62,6 +63,24 @@ folium.Marker(
     location=HONOMAI,
     tooltip="天然温泉 鳳乃舞 音更(木野西通17丁目) ※17丁目代表点で近似",
     icon=folium.Icon(color="orange", icon="tint"),
+).add_to(fmap)
+
+folium.Circle(
+    location=HOSPITAL,
+    radius=RADIUS_M,
+    color="#6b4fa0",
+    weight=2,
+    dash_array="6,6",
+    fill=True,
+    fill_color="#6b4fa0",
+    fill_opacity=0.10,
+    tooltip="帯広徳洲会病院 半径500m円(温泉法上の源泉の有無は未確認)",
+).add_to(fmap)
+
+folium.Marker(
+    location=HOSPITAL,
+    tooltip="帯広徳洲会病院(木野西通14丁目2-1) ※温泉の有無は未確認・14丁目代表点で近似",
+    icon=folium.Icon(color="purple", icon="question-sign"),
 ).add_to(fmap)
 
 for label, pt, color in [
@@ -105,6 +124,7 @@ def to_xy(pt):
 
 onsen_xy = to_xy(ONSEN)
 honomai_xy = to_xy(HONOMAI)
+hospital_xy = to_xy(HOSPITAL)
 south_xy = to_xy(SOUTH)
 center_xy = to_xy(CENTER)
 north_xy = to_xy(NORTH)
@@ -122,6 +142,11 @@ circle = patches.Circle(onsen_xy, RADIUS_M, facecolor="#d64550", alpha=0.12,
                          label="木野温泉 半径500m規制円(推定)")
 ax.add_patch(circle)
 
+hospital_circle = patches.Circle(hospital_xy, RADIUS_M, facecolor="#6b4fa0", alpha=0.10,
+                                  edgecolor="#6b4fa0", linewidth=2, linestyle=(0, (2, 3)),
+                                  label="帯広徳洲会病院 半径500m円(温泉の有無は未確認)")
+ax.add_patch(hospital_circle)
+
 site_rect = patches.Rectangle((site_x0, site_y0), width_m, depth_m,
                                facecolor="#2b6cb0", alpha=0.25,
                                edgecolor="#2b6cb0", linewidth=2,
@@ -131,6 +156,10 @@ ax.add_patch(site_rect)
 ax.plot(*onsen_xy, "o", color="#d64550", markersize=10)
 ax.annotate("健康ハウス木野温泉\n(10丁目)", onsen_xy, textcoords="offset points",
             xytext=(10, 10), fontsize=9, color="#d64550")
+
+ax.plot(*hospital_xy, "o", color="#6b4fa0", markersize=10)
+ax.annotate("帯広徳洲会病院\n(14丁目・未確認)", hospital_xy, textcoords="offset points",
+            xytext=(10, 10), fontsize=9, color="#6b4fa0")
 
 ax.plot(*south_xy, "s", color="#1a365d", markersize=8)
 ax.annotate(f"南端(推定)\n{R['distance_from_kino_onsen_m']['to_south_end']:.0f}m",
@@ -144,21 +173,23 @@ ax.plot(*north_xy, "s", color="#553c9a", markersize=8)
 ax.annotate(f"北端(推定)\n{R['distance_from_kino_onsen_m']['to_north_end']:.0f}m",
             north_xy, textcoords="offset points", xytext=(10, 10), fontsize=8)
 
-# 木野温泉から各点への直線
+# 木野温泉・病院候補から各点への直線
 for pt_xy in (south_xy, center_xy, north_xy):
     ax.plot([onsen_xy[0], pt_xy[0]], [onsen_xy[1], pt_xy[1]], "--",
             color="gray", linewidth=1)
+    ax.plot([hospital_xy[0], pt_xy[0]], [hospital_xy[1], pt_xy[1]], ":",
+            color="#6b4fa0", linewidth=1, alpha=0.6)
 
 ax.set_xlabel("東西方向 (m) ※木野温泉を原点(0,0)とする概算平面座標")
 ax.set_ylabel("南北方向 (m)")
-ax.set_title("木野温泉500m規制円と対象地(木野大通東13丁目)の位置関係(概算)")
+ax.set_title("木野温泉・病院候補の500m円と対象地(木野大通東13丁目)の位置関係(概算)")
 ax.set_aspect("equal")
 ax.legend(loc="lower right", fontsize=8)
 ax.grid(True, linestyle=":", alpha=0.5)
 
 margin = 150
-all_x = [onsen_xy[0], site_x0, site_x1]
-all_y = [onsen_xy[1] - RADIUS_M, site_y1]
+all_x = [onsen_xy[0], hospital_xy[0] - RADIUS_M, site_x0, site_x1]
+all_y = [onsen_xy[1] - RADIUS_M, hospital_xy[1] + RADIUS_M, site_y1]
 ax.set_xlim(min(all_x) - margin, max(all_x) + margin)
 ax.set_ylim(min(all_y) - margin, max(all_y) + margin)
 
