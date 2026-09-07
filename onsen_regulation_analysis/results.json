@@ -43,5 +43,29 @@
   "hospital_coords": [
     42.963291,
     143.202452
-  ]
+  ],
+  "boundary_crossing": {
+    "kino_onsen": {
+      "closest_approach_m": 566.0874623326849,
+      "segment_length_m": 311.9415060879758,
+      "500": {
+        "status": "clear"
+      },
+      "600": {
+        "status": "partial",
+        "from_south_m": 0.0,
+        "to_south_m": 33.9233158825323
+      }
+    },
+    "hospital": {
+      "closest_approach_m": 604.5311928659974,
+      "segment_length_m": 311.9415060879758,
+      "500": {
+        "status": "clear"
+      },
+      "600": {
+        "status": "clear"
+      }
+    }
+  }
 }

@@ -53,6 +53,17 @@ folium.Circle(
     tooltip="健康ハウス木野温泉 半径500m規制円(北海道温泉保護対策要綱・推定)",
 ).add_to(fmap)
 
+folium.Circle(
+    location=ONSEN,
+    radius=600.0,
+    color="#d64550",
+    weight=1.5,
+    dash_array="3,8",
+    fill=False,
+    opacity=0.6,
+    tooltip="健康ハウス木野温泉 半径600m円(北海道内の運用で目安になり得る距離・参考)",
+).add_to(fmap)
+
 folium.Marker(
     location=ONSEN,
     tooltip="健康ハウス木野温泉(木野大通東10丁目6-1) ※10丁目代表点で近似",
@@ -75,6 +86,17 @@ folium.Circle(
     fill_color="#6b4fa0",
     fill_opacity=0.10,
     tooltip="帯広徳洲会病院 半径500m円(温泉法上の源泉の有無は未確認)",
+).add_to(fmap)
+
+folium.Circle(
+    location=HOSPITAL,
+    radius=600.0,
+    color="#6b4fa0",
+    weight=1.5,
+    dash_array="3,8",
+    fill=False,
+    opacity=0.6,
+    tooltip="帯広徳洲会病院 半径600m円(参考・温泉の有無は未確認)",
 ).add_to(fmap)
 
 folium.Marker(
@@ -142,16 +164,46 @@ circle = patches.Circle(onsen_xy, RADIUS_M, facecolor="#d64550", alpha=0.12,
                          label="木野温泉 半径500m規制円(推定)")
 ax.add_patch(circle)
 
+circle_600 = patches.Circle(onsen_xy, 600.0, facecolor="none",
+                             edgecolor="#d64550", linewidth=1.5, linestyle=(0, (2, 5)), alpha=0.6,
+                             label="600m円(参考・木野温泉)")
+ax.add_patch(circle_600)
+
 hospital_circle = patches.Circle(hospital_xy, RADIUS_M, facecolor="#6b4fa0", alpha=0.10,
                                   edgecolor="#6b4fa0", linewidth=2, linestyle=(0, (2, 3)),
                                   label="帯広徳洲会病院 半径500m円(温泉の有無は未確認)")
 ax.add_patch(hospital_circle)
+
+hospital_circle_600 = patches.Circle(hospital_xy, 600.0, facecolor="none",
+                                      edgecolor="#6b4fa0", linewidth=1.5, linestyle=(0, (2, 5)), alpha=0.6,
+                                      label="600m円(参考・病院候補)")
+ax.add_patch(hospital_circle_600)
 
 site_rect = patches.Rectangle((site_x0, site_y0), width_m, depth_m,
                                facecolor="#2b6cb0", alpha=0.25,
                                edgecolor="#2b6cb0", linewidth=2,
                                label=f"対象地 概形(面積等価 {SITE_AREA_SQM:,.0f}㎡)")
 ax.add_patch(site_rect)
+
+# 木野温泉の600m円に入る南端側の区間(南端→北端の代表線ベース)
+bc_onsen_600 = R["boundary_crossing"]["kino_onsen"]["600"]
+if bc_onsen_600["status"] == "partial":
+    band_h = bc_onsen_600["to_south_m"] - bc_onsen_600["from_south_m"]
+    band = patches.Rectangle((site_x0, site_y0 + bc_onsen_600["from_south_m"]), width_m, band_h,
+                              facecolor="#c98a1f", alpha=0.5, edgecolor="#c98a1f", linewidth=1.5,
+                              label=f"600m円内の区間(南端から{band_h:.0f}m, 木野温泉)")
+    ax.add_patch(band)
+
+# 病院候補への最接近点(南端→北端の代表線上)
+bc_hosp = R["boundary_crossing"]["hospital"]
+_dx, _dy = north_xy[0] - south_xy[0], north_xy[1] - south_xy[1]
+_seg_len = bc_hosp["segment_length_m"]
+_sx, _sy = south_xy[0] - hospital_xy[0], south_xy[1] - hospital_xy[1]
+_t = max(0.0, min(1.0, -(_sx * _dx + _sy * _dy) / (_dx * _dx + _dy * _dy)))
+closest_pt = (south_xy[0] + _t * _dx, south_xy[1] + _t * _dy)
+ax.plot(*closest_pt, "o", markerfacecolor="none", markeredgecolor="#6b4fa0", markersize=10, mew=2)
+ax.annotate(f"最接近点\n約{bc_hosp['closest_approach_m']:.1f}m(病院候補)",
+            closest_pt, textcoords="offset points", xytext=(15, -15), fontsize=8, color="#6b4fa0")
 
 ax.plot(*onsen_xy, "o", color="#d64550", markersize=10)
 ax.annotate("健康ハウス木野温泉\n(10丁目)", onsen_xy, textcoords="offset points",
@@ -182,14 +234,14 @@ for pt_xy in (south_xy, center_xy, north_xy):
 
 ax.set_xlabel("東西方向 (m) ※木野温泉を原点(0,0)とする概算平面座標")
 ax.set_ylabel("南北方向 (m)")
-ax.set_title("木野温泉・病院候補の500m円と対象地(木野大通東13丁目)の位置関係(概算)")
+ax.set_title("木野温泉・病院候補の500m/600m円と対象地(木野大通東13丁目)の位置関係(概算)")
 ax.set_aspect("equal")
-ax.legend(loc="lower right", fontsize=8)
+ax.legend(loc="lower right", fontsize=7.5)
 ax.grid(True, linestyle=":", alpha=0.5)
 
 margin = 150
-all_x = [onsen_xy[0], hospital_xy[0] - RADIUS_M, site_x0, site_x1]
-all_y = [onsen_xy[1] - RADIUS_M, hospital_xy[1] + RADIUS_M, site_y1]
+all_x = [onsen_xy[0], hospital_xy[0] - 600.0, site_x0, site_x1]
+all_y = [onsen_xy[1] - 600.0, hospital_xy[1] + 600.0, site_y1]
 ax.set_xlim(min(all_x) - margin, max(all_x) + margin)
 ax.set_ylim(min(all_y) - margin, max(all_y) + margin)
 

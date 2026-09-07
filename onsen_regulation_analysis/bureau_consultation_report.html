@@ -15,6 +15,8 @@
     --info-soft:#e4eaf0;
     --candidate:#6b4fa0;
     --candidate-soft:#ece7f4;
+    --warn:#9a6b1f;
+    --warn-soft:#f4ead4;
     --font-display:'Shippori Mincho', 'IPAGothic', serif;
     --font-body:'Zen Kaku Gothic New', 'Noto Sans JP', 'IPAGothic', sans-serif;
   }
@@ -26,6 +28,7 @@
       --site:#7fc4d1; --site-soft:#1e3236;
       --info:#8fb0d1; --info-soft:#20293a;
       --candidate:#b3a0dd; --candidate-soft:#2c2740;
+      --warn:#e0b463; --warn-soft:#3a2f16;
     }
   }
   :root[data-theme="dark"]{
@@ -35,6 +38,7 @@
     --site:#7fc4d1; --site-soft:#1e3236;
     --info:#8fb0d1; --info-soft:#20293a;
     --candidate:#b3a0dd; --candidate-soft:#2c2740;
+    --warn:#e0b463; --warn-soft:#3a2f16;
   }
 
   *{box-sizing:border-box;}
@@ -181,14 +185,15 @@
       <span class="head">照合をお願いしたい点</span>
       <p>上記は丁目単位の代表点に基づく概算であり、健康ハウス木野温泉の実際の掘削位置、および対象地（3番11・4番1）の正確な地番境界座標を用いたものではありません。最終的な判断の前提として、貴局が保有される温泉台帳の座標、または音更町の公図・地積測量図との照合をお願いしたく存じます。</p>
       <p>あわせて、帯広徳洲会病院（木野西通14丁目2-1）についても座標を試算したところ、対象地中心点まで約597m、北端まで約605mとなり、木野温泉より規制ラインまでの余裕が小さい結果になりました。ただし同院が温泉法上の源泉を保有しているか自体を確認できておらず、その点を含めご教示いただきたく存じます（05章参照）。</p>
+      <p>また、「600mも一応の目安になり得る」との情報を伺ったため500mに加えて600mでも試算したところ、健康ハウス木野温泉については対象地南端から約34mの区間が600m円内に入り、帯広徳洲会病院（未確認）については対象地への最接近点が約604.5m（600mまで残り約4.5m）という結果になりました。この点についても、500mとの関係も含めてご教示いただきたく存じます。</p>
     </div>
   </section>
 
   <section aria-label="位置関係図">
     <h2><span class="no">04</span>位置関係図（概算）</h2>
-    <p class="lede">健康ハウス木野温泉を中心とする半径500m円（赤）と、帯広徳洲会病院を中心と仮定した半径500m円（紫・温泉の有無は未確認）。</p>
+    <p class="lede">健康ハウス木野温泉・帯広徳洲会病院（未確認）それぞれを中心とする半径500m円（実線）と600m円（外側の淡い点線）。北海道内の運用では600mも一応の目安になり得るとの情報を踏まえ併記している。</p>
     <div class="diagram-card">
-      <svg viewBox="-1040 -1480 1600 2040" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="健康ハウス木野温泉・帯広徳洲会病院を中心とした半径500m円と対象地の位置関係図">
+      <svg viewBox="-1120 -1580 1760 2220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="健康ハウス木野温泉・帯広徳洲会病院を中心とした半径500m・600m円と対象地の位置関係図">
         <defs>
           <marker id="northArrow2" markerWidth="14" markerHeight="14" refX="7" refY="13" orient="auto">
             <path d="M7,0 L13,13 L7,10 L1,13 Z" fill="var(--ink-soft)"/>
@@ -198,15 +203,24 @@
           <circle cx="0" cy="0" r="100"/><circle cx="0" cy="0" r="200"/>
           <circle cx="0" cy="0" r="300"/><circle cx="0" cy="0" r="400"/>
         </g>
+
+        <circle cx="0" cy="0" r="600" fill="none"
+                stroke="var(--regulation)" stroke-width="2.6" stroke-dasharray="3 8" stroke-opacity="0.6"/>
+        <text x="-150" y="565" font-family="var(--font-body)" font-size="21" font-weight="700" fill="var(--regulation)" fill-opacity="0.85">600m円（参考・木野温泉）</text>
+
         <circle cx="0" cy="0" r="500" fill="var(--regulation-soft)" fill-opacity="0.55"
                 stroke="var(--regulation)" stroke-width="4.3" stroke-dasharray="14 10"/>
         <text x="290" y="-470" font-family="var(--font-body)" font-size="24" font-weight="700" fill="var(--regulation)">500m規制円（推定）</text>
         <text x="290" y="-440" font-family="var(--font-body)" font-size="18" fill="var(--regulation)">健康ハウス木野温泉を中心</text>
 
+        <circle cx="-477.8" cy="-933.2" r="600" fill="none"
+                stroke="var(--candidate)" stroke-width="2.6" stroke-dasharray="3 8" stroke-opacity="0.6"/>
+
         <circle cx="-477.8" cy="-933.2" r="500" fill="var(--candidate-soft)" fill-opacity="0.55"
                 stroke="var(--candidate)" stroke-width="3.6" stroke-dasharray="6 9"/>
-        <text x="-985" y="-955" font-family="var(--font-body)" font-size="24" font-weight="700" fill="var(--candidate)">500m円（未確認・候補）</text>
-        <text x="-985" y="-925" font-family="var(--font-body)" font-size="18" fill="var(--candidate)">帯広徳洲会病院を中心と仮定</text>
+        <text x="-1065" y="-955" font-family="var(--font-body)" font-size="24" font-weight="700" fill="var(--candidate)">500m円（未確認・候補）</text>
+        <text x="-1065" y="-925" font-family="var(--font-body)" font-size="18" fill="var(--candidate)">帯広徳洲会病院を中心と仮定</text>
+        <text x="-1065" y="-895" font-family="var(--font-body)" font-size="18" fill="var(--candidate)" fill-opacity="0.85">(外側の淡い点線=600m円)</text>
 
         <g stroke="var(--ink-soft)" stroke-width="2.1" stroke-dasharray="4.3 5.7">
           <line x1="0" y1="0" x2="74.9" y2="-561.1"/>
@@ -223,6 +237,17 @@
         <rect x="77.99" y="-869.13" width="43.13" height="308.02"
               fill="var(--site-soft)" stroke="var(--site)" stroke-width="3.6"/>
 
+        <!-- 600m円(木野温泉)に入る南端側の帯(約34m) -->
+        <rect x="77.99" y="-594.6" width="43.13" height="33.5"
+              fill="var(--warn)" fill-opacity="0.45" stroke="var(--warn)" stroke-width="2.1"/>
+        <text x="127" y="-575" font-family="var(--font-body)" font-size="17" font-weight="700" fill="var(--warn)">南端から約34m区間</text>
+        <text x="127" y="-555" font-family="var(--font-body)" font-size="15.5" fill="var(--warn)">木野温泉の600m円内</text>
+
+        <!-- 病院候補への最接近点(約604.5m=600mまで残り4.5m) -->
+        <circle cx="119.2" cy="-837.7" r="9" fill="none" stroke="var(--candidate)" stroke-width="2.9"/>
+        <text x="145" y="-812" font-family="var(--font-body)" font-size="17" font-weight="700" fill="var(--candidate)">最接近点 約604.5m</text>
+        <text x="145" y="-792" font-family="var(--font-body)" font-size="15.5" fill="var(--candidate)">600mまで残り約4.5m(誤差要確認)</text>
+
         <circle cx="0" cy="0" r="12.9" fill="var(--regulation)"/>
         <text x="20" y="7" font-family="var(--font-body)" font-size="20.7" font-weight="700" fill="var(--regulation)">健康ハウス木野温泉（10丁目）</text>
 
@@ -231,16 +256,16 @@
         <text x="-460" y="-912" font-family="var(--font-body)" font-size="16" fill="var(--candidate)">※温泉法上の源泉の有無は未確認</text>
 
         <rect x="64.9" y="-571.1" width="20" height="20" fill="var(--site)"/>
-        <text x="100" y="-598" font-family="var(--font-body)" font-size="20" font-weight="700" fill="var(--ink)">南端（推定）</text>
-        <text x="100" y="-573" font-family="var(--font-body)" font-size="18.6" fill="var(--ink-soft)">木野温泉565m／病院候補665m</text>
+        <text x="55" y="-598" text-anchor="end" font-family="var(--font-body)" font-size="20" font-weight="700" fill="var(--ink)">南端（推定）</text>
+        <text x="55" y="-573" text-anchor="end" font-family="var(--font-body)" font-size="18.6" fill="var(--ink-soft)">木野温泉565m／病院候補665m</text>
 
         <rect x="67.8" y="-722.6" width="20" height="20" fill="var(--site)"/>
-        <text x="103" y="-748" font-family="var(--font-body)" font-size="20" font-weight="700" fill="var(--ink)">中心点</text>
-        <text x="103" y="-723" font-family="var(--font-body)" font-size="18.6" fill="var(--ink-soft)">木野温泉716m／病院候補597m</text>
+        <text x="58" y="-748" text-anchor="end" font-family="var(--font-body)" font-size="20" font-weight="700" fill="var(--ink)">中心点</text>
+        <text x="58" y="-723" text-anchor="end" font-family="var(--font-body)" font-size="18.6" fill="var(--ink-soft)">木野温泉716m／病院候補597m</text>
 
         <rect x="114.2" y="-879.1" width="20" height="20" fill="var(--site)"/>
-        <text x="150" y="-905" font-family="var(--font-body)" font-size="20" font-weight="700" fill="var(--ink)">北端（推定）</text>
-        <text x="150" y="-880" font-family="var(--font-body)" font-size="18.6" fill="var(--ink-soft)">木野温泉877m／病院候補605m</text>
+        <text x="105" y="-905" text-anchor="end" font-family="var(--font-body)" font-size="20" font-weight="700" fill="var(--ink)">北端（推定）</text>
+        <text x="105" y="-880" text-anchor="end" font-family="var(--font-body)" font-size="18.6" fill="var(--ink-soft)">木野温泉877m／病院候補605m</text>
 
         <g transform="translate(-990,500)">
           <line x1="0" y1="0" x2="200" y2="0" stroke="var(--ink)" stroke-width="2.9"/>
@@ -257,7 +282,9 @@
       <div class="legend">
         <div class="item"><span class="swatch reg"></span>500m規制円（健康ハウス木野温泉を中心）</div>
         <div class="item"><span class="swatch" style="background:var(--candidate-soft);border:2px solid var(--candidate);"></span>500m円（帯広徳洲会病院・温泉の有無は未確認）</div>
+        <div class="item"><span class="swatch" style="background:none;border:2px dashed var(--ink-soft);"></span>外側の淡い点線＝600m円（一応の目安とされる距離）</div>
         <div class="item"><span class="swatch site"></span>対象地 概形（面積等価モデル）</div>
+        <div class="item"><span class="swatch" style="background:var(--warn-soft);border:2px solid var(--warn);"></span>木野温泉の600m円に入る区間（南端から約34m）</div>
         <div class="item">グレーの同心円は100m間隔の目盛り</div>
       </div>
     </div>
@@ -267,13 +294,14 @@
     <h2><span class="no">05</span>ご確認・ご相談したい事項</h2>
     <ol class="qlist">
       <li><span class="idx">01</span><span>離隔距離「原則500m」の起点・終点は、既存源泉は掘削位置か建物か、新規は計画井戸位置か敷地境界か、どのように定義されていますか。</span></li>
-      <li><span class="idx">02</span><span>距離の測定方法（水平直線距離か道路距離か）、及び使用する測地系・座標系の指定はありますか。</span></li>
-      <li><span class="idx">03</span><span>原則500m以内であっても、水理地質調査（揚湯試験等）の結果により許可された事例はございますか。</span></li>
-      <li><span class="idx">04</span><span>貴局が保有される健康ハウス木野温泉の掘削位置座標について、照合いただくことは可能でしょうか。</span></li>
-      <li><span class="idx">05</span><span>対象地の正確な座標確認のため音更町の公図・地積測量図を取得する場合、どのような手続きが必要でしょうか。</span></li>
-      <li><span class="idx">06</span><span>対象地周辺の半径500m以内に、他に登録されている温泉井戸はございますか。特に帯広徳洲会病院（音更町木野西通14丁目2-1）が温泉法上の源泉を保有しているかご確認いただけますでしょうか（弊社試算では対象地中心点まで約597mと算出しております）。</span></li>
-      <li><span class="idx">07</span><span>温泉法に基づく掘削許可申請の標準的な処理期間、及び利害関係者への意見照会手続きの有無について教えてください。</span></li>
-      <li><span class="idx">08</span><span>既存源泉の権利者への事前説明が望ましいか、運用上の考え方をご教示ください。</span></li>
+      <li><span class="idx">02</span><span>「600mも一応の目安になり得る」と伺いましたが、これは要綱本文の規定でしょうか、それとも運用上の慣行でしょうか。500mと600mのどちらを基準に考えればよいかご教示ください。</span></li>
+      <li><span class="idx">03</span><span>距離の測定方法（水平直線距離か道路距離か）、及び使用する測地系・座標系の指定はありますか。</span></li>
+      <li><span class="idx">04</span><span>原則500m（または600m）以内であっても、水理地質調査（揚湯試験等）の結果により許可された事例はございますか。</span></li>
+      <li><span class="idx">05</span><span>貴局が保有される健康ハウス木野温泉の掘削位置座標について、照合いただくことは可能でしょうか。</span></li>
+      <li><span class="idx">06</span><span>対象地の正確な座標確認のため音更町の公図・地積測量図を取得する場合、どのような手続きが必要でしょうか。</span></li>
+      <li><span class="idx">07</span><span>対象地周辺の半径500〜600m以内に、他に登録されている温泉井戸はございますか。特に帯広徳洲会病院（音更町木野西通14丁目2-1）が温泉法上の源泉を保有しているかご確認いただけますでしょうか（弊社試算では対象地中心点まで約597mと算出しております）。</span></li>
+      <li><span class="idx">08</span><span>温泉法に基づく掘削許可申請の標準的な処理期間、及び利害関係者への意見照会手続きの有無について教えてください。</span></li>
+      <li><span class="idx">09</span><span>既存源泉の権利者への事前説明が望ましいか、運用上の考え方をご教示ください。</span></li>
     </ol>
   </section>
 
