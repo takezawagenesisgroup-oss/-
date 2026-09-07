@@ -1,0 +1,38 @@
+{
+  "block_span_check_m": {
+    "12chome_to_13chome": 302.6165554018589,
+    "13chome_to_14chome": 326.2338606425843
+  },
+  "target_points_latlng": {
+    "south_end": [
+      42.959948499999996,
+      143.2092355
+    ],
+    "center": [
+      42.961309,
+      143.209271
+    ],
+    "north_end": [
+      42.9627155,
+      143.20984049999998
+    ]
+  },
+  "distance_from_kino_onsen_m": {
+    "to_south_end": 565.4510303578508,
+    "to_center": 715.9890325953851,
+    "to_north_end": 876.9736928365082
+  },
+  "distance_from_honomai_m": {
+    "to_south_end": 1341.1429352486098,
+    "to_center": 1207.5776678313994,
+    "to_north_end": 1098.4856270741266
+  },
+  "onsen_coords": [
+    42.954908,
+    143.208316
+  ],
+  "honomai_coords": [
+    42.970846,
+    143.202172
+  ]
+}

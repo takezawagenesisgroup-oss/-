@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_043bd9d6d68b8be99947660b04d2bb3d {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_043bd9d6d68b8be99947660b04d2bb3d" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_043bd9d6d68b8be99947660b04d2bb3d = L.map(
+                "map_043bd9d6d68b8be99947660b04d2bb3d",
+                {
+                    center: [42.961309, 143.209271],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 16,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_4fba037664527bc468ee2a242913a405 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_4fba037664527bc468ee2a242913a405.addTo(map_043bd9d6d68b8be99947660b04d2bb3d);
+        
+    
+            var circle_a5c282b7829c941f72b3d891cf76038d = L.circle(
+                [42.954908, 143.208316],
+                {"bubblingMouseEvents": true, "color": "#d64550", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#d64550", "fillOpacity": 0.12, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 500.0, "stroke": true, "weight": 2}
+            ).addTo(map_043bd9d6d68b8be99947660b04d2bb3d);
+        
+    
+            circle_a5c282b7829c941f72b3d891cf76038d.bindTooltip(
+                `<div>
+                     健康ハウス木野温泉 半径500m規制円(北海道温泉保護対策要綱・推定)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var marker_af7a30af340c1bcf97c18ac98d8006b7 = L.marker(
+                [42.954908, 143.208316],
+                {
+}
+            ).addTo(map_043bd9d6d68b8be99947660b04d2bb3d);
+        
+    
+            var icon_31cd05a2dfd7332e6c377f21b9b7dbe7 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "tint",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_af7a30af340c1bcf97c18ac98d8006b7.bindTooltip(
+                `<div>
+                     健康ハウス木野温泉(木野大通東10丁目6-1) ※10丁目代表点で近似
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_af7a30af340c1bcf97c18ac98d8006b7.setIcon(icon_31cd05a2dfd7332e6c377f21b9b7dbe7);
+            
+    
+            var marker_acacfad72593e01a1c291e137ac84776 = L.marker(
+                [42.970846, 143.202172],
+                {
+}
+            ).addTo(map_043bd9d6d68b8be99947660b04d2bb3d);
+        
+    
+            var icon_019ae868d06e1aec3918d48d74581993 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "orange",
+  "iconColor": "white",
+  "icon": "tint",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_acacfad72593e01a1c291e137ac84776.bindTooltip(
+                `<div>
+                     天然温泉 鳳乃舞 音更(木野西通17丁目) ※17丁目代表点で近似
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_acacfad72593e01a1c291e137ac84776.setIcon(icon_019ae868d06e1aec3918d48d74581993);
+            
+    
+            var marker_148c4fd44a8bfdd51d17368238d3f34d = L.marker(
+                [42.959948499999996, 143.2092355],
+                {
+}
+            ).addTo(map_043bd9d6d68b8be99947660b04d2bb3d);
+        
+    
+            var icon_22cb5af2e5176b80655b98ed166ab7f1 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_148c4fd44a8bfdd51d17368238d3f34d.bindTooltip(
+                `<div>
+                     対象地 南端(推定)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_148c4fd44a8bfdd51d17368238d3f34d.setIcon(icon_22cb5af2e5176b80655b98ed166ab7f1);
+            
+    
+            var marker_8b75bfaf512d0313412e9d92c1760556 = L.marker(
+                [42.961309, 143.209271],
+                {
+}
+            ).addTo(map_043bd9d6d68b8be99947660b04d2bb3d);
+        
+    
+            var icon_7182f91d24fef9d63a88864db53d7156 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_8b75bfaf512d0313412e9d92c1760556.bindTooltip(
+                `<div>
+                     対象地 中心点(13丁目代表点)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_8b75bfaf512d0313412e9d92c1760556.setIcon(icon_7182f91d24fef9d63a88864db53d7156);
+            
+    
+            var marker_a4a6de416fcde8d3c42ca40756befa0e = L.marker(
+                [42.9627155, 143.20984049999998],
+                {
+}
+            ).addTo(map_043bd9d6d68b8be99947660b04d2bb3d);
+        
+    
+            var icon_cc0a208ba807e2d8abb9713ae1a2e057 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "purple",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+            marker_a4a6de416fcde8d3c42ca40756befa0e.bindTooltip(
+                `<div>
+                     対象地 北端(推定)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_a4a6de416fcde8d3c42ca40756befa0e.setIcon(icon_cc0a208ba807e2d8abb9713ae1a2e057);
+            
+    
+            var poly_line_0c588d287b377f7b8f80920a5746499e = L.polyline(
+                [[42.959948499999996, 143.2092355], [42.961309, 143.209271], [42.9627155, 143.20984049999998]],
+                {"bubblingMouseEvents": true, "color": "#2b6cb0", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#2b6cb0", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.7, "smoothFactor": 1.0, "stroke": true, "weight": 6}
+            ).addTo(map_043bd9d6d68b8be99947660b04d2bb3d);
+        
+    
+            poly_line_0c588d287b377f7b8f80920a5746499e.bindTooltip(
+                `<div>
+                     対象地(木野大通東13丁目3番11・4番1) 概形ライン(南北方向)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var layer_control_12779e07d4333c8cad1b060f210f7a5f_layers = {
+                base_layers : {
+                    "openstreetmap" : tile_layer_4fba037664527bc468ee2a242913a405,
+                },
+                overlays :  {
+                },
+            };
+            let layer_control_12779e07d4333c8cad1b060f210f7a5f = L.control.layers(
+                layer_control_12779e07d4333c8cad1b060f210f7a5f_layers.base_layers,
+                layer_control_12779e07d4333c8cad1b060f210f7a5f_layers.overlays,
+                {
+  "position": "topright",
+  "collapsed": true,
+  "autoZIndex": true,
+}
+            ).addTo(map_043bd9d6d68b8be99947660b04d2bb3d);
+
+        
+</script>
+</html>
