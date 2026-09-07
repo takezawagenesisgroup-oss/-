@@ -1,0 +1,262 @@
+<title>木野温泉掘削 事前相談資料</title>
+<style>
+  :root{
+    --paper:#f5f3ec;
+    --surface:#fffdf8;
+    --ink:#26251e;
+    --ink-soft:#6b6858;
+    --line:#e0dac8;
+    --line-strong:#c9c2ab;
+    --regulation:#b23c2e;
+    --regulation-soft:#f3e3df;
+    --site:#1f5c68;
+    --site-soft:#e2ecec;
+    --info:#3c5a78;
+    --info-soft:#e4eaf0;
+    --font-display:'Shippori Mincho', 'IPAGothic', serif;
+    --font-body:'Zen Kaku Gothic New', 'Noto Sans JP', 'IPAGothic', sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#1b1a16; --surface:#242219; --ink:#ece7d9; --ink-soft:#a9a38d;
+      --line:#3a3627; --line-strong:#4d4832;
+      --regulation:#e08876; --regulation-soft:#3a2420;
+      --site:#7fc4d1; --site-soft:#1e3236;
+      --info:#8fb0d1; --info-soft:#20293a;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#1b1a16; --surface:#242219; --ink:#ece7d9; --ink-soft:#a9a38d;
+    --line:#3a3627; --line-strong:#4d4832;
+    --regulation:#e08876; --regulation-soft:#3a2420;
+    --site:#7fc4d1; --site-soft:#1e3236;
+    --info:#8fb0d1; --info-soft:#20293a;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:var(--font-body); line-height:1.72;
+    font-variant-numeric:tabular-nums;
+  }
+  .page{
+    max-width:760px; margin:0 auto; padding:40px 22px 60px;
+    display:flex; flex-direction:column; gap:30px;
+  }
+  header{ display:flex; flex-direction:column; gap:8px; }
+  .eyebrow{ font-size:12px; letter-spacing:.13em; text-transform:uppercase; color:var(--info); font-weight:700; }
+  h1{ font-family:var(--font-display); font-size:26px; margin:0; font-weight:700; text-wrap:balance; }
+  .subhead{ color:var(--ink-soft); font-size:14px; max-width:64ch; }
+  .meta-row{
+    display:flex; flex-wrap:wrap; gap:6px 20px; font-size:12.5px; color:var(--ink-soft);
+    padding-top:8px; border-top:1px solid var(--line);
+  }
+  .meta-row span b{ color:var(--ink); font-weight:600; }
+
+  section{ display:flex; flex-direction:column; gap:12px; }
+  .intro-box, .callout, .diagram-card, .stats{ break-inside:avoid; }
+  .info-table tr, ol.qlist li{ break-inside:avoid; }
+  h2{
+    font-family:var(--font-display); font-size:17.5px; margin:0; font-weight:700;
+    display:flex; align-items:baseline; gap:9px;
+    break-after:avoid;
+  }
+  h2 .no{ font-size:12px; color:var(--ink-soft); font-weight:500; }
+  p{ margin:0; font-size:14px; }
+  .lede{ color:var(--ink-soft); font-size:13.5px; max-width:66ch; }
+
+  .intro-box{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:5px; padding:16px 20px; font-size:14px;
+  }
+
+  .info-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .info-table th{
+    text-align:left; width:130px; vertical-align:top; padding:7px 12px 7px 0;
+    color:var(--ink-soft); font-weight:600; white-space:nowrap;
+  }
+  .info-table td{ padding:7px 0; border-bottom:1px solid var(--line); }
+  .info-table tr:last-child td, .info-table tr:last-child th{ border-bottom:none; }
+
+  .stats{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+    background:var(--line-strong); border:1px solid var(--line-strong);
+    border-radius:4px; overflow:hidden;
+  }
+  .stat{ background:var(--surface); padding:14px 14px; display:flex; flex-direction:column; gap:4px; }
+  .stat .label{ font-size:11.5px; color:var(--ink-soft); }
+  .stat .value{ font-family:var(--font-display); font-size:23px; font-weight:700; }
+  .stat .value small{ font-size:12px; font-weight:500; color:var(--ink-soft); }
+
+  .callout{
+    background:var(--info-soft); border-left:3px solid var(--info);
+    border-radius:0 4px 4px 0; padding:13px 18px; font-size:13px;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .callout .head{ font-weight:700; color:var(--info); font-size:12.5px; }
+
+  .diagram-card{
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:6px; padding:14px 10px 18px;
+  }
+  .diagram-card svg{ width:100%; height:auto; display:block; }
+  .legend{
+    display:flex; flex-wrap:wrap; gap:14px 22px; padding-top:12px; margin-top:12px;
+    border-top:1px solid var(--line); font-size:12px; color:var(--ink-soft);
+  }
+  .legend .item{ display:flex; align-items:center; gap:7px; }
+  .swatch{ width:12px; height:12px; border-radius:3px; flex:none; }
+  .swatch.reg{ background:var(--regulation-soft); border:2px solid var(--regulation); }
+  .swatch.site{ background:var(--site-soft); border:2px solid var(--site); }
+
+  ol.qlist{ margin:0; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:8px; }
+  ol.qlist li{
+    display:flex; gap:11px; font-size:13.5px;
+    padding:10px 13px; background:var(--surface);
+    border:1px solid var(--line); border-radius:4px;
+  }
+  ol.qlist li .idx{
+    font-family:var(--font-display); font-weight:700; color:var(--info);
+    font-size:12.5px; flex:none; width:18px;
+  }
+
+  footer{
+    border-top:1px solid var(--line); padding-top:14px;
+    display:flex; flex-direction:column; gap:4px;
+    font-size:11.5px; color:var(--ink-soft);
+  }
+
+  @media (max-width:520px){ .stats{ grid-template-columns:1fr; } }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+
+<div class="page">
+
+  <header>
+    <div class="eyebrow">十勝総合振興局 環境生活課 ご相談用</div>
+    <h1>木野温泉掘削 事前相談資料</h1>
+    <p class="subhead">音更町木野における温泉掘削（北海道温泉保護対策要綱・離隔距離500m）について、事前にご教示いただきたく作成いたしました。</p>
+    <div class="meta-row">
+      <span>作成日 <b>2026年9月</b></span>
+      <span>種別 <b>事前相談・確認事項の整理</b></span>
+    </div>
+  </header>
+
+  <section aria-label="相談の趣旨">
+    <h2><span class="no">01</span>相談の趣旨</h2>
+    <div class="intro-box">
+      <p>音更町木野大通東13丁目において、温泉を利用した滞在型スパ施設の整備を検討しております。計画地の近隣に既存源泉があるため、新規掘削にあたり北海道温泉保護対策要綱に基づく離隔距離の考え方について、事前にご教示いただきたく本資料を持参いたしました。3章の試算はあくまで事業者側での概算であり、貴局が保有される公式データとの照合をお願いしたい旨、4章に確認事項としてまとめております。</p>
+    </div>
+  </section>
+
+  <section aria-label="対象地概要">
+    <h2><span class="no">02</span>対象地の概要</h2>
+    <table class="info-table">
+      <tr><th>所在地</th><td>北海道河東郡音更町木野大通東13丁目3番11、4番1（計2筆）</td></tr>
+      <tr><th>地積</th><td>合計 13,285㎡（3番11：10,866㎡、4番1：2,419㎡）</td></tr>
+      <tr><th>用途地域</th><td>市街化区域／工業地域／第3種特別工業地区</td></tr>
+      <tr><th>現況</th><td>原野（未造成）</td></tr>
+      <tr><th>計画概要</th><td>温泉を利用した滞在型スパ施設の整備</td></tr>
+      <tr><th>近隣の既存源泉</th><td>健康ハウス木野温泉（木野大通東10丁目6-1）</td></tr>
+    </table>
+  </section>
+
+  <section aria-label="距離の概算試算">
+    <h2><span class="no">03</span>距離の概算試算（事業者側の参考値）</h2>
+    <p class="lede">国土交通省「位置参照情報」に基づく街区（丁目）代表点座標（Geolonia住所データ）を用い、健康ハウス木野温泉と対象地の南端・中心・北端（推定）との直線距離をHaversine公式で算出しました。</p>
+
+    <div class="stats">
+      <div class="stat"><span class="label">対象地 南端（推定）</span><span class="value">約565<small>m</small></span></div>
+      <div class="stat"><span class="label">対象地 中心点</span><span class="value">約716<small>m</small></span></div>
+      <div class="stat"><span class="label">対象地 北端（推定）</span><span class="value">約877<small>m</small></span></div>
+    </div>
+
+    <div class="callout">
+      <span class="head">照合をお願いしたい点</span>
+      <p>上記は丁目単位の代表点に基づく概算であり、健康ハウス木野温泉の実際の掘削位置、および対象地（3番11・4番1）の正確な地番境界座標を用いたものではありません。最終的な判断の前提として、貴局が保有される温泉台帳の座標、または音更町の公図・地積測量図との照合をお願いしたく存じます。</p>
+    </div>
+  </section>
+
+  <section aria-label="位置関係図">
+    <h2><span class="no">04</span>位置関係図（概算）</h2>
+    <div class="diagram-card">
+      <svg viewBox="-560 -930 1120 1500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="健康ハウス木野温泉を中心とした半径500m円と対象地の位置関係図">
+        <defs>
+          <marker id="northArrow2" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto">
+            <path d="M5,0 L9,9 L5,7 L1,9 Z" fill="var(--ink-soft)"/>
+          </marker>
+        </defs>
+        <g stroke="var(--line)" fill="none" stroke-width="1.5">
+          <circle cx="0" cy="0" r="100"/><circle cx="0" cy="0" r="200"/>
+          <circle cx="0" cy="0" r="300"/><circle cx="0" cy="0" r="400"/>
+        </g>
+        <circle cx="0" cy="0" r="500" fill="var(--regulation-soft)" fill-opacity="0.55"
+                stroke="var(--regulation)" stroke-width="3" stroke-dasharray="10 7"/>
+        <text x="290" y="-470" font-family="var(--font-body)" font-size="16" font-weight="700" fill="var(--regulation)">500m規制円（推定）</text>
+        <text x="290" y="-448" font-family="var(--font-body)" font-size="12" fill="var(--regulation)">北海道温泉保護対策要綱・原則離隔距離</text>
+
+        <g stroke="var(--ink-soft)" stroke-width="1.5" stroke-dasharray="3 4">
+          <line x1="0" y1="0" x2="74.9" y2="-561.1"/>
+          <line x1="0" y1="0" x2="77.8" y2="-712.6"/>
+          <line x1="0" y1="0" x2="124.2" y2="-869.1"/>
+        </g>
+
+        <rect x="77.99" y="-869.13" width="43.13" height="308.02"
+              fill="var(--site-soft)" stroke="var(--site)" stroke-width="2.5"/>
+
+        <circle cx="0" cy="0" r="9" fill="var(--regulation)"/>
+        <text x="16" y="5" font-family="var(--font-body)" font-size="14" font-weight="700" fill="var(--regulation)">健康ハウス木野温泉（10丁目）</text>
+
+        <rect x="68.9" y="-568.1" width="14" height="14" fill="var(--site)"/>
+        <text x="90" y="-590" font-family="var(--font-body)" font-size="13.5" font-weight="700" fill="var(--ink)">南端（推定）</text>
+        <text x="90" y="-570" font-family="var(--font-body)" font-size="12.5" fill="var(--ink-soft)">約565m</text>
+
+        <rect x="70.8" y="-719.6" width="14" height="14" fill="var(--site)"/>
+        <text x="93" y="-736" font-family="var(--font-body)" font-size="13.5" font-weight="700" fill="var(--ink)">中心点</text>
+        <text x="93" y="-716" font-family="var(--font-body)" font-size="12.5" fill="var(--ink-soft)">約716m</text>
+
+        <rect x="117.2" y="-876.1" width="14" height="14" fill="var(--site)"/>
+        <text x="139" y="-893" font-family="var(--font-body)" font-size="13.5" font-weight="700" fill="var(--ink)">北端（推定）</text>
+        <text x="139" y="-873" font-family="var(--font-body)" font-size="12.5" fill="var(--ink-soft)">約877m</text>
+
+        <g transform="translate(-520,470)">
+          <line x1="0" y1="0" x2="200" y2="0" stroke="var(--ink)" stroke-width="2"/>
+          <line x1="0" y1="-6" x2="0" y2="6" stroke="var(--ink)" stroke-width="2"/>
+          <line x1="200" y1="-6" x2="200" y2="6" stroke="var(--ink)" stroke-width="2"/>
+          <text x="100" y="22" text-anchor="middle" font-family="var(--font-body)" font-size="12.5" fill="var(--ink-soft)">200 m</text>
+        </g>
+
+        <g transform="translate(500,-860)">
+          <line x1="0" y1="20" x2="0" y2="-20" stroke="var(--ink-soft)" stroke-width="2" marker-end="url(#northArrow2)"/>
+          <text x="0" y="38" text-anchor="middle" font-family="var(--font-body)" font-size="12.5" fill="var(--ink-soft)">N</text>
+        </g>
+      </svg>
+      <div class="legend">
+        <div class="item"><span class="swatch reg"></span>500m規制円（木野温泉を中心・推定）</div>
+        <div class="item"><span class="swatch site"></span>対象地 概形（面積等価モデル）</div>
+        <div class="item">グレーの同心円は100m間隔の目盛り</div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-label="確認事項">
+    <h2><span class="no">05</span>ご確認・ご相談したい事項</h2>
+    <ol class="qlist">
+      <li><span class="idx">01</span><span>離隔距離「原則500m」の起点・終点は、既存源泉は掘削位置か建物か、新規は計画井戸位置か敷地境界か、どのように定義されていますか。</span></li>
+      <li><span class="idx">02</span><span>距離の測定方法（水平直線距離か道路距離か）、及び使用する測地系・座標系の指定はありますか。</span></li>
+      <li><span class="idx">03</span><span>原則500m以内であっても、水理地質調査（揚湯試験等）の結果により許可された事例はございますか。</span></li>
+      <li><span class="idx">04</span><span>貴局が保有される健康ハウス木野温泉の掘削位置座標について、照合いただくことは可能でしょうか。</span></li>
+      <li><span class="idx">05</span><span>対象地の正確な座標確認のため音更町の公図・地積測量図を取得する場合、どのような手続きが必要でしょうか。</span></li>
+      <li><span class="idx">06</span><span>対象地周辺の半径500m以内に、他に登録されている温泉井戸はございますか。</span></li>
+      <li><span class="idx">07</span><span>温泉法に基づく掘削許可申請の標準的な処理期間、及び利害関係者への意見照会手続きの有無について教えてください。</span></li>
+      <li><span class="idx">08</span><span>既存源泉の権利者への事前説明が望ましいか、運用上の考え方をご教示ください。</span></li>
+    </ol>
+  </section>
+
+  <footer>
+    <span>算出方法：国土交通省「位置参照情報」に基づく街区代表点座標（Geolonia住所データ、CC BY 4.0）を用いた直線距離計算（Haversine公式）</span>
+    <span>本資料の数値はいずれも事業者側の概算であり、貴局及び音更町の公式データによる確認をお願いするものです。</span>
+  </footer>
+
+</div>
