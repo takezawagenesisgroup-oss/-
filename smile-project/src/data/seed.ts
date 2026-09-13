@@ -4,11 +4,11 @@ import { EXCHANGE_ITEMS, currentSeasonalEvent, eventActionsFor } from '../types'
 export const ME: Member = { id: 'me', name: '自分', avatar: '🙂', role: 'staff' };
 
 export const COLLEAGUES: Member[] = [
-  { id: 'u1', name: '坂下 涼香', avatar: '/photos/person1-avatar.jpg', photo: '/photos/person1.jpg', role: 'manager' },
-  { id: 'u2', name: '安藤 幸二', avatar: '/photos/person2-avatar.jpg', photo: '/photos/person2.jpg', role: 'manager' },
-  { id: 'u3', name: '竹内 壮良', avatar: '/photos/person3-avatar.jpg', photo: '/photos/person3.jpg', role: 'staff' },
-  { id: 'u4', name: '福西 良子', avatar: '/photos/person4-avatar.jpg', photo: '/photos/person4.jpg', role: 'staff' },
-  { id: 'u5', name: '久保 渉功', avatar: '/photos/person5-avatar.jpg', photo: '/photos/person5.jpg', role: 'staff' },
+  { id: 'u1', name: '中村 彩花', avatar: '😊', role: 'manager' },
+  { id: 'u2', name: '小林 大輝', avatar: '😄', role: 'manager' },
+  { id: 'u3', name: '渡辺 陽菜', avatar: '🥰', role: 'staff' },
+  { id: 'u4', name: '加藤 美月', avatar: '😆', role: 'staff' },
+  { id: 'u5', name: '木村 蓮', avatar: '😁', role: 'staff' },
 ];
 
 const PHOTO_EMOJIS = ['😄', '😁', '😊', '🥰', '😆', '🙂'];
