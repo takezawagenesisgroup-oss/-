@@ -3,10 +3,18 @@ export interface Member {
   name: string;
   avatar: string; // emoji, or an image path/data URI
   photo?: string; // this member's own smile photo, used on their posts
-  role: 'staff' | 'manager'; // 店長・上長 (manager) can grant points on reports
+  role: 'staff' | 'manager'; // 店長・上長 (manager) — their "いいね" counts toward the point rule
 }
 
-export type EventPhase = 'prep' | 'day';
+export type EventPhase = 'prep' | 'day' | 'post';
+
+export const PHASE_META: Record<EventPhase, { label: string; shortLabel: string; emoji: string }> = {
+  prep: { label: '事前行動', shortLabel: '事前', emoji: '🛠️' },
+  day: { label: '当日の報告', shortLabel: '当日', emoji: '🎉' },
+  post: { label: '事後の行動', shortLabel: '事後', emoji: '🌱' },
+};
+
+export const EVENT_PHASES: EventPhase[] = ['prep', 'day', 'post'];
 
 export interface EventActionItem {
   key: string;
@@ -17,18 +25,24 @@ export interface EventActionItem {
 }
 
 export const EVENT_ACTION_ITEMS: EventActionItem[] = [
-  // 事前編
+  // 事前行動
   { key: 'coordination', phase: 'prep', label: '自分から全体調整を実施', points: 100, emoji: '🧩' },
   { key: 'proposal', phase: 'prep', label: '企画の提案', points: 100, emoji: '💡' },
   { key: 'prep-participation', phase: 'prep', label: '事前準備への参加', points: 200, emoji: '🙌' },
   { key: 'genki-participation', phase: 'prep', label: '笑顔で元気に参加', points: 100, emoji: '😊' },
   { key: 'member-support', phase: 'prep', label: 'メンバーへのサポート', points: 100, emoji: '🤝' },
-  // 当日編
+  // 当日の報告
   { key: 'genki-greeting', phase: 'day', label: '誰よりも元気にご挨拶', points: 300, emoji: '👋' },
   { key: 'consideration', phase: 'day', label: '気配り・お声掛け', points: 500, emoji: '👀' },
   { key: 'eyecatch-smile', phase: 'day', label: '笑顔でアイキャッチ', points: 200, emoji: '😄' },
   { key: 'peer-follow', phase: 'day', label: '仲間へのフォロー', points: 200, emoji: '🫱' },
   { key: 'quick-witted', phase: 'day', label: '機転の利いたお声掛け', points: 500, emoji: '✨' },
+  // 事後の行動
+  { key: 'thanks-followup', phase: 'post', label: 'お礼・お声掛けのフォロー', points: 200, emoji: '🙏' },
+  { key: 'reflection-share', phase: 'post', label: '振り返り・気づきの共有', points: 100, emoji: '📝' },
+  { key: 'improvement-proposal', phase: 'post', label: '次回への改善提案', points: 300, emoji: '💭' },
+  { key: 'knowledge-share', phase: 'post', label: 'ナレッジ・成功事例の共有', points: 200, emoji: '📚' },
+  { key: 'team-appreciation', phase: 'post', label: 'メンバーへの感謝・称賛', points: 100, emoji: '💌' },
 ];
 
 export function eventActionsFor(phase: EventPhase): EventActionItem[] {
@@ -45,14 +59,10 @@ export const POINT_LIMITS = {
   annual: 14400,
 };
 
-export interface PointGrant {
-  managerId: string;
-  managerName: string;
-  managerAvatar: string;
-  comment: string;
-  points: number;
-  grantedAt: string; // ISO
-}
+// ポイント獲得ルール：投稿に、店長・上長を含む3人以上の「いいね」がつくとポイント獲得
+export const POINT_RULE = {
+  minLikes: 3,
+};
 
 export interface EventPost {
   id: string;
@@ -66,7 +76,7 @@ export interface EventPost {
   comment: string;
   createdAt: string; // ISO
   likes: string[]; // member ids who liked
-  grant?: PointGrant; // set once a manager approves and sends points
+  pointsEarnedAt?: string; // ISO — set once 店長・上長を含む3件以上のいいねの条件を満たした瞬間
 }
 
 export interface SeasonalEvent {

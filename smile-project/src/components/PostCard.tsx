@@ -1,12 +1,10 @@
-import { useState } from 'react';
 import type { EventPost } from '../types';
-import { findEventAction } from '../types';
+import { PHASE_META, POINT_RULE, findEventAction } from '../types';
 import { useStore } from '../data/store';
 import Avatar from './Avatar';
 import { isImageSrc } from '../utils/media';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Heart, Award } from 'lucide-react';
+import { Heart, Sparkles, Crown } from 'lucide-react';
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -21,21 +19,36 @@ function timeAgo(iso: string): string {
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-export default function PostCard({ post }: { post: EventPost }) {
-  const { currentUser, toggleLike, grantPoints } = useStore();
-  const [showGrantForm, setShowGrantForm] = useState(false);
-  const [grantComment, setGrantComment] = useState('');
+const PHASE_BADGE_STYLE: Record<string, string> = {
+  prep: 'bg-secondary text-primary',
+  day: 'bg-primary/15 text-primary',
+  post: 'bg-coin/15 text-coin',
+};
 
-  const isMine = post.userId === currentUser.id;
+export default function PostCard({ post }: { post: EventPost }) {
+  const { currentUser, memberById, toggleLike, isPostEarned, managerLikeCount } = useStore();
+
   const iLiked = post.likes.includes(currentUser.id);
   const action = findEventAction(post.actionKey);
-  const canGrant = currentUser.role === 'manager' && !isMine && !post.grant;
+  const phaseMeta = PHASE_META[post.phase];
+  const earned = isPostEarned(post);
+  const mgrLikes = managerLikeCount(post);
+  const remaining = Math.max(0, POINT_RULE.minLikes - post.likes.length);
 
-  function handleGrant() {
-    if (!grantComment.trim()) return;
-    grantPoints(post.id, grantComment.trim());
-    setShowGrantForm(false);
-    setGrantComment('');
+  const likers = post.likes
+    .map((id) => memberById(id))
+    .filter((m): m is NonNullable<typeof m> => !!m);
+
+  let ruleMessage: string;
+  if (earned) {
+    ruleMessage = `+${action?.points ?? 0}P 獲得！`;
+  } else if (mgrLikes === 0) {
+    ruleMessage =
+      post.likes.length >= POINT_RULE.minLikes
+        ? '店長・上長のいいねでポイント獲得！'
+        : `店長・上長を含む${POINT_RULE.minLikes}人のいいねでポイント獲得（あと${remaining}件）`;
+  } else {
+    ruleMessage = `あと${remaining}件のいいねでポイント獲得！`;
   }
 
   return (
@@ -48,12 +61,17 @@ export default function PostCard({ post }: { post: EventPost }) {
           <p className="truncate text-sm font-semibold text-foreground">{post.userName}</p>
           <p className="text-[11px] text-muted-foreground">{timeAgo(post.createdAt)}</p>
         </div>
-        {action && (
-          <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-primary">
-            {post.phase === 'prep' ? '事前編' : '当日編'}・{action.emoji} {action.label}
-          </span>
-        )}
+        <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold', PHASE_BADGE_STYLE[post.phase])}>
+          {phaseMeta.emoji} {phaseMeta.label}
+        </span>
       </div>
+
+      {action && (
+        <div className="flex items-center gap-1.5 px-4 pb-1.5 text-xs text-muted-foreground">
+          <span className="text-sm">{action.emoji}</span>
+          <span>{action.label}</span>
+        </div>
+      )}
 
       <div className="relative flex items-center justify-center overflow-hidden bg-muted">
         {isImageSrc(post.photo) ? (
@@ -62,8 +80,13 @@ export default function PostCard({ post }: { post: EventPost }) {
           <div className="flex aspect-[4/5] w-full items-center justify-center text-8xl">{post.photo}</div>
         )}
         {action && (
-          <div className="absolute right-2.5 top-2.5 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold text-neutral-900 shadow-sm">
-            +{action.points}P
+          <div
+            className={cn(
+              'absolute right-2.5 top-2.5 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm',
+              earned ? 'bg-coin text-coin-foreground' : 'bg-white/95 text-neutral-900',
+            )}
+          >
+            {earned && <Sparkles className="size-3" />}+{action.points}P
           </div>
         )}
       </div>
@@ -72,52 +95,40 @@ export default function PostCard({ post }: { post: EventPost }) {
         <div className="flex items-center justify-between">
           <button
             onClick={() => toggleLike(post.id)}
-            className={cn('transition-transform active:scale-90', iLiked ? 'text-story-2' : 'text-foreground')}
+            className={cn('flex items-center gap-1.5 transition-transform active:scale-90', iLiked ? 'text-story-2' : 'text-foreground')}
           >
             <Heart className="size-6" strokeWidth={1.8} fill={iLiked ? 'currentColor' : 'none'} />
           </button>
 
-          {post.grant ? (
-            <span className="flex items-center gap-1 text-[11px] font-bold text-coin">
-              <Award className="size-3.5" />+{post.grant.points}P承認済み
-            </span>
-          ) : canGrant && !showGrantForm ? (
-            <Button onClick={() => setShowGrantForm(true)} size="sm" variant="coin">
-              ポイントを送る
-            </Button>
-          ) : isMine && !post.grant ? (
-            <span className="text-[11px] text-muted-foreground">ポイント承認待ち</span>
-          ) : null}
+          <span className={cn('flex items-center gap-1 text-[11px] font-bold', earned ? 'text-coin' : 'text-muted-foreground')}>
+            {earned && <Sparkles className="size-3.5" />}
+            {ruleMessage}
+          </span>
         </div>
 
-        {post.likes.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{post.likes.length}件のいいね</p>}
-
-        {showGrantForm && (
-          <div className="mt-2 flex flex-col gap-2 rounded-xl border border-border bg-secondary/40 p-2.5">
-            <textarea
-              value={grantComment}
-              onChange={(e) => setGrantComment(e.target.value)}
-              placeholder="承認コメントを入力（必須）：例）お客様対応が素晴らしかったです！"
-              rows={2}
-              className="w-full resize-none rounded-lg border border-border bg-card p-2 text-xs text-foreground outline-none focus:border-primary"
-            />
-            <div className="flex items-center justify-end gap-2">
-              <button onClick={() => setShowGrantForm(false)} className="text-xs text-muted-foreground">
-                キャンセル
-              </button>
-              <Button onClick={handleGrant} disabled={!grantComment.trim()} size="sm" variant="coin">
-                +{action?.points}P を承認して送る
-              </Button>
+        {likers.length > 0 && (
+          <div className="mt-1.5 flex items-center gap-1.5">
+            <div className="flex -space-x-1.5">
+              {likers.slice(0, 6).map((m) => (
+                <span key={m.id} className="relative">
+                  <Avatar
+                    src={m.avatar}
+                    alt={m.name}
+                    className={cn(
+                      'h-5 w-5 rounded-full border-2 border-card text-[10px]',
+                      m.role === 'manager' ? 'ring-1 ring-coin' : '',
+                    )}
+                  />
+                  {m.role === 'manager' && (
+                    <Crown className="absolute -right-1 -top-1.5 size-3 fill-coin text-coin" strokeWidth={1.5} />
+                  )}
+                </span>
+              ))}
             </div>
-          </div>
-        )}
-
-        {post.grant && (
-          <div className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-coin/10 px-2.5 py-1.5 text-xs text-coin">
-            <Avatar src={post.grant.managerAvatar} alt={post.grant.managerName} className="h-4 w-4 rounded-full text-[9px]" />
-            <span>
-              {post.grant.managerName}（店長）「{post.grant.comment}」
-            </span>
+            <p className="text-xs text-muted-foreground">
+              {post.likes.length}件のいいね
+              {mgrLikes > 0 && <span className="text-coin">（店長・上長を含む）</span>}
+            </p>
           </div>
         )}
 

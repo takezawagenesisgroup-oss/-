@@ -1,4 +1,4 @@
-import type { EventPost, Member, Redemption } from '../types';
+import type { EventPhase, EventPost, Member, Redemption } from '../types';
 import { EXCHANGE_ITEMS, currentSeasonalEvent, eventActionsFor } from '../types';
 
 export const ME: Member = { id: 'me', name: '自分', avatar: '🙂', role: 'staff' };
@@ -13,29 +13,29 @@ export const COLLEAGUES: Member[] = [
 
 const PHOTO_EMOJIS = ['😄', '😁', '😊', '🥰', '😆', '🙂'];
 
-const PREP_COMMENTS = [
-  '当日の動線を確認しながら机の配置を決めました！',
-  '飾り付け用の花を仕入れてきました🌸',
-  '前日準備、みんなで手分けして進めました',
-  '企画書をまとめて共有しました！',
-  '準備が整って、あとは当日を待つのみです',
-];
-
-const DAY_COMMENTS = [
-  'お客様に元気よくご挨拶できました！',
-  '困っているお客様にすぐ気づいて声をかけられました',
-  '新人スタッフのフォローもばっちりです',
-  '笑顔でお出迎え、いい表情撮れました📸',
-  '機転を利かせて対応、喜んでもらえました！',
-];
-
-const APPROVAL_COMMENTS = [
-  'さすがの動きでした！助かりました',
-  'いつも気が利いていて素晴らしいです',
-  'お客様からの評判も良かったです、ありがとう！',
-  'チーム全体の雰囲気が良くなりました',
-  '模範的な対応でした！',
-];
+const PHASE_COMMENTS: Record<EventPhase, string[]> = {
+  prep: [
+    '当日の動線を確認しながら机の配置を決めました！',
+    '飾り付け用の花を仕入れてきました🌸',
+    '前日準備、みんなで手分けして進めました',
+    '企画書をまとめて共有しました！',
+    '準備が整って、あとは当日を待つのみです',
+  ],
+  day: [
+    'お客様に元気よくご挨拶できました！',
+    '困っているお客様にすぐ気づいて声をかけられました',
+    '新人スタッフのフォローもばっちりです',
+    '笑顔でお出迎え、いい表情撮れました📸',
+    '機転を利かせて対応、喜んでもらえました！',
+  ],
+  post: [
+    'ご協力いただいた皆さんにお礼を伝えて回りました',
+    '今回の気づきをメモにまとめて共有しました！',
+    '次回に向けた改善案を提案しました',
+    'うまくいったポイントをナレッジとして残しました📚',
+    'サポートしてくれたメンバーに感謝を伝えました💌',
+  ],
+};
 
 function daysAgo(n: number, hour = 12): string {
   const d = new Date();
@@ -49,10 +49,19 @@ function nextId(): string {
   return `p${idCounter++}`;
 }
 
-function randomLikes(authorId: string, pool: Member[]): string[] {
-  const candidates = pool.filter((m) => m.id !== authorId);
-  const shuffled = [...candidates].sort(() => Math.random() - 0.5);
-  const count = Math.floor(Math.random() * (shuffled.length + 1));
+function buildLikes(authorId: string, allMembers: Member[], managers: Member[], earned: boolean): string[] {
+  const candidates = allMembers.filter((m) => m.id !== authorId);
+  if (earned) {
+    const managerCandidates = managers.filter((m) => m.id !== authorId);
+    const manager = managerCandidates[Math.floor(Math.random() * managerCandidates.length)];
+    const others = candidates.filter((m) => m.id !== manager.id).sort(() => Math.random() - 0.5);
+    const extraCount = Math.min(others.length, 2 + Math.floor(Math.random() * 2));
+    const chosen = [manager, ...others.slice(0, extraCount)];
+    return chosen.sort(() => Math.random() - 0.5).map((m) => m.id);
+  }
+  const nonManagers = candidates.filter((m) => !managers.some((mgr) => mgr.id === m.id));
+  const shuffled = [...nonManagers].sort(() => Math.random() - 0.5);
+  const count = Math.floor(Math.random() * Math.min(3, shuffled.length + 1));
   return shuffled.slice(0, count).map((m) => m.id);
 }
 
@@ -61,68 +70,31 @@ export function buildSeedEventPosts(): EventPost[] {
   const allMembers = [ME, ...COLLEAGUES];
   const managers = COLLEAGUES.filter((m) => m.role === 'manager');
   const event = currentSeasonalEvent(new Date());
-
   const authors = [ME, ...COLLEAGUES];
-  const prepActions = eventActionsFor('prep');
-  const dayActions = eventActionsFor('day');
+  const phases: EventPhase[] = ['prep', 'day', 'post'];
 
   authors.forEach((author, idx) => {
-    // one prep-phase report per person
-    const prepAction = prepActions[idx % prepActions.length];
-    const prepCreatedAt = daysAgo(6 + idx);
-    const prepGranted = Math.random() < 0.6;
-    const prepManager = managers.find((m) => m.id !== author.id) ?? managers[0];
-    posts.push({
-      id: nextId(),
-      userId: author.id,
-      userName: author.name,
-      avatar: author.avatar,
-      eventKey: event.key,
-      phase: 'prep',
-      actionKey: prepAction.key,
-      photo: author.photo ?? PHOTO_EMOJIS[Math.floor(Math.random() * PHOTO_EMOJIS.length)],
-      comment: PREP_COMMENTS[idx % PREP_COMMENTS.length],
-      createdAt: prepCreatedAt,
-      likes: randomLikes(author.id, allMembers),
-      grant: prepGranted
-        ? {
-            managerId: prepManager.id,
-            managerName: prepManager.name,
-            managerAvatar: prepManager.avatar,
-            comment: APPROVAL_COMMENTS[idx % APPROVAL_COMMENTS.length],
-            points: prepAction.points,
-            grantedAt: daysAgo(5 + idx),
-          }
-        : undefined,
-    });
-
-    // one day-phase report per person
-    const dayAction = dayActions[(idx + 2) % dayActions.length];
-    const dayCreatedAt = daysAgo(Math.max(0, 2 - idx));
-    const dayGranted = Math.random() < 0.5;
-    const dayManager = managers.find((m) => m.id !== author.id) ?? managers[0];
-    posts.push({
-      id: nextId(),
-      userId: author.id,
-      userName: author.name,
-      avatar: author.avatar,
-      eventKey: event.key,
-      phase: 'day',
-      actionKey: dayAction.key,
-      photo: author.photo ?? PHOTO_EMOJIS[Math.floor(Math.random() * PHOTO_EMOJIS.length)],
-      comment: DAY_COMMENTS[(idx + 1) % DAY_COMMENTS.length],
-      createdAt: dayCreatedAt,
-      likes: randomLikes(author.id, allMembers),
-      grant: dayGranted
-        ? {
-            managerId: dayManager.id,
-            managerName: dayManager.name,
-            managerAvatar: dayManager.avatar,
-            comment: APPROVAL_COMMENTS[(idx + 2) % APPROVAL_COMMENTS.length],
-            points: dayAction.points,
-            grantedAt: daysAgo(Math.max(0, 1 - idx)),
-          }
-        : undefined,
+    phases.forEach((phase, phaseIdx) => {
+      const actions = eventActionsFor(phase);
+      const action = actions[(idx + phaseIdx) % actions.length];
+      const comments = PHASE_COMMENTS[phase];
+      const createdAt = daysAgo(8 - phaseIdx * 3 + idx);
+      const earned = Math.random() < 0.55;
+      const likes = buildLikes(author.id, allMembers, managers, earned);
+      posts.push({
+        id: nextId(),
+        userId: author.id,
+        userName: author.name,
+        avatar: author.avatar,
+        eventKey: event.key,
+        phase,
+        actionKey: action.key,
+        photo: author.photo ?? PHOTO_EMOJIS[Math.floor(Math.random() * PHOTO_EMOJIS.length)],
+        comment: comments[(idx + phaseIdx) % comments.length],
+        createdAt,
+        likes,
+        pointsEarnedAt: earned ? daysAgo(Math.max(0, 8 - phaseIdx * 3 + idx - 1)) : undefined,
+      });
     });
   });
 

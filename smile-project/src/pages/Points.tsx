@@ -5,7 +5,7 @@ import type { Tab } from '../components/BottomNav';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, Coins, RefreshCw } from 'lucide-react';
-import { POINT_LIMITS } from '../types';
+import { PHASE_META, POINT_LIMITS, findEventAction } from '../types';
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -50,13 +50,16 @@ export default function Points({ onNavigate }: { onNavigate: (tab: Tab) => void 
   const myPosts = posts.filter((p) => p.userId === currentUser.id);
   const activity: ActivityEntry[] = [
     ...myPosts
-      .filter((p) => p.grant)
-      .map((p) => ({
-        id: `grant-${p.id}`,
-        label: `${new Date(p.grant!.grantedAt).getMonth() + 1}月${new Date(p.grant!.grantedAt).getDate()}日：${p.grant!.managerName}さんが承認「${p.grant!.comment}」`,
-        points: p.grant!.points,
-        createdAt: p.grant!.grantedAt,
-      })),
+      .filter((p) => p.pointsEarnedAt)
+      .map((p) => {
+        const action = findEventAction(p.actionKey);
+        return {
+          id: `earn-${p.id}`,
+          label: `${new Date(p.pointsEarnedAt!).getMonth() + 1}月${new Date(p.pointsEarnedAt!).getDate()}日：${PHASE_META[p.phase].label}「${action?.label ?? ''}」で獲得`,
+          points: action?.points ?? 0,
+          createdAt: p.pointsEarnedAt!,
+        };
+      }),
     ...redemptions
       .filter((r) => r.userId === currentUser.id)
       .map((r) => ({

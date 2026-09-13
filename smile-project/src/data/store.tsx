@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { EventPhase, EventPost, Member, Redemption } from '../types';
-import { EXCHANGE_ITEMS, currentSeasonalEvent, findEventAction } from '../types';
+import { EXCHANGE_ITEMS, POINT_RULE, currentSeasonalEvent, findEventAction } from '../types';
 import { buildSeedEventPosts, buildSeedRedemptions, ME, COLLEAGUES } from './seed';
 
 const POSTS_KEY = 'smile-project-event-posts-v1';
@@ -43,7 +43,8 @@ interface StoreValue {
   allMembers: Member[];
   addPost: (phase: EventPhase, actionKey: string, comment: string, photo: string) => void;
   toggleLike: (postId: string) => void;
-  grantPoints: (postId: string, comment: string) => boolean;
+  isPostEarned: (post: EventPost) => boolean;
+  managerLikeCount: (post: EventPost) => number;
   totalPoints: (userId: string) => number;
   monthlyPoints: (userId: string, year: number, month: number) => number;
   monthlyScores: (userId: string, year: number, month: number) => Map<number, number>;
@@ -94,68 +95,60 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setPosts((prev) => [newPost, ...prev]);
     }
 
+    function managerLikeCount(post: EventPost): number {
+      return post.likes.filter((id) => allMembers.find((m) => m.id === id)?.role === 'manager').length;
+    }
+
+    function isPostEarned(post: EventPost): boolean {
+      if (post.pointsEarnedAt) return true;
+      return post.likes.length >= POINT_RULE.minLikes && managerLikeCount(post) > 0;
+    }
+
     function toggleLike(postId: string) {
       setPosts((prev) =>
         prev.map((post) => {
           if (post.id !== postId) return post;
           const already = post.likes.includes(currentUser.id);
           const likes = already ? post.likes.filter((id) => id !== currentUser.id) : [...post.likes, currentUser.id];
-          return { ...post, likes };
+          let pointsEarnedAt = post.pointsEarnedAt;
+          if (!pointsEarnedAt) {
+            const managerLiked = likes.some((id) => allMembers.find((m) => m.id === id)?.role === 'manager');
+            if (likes.length >= POINT_RULE.minLikes && managerLiked) {
+              pointsEarnedAt = new Date().toISOString();
+            }
+          }
+          return { ...post, likes, pointsEarnedAt };
         }),
       );
     }
 
-    function grantPoints(postId: string, comment: string): boolean {
-      if (currentUser.role !== 'manager') return false;
-      const post = posts.find((p) => p.id === postId);
-      if (!post || post.grant || post.userId === currentUser.id) return false;
-      const action = findEventAction(post.actionKey);
-      if (!action) return false;
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? {
-                ...p,
-                grant: {
-                  managerId: currentUser.id,
-                  managerName: currentUser.name,
-                  managerAvatar: currentUser.avatar,
-                  comment,
-                  points: action.points,
-                  grantedAt: new Date().toISOString(),
-                },
-              }
-            : p,
-        ),
-      );
-      return true;
-    }
-
     function totalPoints(userId: string) {
-      const earned = posts.filter((p) => p.userId === userId && p.grant).reduce((sum, p) => sum + (p.grant?.points ?? 0), 0);
+      const earned = posts
+        .filter((p) => p.userId === userId && p.pointsEarnedAt)
+        .reduce((sum, p) => sum + (findEventAction(p.actionKey)?.points ?? 0), 0);
       const spent = redemptions.filter((r) => r.userId === userId).reduce((sum, r) => sum + r.cost, 0);
       return earned - spent;
     }
 
     function monthlyPoints(userId: string, year: number, month: number) {
       return posts
-        .filter((p) => p.userId === userId && p.grant)
+        .filter((p) => p.userId === userId && p.pointsEarnedAt)
         .filter((p) => {
-          const d = new Date(p.grant!.grantedAt);
+          const d = new Date(p.pointsEarnedAt!);
           return d.getFullYear() === year && d.getMonth() === month;
         })
-        .reduce((sum, p) => sum + (p.grant?.points ?? 0), 0);
+        .reduce((sum, p) => sum + (findEventAction(p.actionKey)?.points ?? 0), 0);
     }
 
     function monthlyScores(userId: string, year: number, month: number) {
       const map = new Map<number, number>();
       posts
-        .filter((p) => p.userId === userId && p.grant)
+        .filter((p) => p.userId === userId && p.pointsEarnedAt)
         .forEach((p) => {
-          const d = new Date(p.grant!.grantedAt);
+          const d = new Date(p.pointsEarnedAt!);
           if (d.getFullYear() === year && d.getMonth() === month) {
             const day = d.getDate();
-            map.set(day, (map.get(day) ?? 0) + (p.grant?.points ?? 0));
+            map.set(day, (map.get(day) ?? 0) + (findEventAction(p.actionKey)?.points ?? 0));
           }
         });
       return map;
@@ -164,8 +157,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     function overallLeaderboard(): LeaderboardEntry[] {
       return allMembers
         .map((member) => {
-          const memberPosts = posts.filter((p) => p.userId === member.id && p.grant);
-          const points = memberPosts.reduce((sum, p) => sum + (p.grant?.points ?? 0), 0);
+          const memberPosts = posts.filter((p) => p.userId === member.id && p.pointsEarnedAt);
+          const points = memberPosts.reduce((sum, p) => sum + (findEventAction(p.actionKey)?.points ?? 0), 0);
           return { member, points, postCount: memberPosts.length };
         })
         .sort((a, b) => b.points - a.points);
@@ -200,7 +193,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       allMembers,
       addPost,
       toggleLike,
-      grantPoints,
+      isPostEarned,
+      managerLikeCount,
       totalPoints,
       monthlyPoints,
       monthlyScores,

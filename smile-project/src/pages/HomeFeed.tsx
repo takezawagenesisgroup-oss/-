@@ -8,7 +8,7 @@ export default function HomeFeed({ onCreateReport }: { onCreateReport: () => voi
   const event = currentSeasonalEvent(new Date());
   const points = totalPoints(currentUser.id);
   const myPostCount = posts.filter((p) => p.userId === currentUser.id).length;
-  const pendingCount = posts.filter((p) => p.userId === currentUser.id && !p.grant).length;
+  const pendingCount = posts.filter((p) => p.userId === currentUser.id && !p.pointsEarnedAt).length;
 
   return (
     <div className="mx-auto max-w-md pb-4">
@@ -31,7 +31,7 @@ export default function HomeFeed({ onCreateReport }: { onCreateReport: () => voi
         </div>
         <div className="flex-1">
           <p className="font-display text-base font-bold text-foreground">{pendingCount}</p>
-          <p className="text-[10px] text-muted-foreground">承認待ち</p>
+          <p className="text-[10px] text-muted-foreground">いいね待ち</p>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { EventPhase } from '../types';
-import { currentSeasonalEvent, eventActionsFor } from '../types';
+import { EVENT_PHASES, PHASE_META, POINT_RULE, currentSeasonalEvent, eventActionsFor } from '../types';
 import { useStore } from '../data/store';
 import type { Tab } from '../components/BottomNav';
 import { Card } from '@/components/ui/card';
@@ -77,7 +77,9 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
       <div className="mx-auto flex max-w-md flex-col items-center justify-center px-6 py-24 text-center">
         <div className="text-6xl">🎉</div>
         <p className="font-display mt-4 text-lg font-bold text-foreground">報告しました！</p>
-        <p className="mt-1 text-sm text-muted-foreground">店長・上長の承認でポイントが付与されます</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          店長・上長を含む{POINT_RULE.minLikes}人以上にいいねされるとポイント獲得！
+        </p>
       </div>
     );
   }
@@ -131,25 +133,19 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
 
       <Card className="mt-4 p-4">
         <p className="text-sm font-semibold text-foreground">どのタイミングの報告ですか？</p>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => changePhase('prep')}
-            className={cn(
-              'rounded-xl border py-2 text-sm font-semibold transition',
-              phase === 'prep' ? 'border-primary bg-secondary text-primary' : 'border-border text-muted-foreground',
-            )}
-          >
-            事前編（準備）
-          </button>
-          <button
-            onClick={() => changePhase('day')}
-            className={cn(
-              'rounded-xl border py-2 text-sm font-semibold transition',
-              phase === 'day' ? 'border-primary bg-secondary text-primary' : 'border-border text-muted-foreground',
-            )}
-          >
-            当日編
-          </button>
+        <div className="grid grid-cols-3 gap-2">
+          {EVENT_PHASES.map((p) => (
+            <button
+              key={p}
+              onClick={() => changePhase(p)}
+              className={cn(
+                'rounded-xl border py-2 text-sm font-semibold transition',
+                phase === p ? 'border-primary bg-secondary text-primary' : 'border-border text-muted-foreground',
+              )}
+            >
+              {PHASE_META[p].emoji} {PHASE_META[p].shortLabel}
+            </button>
+          ))}
         </div>
 
         <p className="mt-1 text-sm font-semibold text-foreground">やったことを選んでください</p>
@@ -188,7 +184,9 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
       <Button onClick={handleSubmit} disabled={!actionKey} size="lg" className="mt-4 w-full">
         報告する
       </Button>
-      <p className="mt-2 text-center text-xs text-muted-foreground">店長・上長が承認すると、選んだ項目のポイントが付与されます</p>
+      <p className="mt-2 text-center text-xs text-muted-foreground">
+        🏆 店長・上長を含む{POINT_RULE.minLikes}人以上のいいねで、選んだ項目のポイントを獲得できます
+      </p>
     </div>
   );
 }
