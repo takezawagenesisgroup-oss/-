@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { EventPhase } from '../types';
-import { EVENT_PHASES, PHASE_META, POINT_RULE, currentSeasonalEvent, eventActionsFor } from '../types';
+import { EVENT_PHASES, PHASE_META, POINT_RULE, POST_THEMES, currentSeasonalEvent, eventActionsFor } from '../types';
 import { useStore } from '../data/store';
 import type { Tab } from '../components/BottomNav';
 import { Card } from '@/components/ui/card';
@@ -97,6 +97,17 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
           </div>
         </div>
         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{event.description}</p>
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-dashed border-border p-3">
+        <p className="text-xs font-semibold text-foreground">📸 こんな瞬間を投稿しよう</p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {POST_THEMES.map((theme) => (
+            <span key={theme.label} className="rounded-full bg-secondary px-2.5 py-1 text-xs text-foreground">
+              {theme.emoji} {theme.label}
+            </span>
+          ))}
+        </div>
       </div>
 
       <Card className="mt-4 p-4">

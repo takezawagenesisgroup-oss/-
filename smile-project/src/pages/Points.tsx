@@ -5,7 +5,7 @@ import type { Tab } from '../components/BottomNav';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, Coins, RefreshCw } from 'lucide-react';
-import { PHASE_META, POINT_LIMITS, findEventAction } from '../types';
+import { PHASE_META, POINT_LIMITS, POST_THEMES, findEventAction } from '../types';
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -106,6 +106,21 @@ export default function Points({ onNavigate }: { onNavigate: (tab: Tab) => void 
         <RefreshCw className="size-3.5" />
         🔧 デモ用：表示モードを「{currentUser.role === 'manager' ? 'スタッフ' : '店長・上長'}」に切り替える
       </button>
+
+      <Card className="mt-4 p-4">
+        <p className="text-sm font-semibold text-foreground">✨ こんな投稿でポイントGET！</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          こんなテーマに沿った瞬間を写真で投稿しよう。店長・上長を含む{`3`}人以上のいいねが集まるとポイント獲得！
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
+          {POST_THEMES.map((theme) => (
+            <div key={theme.label} className="flex items-center gap-2.5 rounded-xl bg-secondary/60 px-3 py-2.5">
+              <span className="text-xl">{theme.emoji}</span>
+              <p className="text-sm font-semibold text-foreground">{theme.label}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       <Card className="mt-4 flex-row items-center justify-between p-3 text-center">
         <div className="flex-1">

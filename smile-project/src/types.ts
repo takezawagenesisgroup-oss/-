@@ -64,6 +64,18 @@ export const POINT_RULE = {
   minLikes: 3,
 };
 
+// 投稿のテーマ例：厳密な行動リストではなく、こんな瞬間を投稿しよう、というゆるやかな指針
+export interface PostTheme {
+  emoji: string;
+  label: string;
+}
+
+export const POST_THEMES: PostTheme[] = [
+  { emoji: '😄', label: '最高の笑顔' },
+  { emoji: '🙌', label: 'お客様に喜んでいただいたこと' },
+  { emoji: '🎉', label: '自分自身が楽しんだこと' },
+];
+
 export interface EventPost {
   id: string;
   userId: string;
