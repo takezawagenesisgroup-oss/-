@@ -6,8 +6,8 @@ export default function Header({ title, subtitle }: { title: string; subtitle?: 
           <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-card text-sm">😊</span>
         </div>
         <div className="min-w-0">
-          <h1 className="font-display truncate text-base font-bold leading-tight tracking-tight text-foreground">{title}</h1>
-          {subtitle && <p className="truncate text-[11px] text-muted-foreground">{subtitle}</p>}
+          <h1 className="truncate text-[17px] font-bold leading-tight text-foreground">{title}</h1>
+          {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
         </div>
       </div>
     </header>

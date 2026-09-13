@@ -80,7 +80,7 @@ export default function Points({ onNavigate }: { onNavigate: (tab: Tab) => void 
           <div>
             <p className="text-sm text-muted-foreground">
               {currentUser.name}
-              <span className="ml-1.5 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-primary">
+              <span className="ml-1.5 rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-primary">
                 {currentUser.role === 'manager' ? '店長・上長' : 'スタッフ'}
               </span>
             </p>
@@ -90,11 +90,11 @@ export default function Points({ onNavigate }: { onNavigate: (tab: Tab) => void 
         <div className="mt-4 grid grid-cols-2 gap-2 text-center">
           <div className="rounded-xl bg-muted py-2">
             <p className="font-display text-lg font-bold text-foreground">{myPosts.length}</p>
-            <p className="text-[11px] text-muted-foreground">総投稿数</p>
+            <p className="text-xs text-muted-foreground">総投稿数</p>
           </div>
           <button onClick={() => onNavigate('exchange')} className="flex flex-col items-center justify-center gap-0.5 rounded-xl bg-coin py-2 text-coin-foreground active:scale-95">
             <Coins className="size-4" />
-            <p className="text-[11px] font-semibold">ポイントを使う</p>
+            <p className="text-xs font-semibold">ポイントを使う</p>
           </button>
         </div>
       </div>
@@ -110,15 +110,15 @@ export default function Points({ onNavigate }: { onNavigate: (tab: Tab) => void 
       <Card className="mt-4 flex-row items-center justify-between p-3 text-center">
         <div className="flex-1">
           <p className="font-display text-sm font-bold text-foreground">{POINT_LIMITS.daily}P</p>
-          <p className="text-[10px] text-muted-foreground">1日の目安</p>
+          <p className="text-xs text-muted-foreground">1日の目安</p>
         </div>
         <div className="flex-1 border-x border-border">
           <p className="font-display text-sm font-bold text-foreground">{POINT_LIMITS.monthly.toLocaleString()}P</p>
-          <p className="text-[10px] text-muted-foreground">月間上限</p>
+          <p className="text-xs text-muted-foreground">月間上限</p>
         </div>
         <div className="flex-1">
           <p className="font-display text-sm font-bold text-foreground">{POINT_LIMITS.annual.toLocaleString()}P</p>
-          <p className="text-[10px] text-muted-foreground">年間目安</p>
+          <p className="text-xs text-muted-foreground">年間目安</p>
         </div>
       </Card>
 
@@ -161,7 +161,7 @@ export default function Points({ onNavigate }: { onNavigate: (tab: Tab) => void 
         </div>
 
         <div>
-          <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-muted-foreground">
+          <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
             {WEEKDAYS.map((w) => (
               <div key={w} className="py-1">
                 {w}
@@ -177,13 +177,13 @@ export default function Points({ onNavigate }: { onNavigate: (tab: Tab) => void 
                 <div
                   key={idx}
                   className={cn(
-                    'flex aspect-square flex-col items-center justify-center rounded-lg text-[11px]',
+                    'flex aspect-square flex-col items-center justify-center rounded-lg text-xs',
                     score > 0 ? stampStyle(score) : 'bg-muted text-muted-foreground/50',
                     isToday && 'ring-2 ring-coin',
                   )}
                 >
                   <span>{day}</span>
-                  {score > 0 && <span className="text-[10px] font-bold">{score}</span>}
+                  {score > 0 && <span className="text-[11px] font-bold">{score}</span>}
                 </div>
               );
             })}

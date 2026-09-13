@@ -92,7 +92,7 @@ export default function PostCreate({ onDone }: { onDone: (tab: Tab) => void }) {
         <div className="flex items-center gap-2">
           <span className="text-2xl">{event.emoji}</span>
           <div className="flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">{event.seasonLabel}・開催中</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">{event.seasonLabel}・開催中</p>
             <p className="text-sm font-bold text-foreground">{event.title}</p>
           </div>
         </div>

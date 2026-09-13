@@ -4,7 +4,7 @@ import { useStore } from '../data/store';
 import Avatar from './Avatar';
 import { isImageSrc } from '../utils/media';
 import { cn } from '@/lib/utils';
-import { Heart, Sparkles, Crown } from 'lucide-react';
+import { Heart, Sparkles } from 'lucide-react';
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -18,12 +18,6 @@ function timeAgo(iso: string): string {
   const d = new Date(iso);
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
-
-const PHASE_BADGE_STYLE: Record<string, string> = {
-  prep: 'bg-secondary text-primary',
-  day: 'bg-primary/15 text-primary',
-  post: 'bg-coin/15 text-coin',
-};
 
 export default function PostCard({ post }: { post: EventPost }) {
   const { currentUser, memberById, toggleLike, isPostEarned, managerLikeCount } = useStore();
@@ -39,39 +33,31 @@ export default function PostCard({ post }: { post: EventPost }) {
     .map((id) => memberById(id))
     .filter((m): m is NonNullable<typeof m> => !!m);
 
-  let ruleMessage: string;
-  if (earned) {
-    ruleMessage = `+${action?.points ?? 0}P 獲得！`;
-  } else if (mgrLikes === 0) {
-    ruleMessage =
-      post.likes.length >= POINT_RULE.minLikes
-        ? '店長・上長のいいねでポイント獲得！'
-        : `店長・上長を含む${POINT_RULE.minLikes}人のいいねでポイント獲得（あと${remaining}件）`;
-  } else {
-    ruleMessage = `あと${remaining}件のいいねでポイント獲得！`;
+  let progressMessage: string | null = null;
+  if (!earned) {
+    if (mgrLikes === 0) {
+      progressMessage =
+        post.likes.length >= POINT_RULE.minLikes
+          ? '店長・上長のいいねでポイント獲得！'
+          : `店長・上長を含む${POINT_RULE.minLikes}人のいいねでポイント獲得（あと${remaining}件）`;
+    } else {
+      progressMessage = `あと${remaining}件のいいねでポイント獲得！`;
+    }
   }
 
   return (
-    <div className="border-b border-border pb-3.5">
-      <div className="flex items-center gap-2.5 px-4 py-2.5">
+    <div className="border-b border-border pb-4">
+      <div className="flex items-center gap-3 px-4 py-3">
         <span className="rounded-full bg-gradient-to-tr from-story-1 via-story-2 to-story-3 p-[2px]">
-          <Avatar src={post.avatar} alt={post.userName} className="h-9 w-9 rounded-full border-2 border-card bg-secondary text-lg" />
+          <Avatar src={post.avatar} alt={post.userName} className="h-10 w-10 rounded-full border-2 border-card bg-secondary text-lg" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-foreground">{post.userName}</p>
-          <p className="text-[11px] text-muted-foreground">{timeAgo(post.createdAt)}</p>
+          <p className="truncate text-[15px] font-bold text-foreground">{post.userName}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {timeAgo(post.createdAt)} ・ {phaseMeta.emoji} {phaseMeta.label} ・ {action?.label}
+          </p>
         </div>
-        <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold', PHASE_BADGE_STYLE[post.phase])}>
-          {phaseMeta.emoji} {phaseMeta.label}
-        </span>
       </div>
-
-      {action && (
-        <div className="flex items-center gap-1.5 px-4 pb-1.5 text-xs text-muted-foreground">
-          <span className="text-sm">{action.emoji}</span>
-          <span>{action.label}</span>
-        </div>
-      )}
 
       <div className="relative flex items-center justify-center overflow-hidden bg-muted">
         {isImageSrc(post.photo) ? (
@@ -82,8 +68,8 @@ export default function PostCard({ post }: { post: EventPost }) {
         {action && (
           <div
             className={cn(
-              'absolute right-2.5 top-2.5 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm',
-              earned ? 'bg-coin text-coin-foreground' : 'bg-white/95 text-neutral-900',
+              'absolute right-3 top-3 flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold shadow-sm',
+              earned ? 'bg-coin text-coin-foreground' : 'bg-black/60 text-white',
             )}
           >
             {earned && <Sparkles className="size-3" />}+{action.points}P
@@ -91,49 +77,48 @@ export default function PostCard({ post }: { post: EventPost }) {
         )}
       </div>
 
-      <div className="px-4 pt-2.5">
-        <div className="flex items-center justify-between">
+      <div className="px-4 pt-3">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => toggleLike(post.id)}
-            className={cn('flex items-center gap-1.5 transition-transform active:scale-90', iLiked ? 'text-story-2' : 'text-foreground')}
+            className={cn('transition-transform active:scale-90', iLiked ? 'text-story-2' : 'text-foreground')}
           >
             <Heart className="size-6" strokeWidth={1.8} fill={iLiked ? 'currentColor' : 'none'} />
           </button>
 
-          <span className={cn('flex items-center gap-1 text-[11px] font-bold', earned ? 'text-coin' : 'text-muted-foreground')}>
-            {earned && <Sparkles className="size-3.5" />}
-            {ruleMessage}
-          </span>
+          {earned && (
+            <span className="flex items-center gap-1 text-xs font-bold text-coin">
+              <Sparkles className="size-3.5" />+{action?.points ?? 0}P 獲得！
+            </span>
+          )}
         </div>
 
         {likers.length > 0 && (
-          <div className="mt-1.5 flex items-center gap-1.5">
+          <div className="mt-2 flex items-center gap-2">
             <div className="flex -space-x-1.5">
               {likers.slice(0, 6).map((m) => (
-                <span key={m.id} className="relative">
-                  <Avatar
-                    src={m.avatar}
-                    alt={m.name}
-                    className={cn(
-                      'h-5 w-5 rounded-full border-2 border-card text-[10px]',
-                      m.role === 'manager' ? 'ring-1 ring-coin' : '',
-                    )}
-                  />
-                  {m.role === 'manager' && (
-                    <Crown className="absolute -right-1 -top-1.5 size-3 fill-coin text-coin" strokeWidth={1.5} />
+                <Avatar
+                  key={m.id}
+                  src={m.avatar}
+                  alt={m.name}
+                  className={cn(
+                    'h-5 w-5 rounded-full border-2 border-card text-[10px]',
+                    m.role === 'manager' ? 'ring-1 ring-coin' : '',
                   )}
-                </span>
+                />
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {post.likes.length}件のいいね
-              {mgrLikes > 0 && <span className="text-coin">（店長・上長を含む）</span>}
+            <p className="text-xs text-foreground/80">
+              <span className="font-semibold">{post.likes.length}件</span>のいいね
+              {mgrLikes > 0 && <span className="text-muted-foreground">（店長・上長を含む）</span>}
             </p>
           </div>
         )}
 
+        {progressMessage && <p className="mt-1 text-xs text-muted-foreground">{progressMessage}</p>}
+
         {post.comment && (
-          <p className="mt-1.5 text-sm leading-snug text-foreground">
+          <p className="mt-2 text-sm leading-relaxed text-foreground">
             <span className="font-semibold">{post.userName}</span> {post.comment}
           </p>
         )}

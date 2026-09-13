@@ -15,7 +15,7 @@ export default function HomeFeed({ onCreateReport }: { onCreateReport: () => voi
       <div className="flex items-center gap-2.5 border-b border-border px-4 py-3">
         <span className="text-2xl">{event.emoji}</span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">{event.seasonLabel}・開催中</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">{event.seasonLabel}・開催中</p>
           <p className="truncate text-sm font-bold text-foreground">{event.title}</p>
         </div>
       </div>
@@ -23,15 +23,15 @@ export default function HomeFeed({ onCreateReport }: { onCreateReport: () => voi
       <div className="flex items-center divide-x divide-border border-b border-border px-4 py-3 text-center">
         <div className="flex-1">
           <p className="font-display text-base font-bold text-coin">✨ {points}P</p>
-          <p className="text-[10px] text-muted-foreground">保有ポイント</p>
+          <p className="text-xs text-muted-foreground">保有ポイント</p>
         </div>
         <div className="flex-1">
           <p className="font-display text-base font-bold text-primary">{myPostCount}</p>
-          <p className="text-[10px] text-muted-foreground">投稿数</p>
+          <p className="text-xs text-muted-foreground">投稿数</p>
         </div>
         <div className="flex-1">
           <p className="font-display text-base font-bold text-foreground">{pendingCount}</p>
-          <p className="text-[10px] text-muted-foreground">いいね待ち</p>
+          <p className="text-xs text-muted-foreground">いいね待ち</p>
         </div>
       </div>
 
