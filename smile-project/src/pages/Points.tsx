@@ -5,8 +5,10 @@ import type { Tab } from '../components/BottomNav';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, Coins, RefreshCw } from 'lucide-react';
+import { POINT_LIMITS } from '../types';
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+const MEDALS = ['🥇', '🥈', '🥉'];
 
 function stampStyle(score: number): string {
   if (score === 0) return '';
@@ -22,8 +24,8 @@ interface ActivityEntry {
   createdAt: string;
 }
 
-export default function MyPage({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
-  const { currentUser, totalPoints, monthlyScores, posts, redemptions, toggleRole } = useStore();
+export default function Points({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
+  const { currentUser, totalPoints, monthlyScores, overallLeaderboard, posts, redemptions, toggleRole } = useStore();
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
@@ -31,6 +33,7 @@ export default function MyPage({ onNavigate }: { onNavigate: (tab: Tab) => void 
   const scores = monthlyScores(currentUser.id, viewYear, viewMonth);
   const monthTotal = [...scores.values()].reduce((a, b) => a + b, 0);
   const daysWithPoints = scores.size;
+  const entries = overallLeaderboard();
 
   const firstWeekday = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
@@ -101,7 +104,47 @@ export default function MyPage({ onNavigate }: { onNavigate: (tab: Tab) => void 
         🔧 デモ用：表示モードを「{currentUser.role === 'manager' ? 'スタッフ' : '店長・上長'}」に切り替える
       </button>
 
-      <Card className="mt-4 p-4">
+      <Card className="mt-4 flex-row items-center justify-between p-3 text-center">
+        <div className="flex-1">
+          <p className="font-display text-sm font-bold text-foreground">{POINT_LIMITS.daily}P</p>
+          <p className="text-[10px] text-muted-foreground">1日の目安</p>
+        </div>
+        <div className="flex-1 border-x border-border">
+          <p className="font-display text-sm font-bold text-foreground">{POINT_LIMITS.monthly.toLocaleString()}P</p>
+          <p className="text-[10px] text-muted-foreground">月間上限</p>
+        </div>
+        <div className="flex-1">
+          <p className="font-display text-sm font-bold text-foreground">{POINT_LIMITS.annual.toLocaleString()}P</p>
+          <p className="text-[10px] text-muted-foreground">年間目安</p>
+        </div>
+      </Card>
+
+      <div className="mb-3 mt-5 flex items-center gap-2">
+        <span className="h-2 w-2 rounded-full bg-coin" />
+        <p className="text-sm font-semibold text-foreground">みんなのポイント</p>
+      </div>
+      <div className="flex flex-col gap-2">
+        {entries.map((entry, idx) => {
+          const isMe = entry.member.id === currentUser.id;
+          return (
+            <Card key={entry.member.id} className={cn('flex-row items-center gap-3 p-3', isMe && 'border-primary bg-secondary/50')}>
+              <span className="w-6 shrink-0 text-center text-lg font-bold text-muted-foreground">{MEDALS[idx] ?? idx + 1}</span>
+              <Avatar src={entry.member.avatar} alt={entry.member.name} className="h-10 w-10 rounded-full bg-secondary text-lg" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-foreground">
+                  {entry.member.name}
+                  {entry.member.role === 'manager' && <span className="ml-1 text-xs font-normal text-muted-foreground">（店長）</span>}
+                  {isMe && <span className="ml-1 text-xs font-normal text-primary">（自分）</span>}
+                </p>
+                <p className="text-xs text-muted-foreground">承認{entry.postCount}件</p>
+              </div>
+              <p className="font-display shrink-0 text-lg font-bold text-coin">{entry.points}P</p>
+            </Card>
+          );
+        })}
+      </div>
+
+      <Card className="mt-5 p-4">
         <div className="flex items-center justify-between">
           <button onClick={() => changeMonth(-1)} className="rounded-full p-1 text-muted-foreground active:scale-95">
             <ChevronLeft className="size-4" />

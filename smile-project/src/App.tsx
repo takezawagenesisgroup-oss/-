@@ -4,16 +4,14 @@ import Header from './components/Header';
 import BottomNav, { type Tab } from './components/BottomNav';
 import HomeFeed from './pages/HomeFeed';
 import PostCreate from './pages/PostCreate';
-import Events from './pages/Events';
+import Points from './pages/Points';
 import Exchange from './pages/Exchange';
-import MyPage from './pages/MyPage';
 
 const TITLES: Record<Tab, { title: string; subtitle: string }> = {
   home: { title: 'スマイルプロジェクト', subtitle: '四季のイベントを写真でシェアしよう' },
   post: { title: 'イベント報告', subtitle: '事前準備・当日の様子を投稿' },
-  events: { title: 'イベント', subtitle: '四季の成長プロジェクト＆ポイントランキング' },
+  points: { title: 'ポイント', subtitle: 'みんなの獲得ポイントを見てみよう' },
   exchange: { title: 'ポイント交換', subtitle: 'ためたポイントをご褒美に交換しよう' },
-  mypage: { title: 'マイページ', subtitle: 'ポイントの記録' },
 };
 
 function App() {
@@ -24,14 +22,13 @@ function App() {
     <StoreProvider>
       <div className="flex min-h-svh flex-col bg-background">
         <Header title={title} subtitle={subtitle} />
-        <main className="flex-1 pb-6">
-          {tab === 'home' && <HomeFeed />}
+        <main className="relative flex-1 pb-6">
+          {tab === 'home' && <HomeFeed onCreateReport={() => setTab('post')} />}
           {tab === 'post' && <PostCreate onDone={setTab} />}
-          {tab === 'events' && <Events />}
+          {tab === 'points' && <Points onNavigate={setTab} />}
           {tab === 'exchange' && <Exchange />}
-          {tab === 'mypage' && <MyPage onNavigate={setTab} />}
         </main>
-        <BottomNav active={tab} onChange={setTab} />
+        <BottomNav active={tab === 'post' ? 'home' : tab} onChange={setTab} />
       </div>
     </StoreProvider>
   );

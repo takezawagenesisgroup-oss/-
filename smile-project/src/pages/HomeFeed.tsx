@@ -1,8 +1,9 @@
 import { useStore } from '../data/store';
 import PostCard from '../components/PostCard';
 import { currentSeasonalEvent } from '../types';
+import { Camera } from 'lucide-react';
 
-export default function HomeFeed() {
+export default function HomeFeed({ onCreateReport }: { onCreateReport: () => void }) {
   const { posts, currentUser, totalPoints } = useStore();
   const event = currentSeasonalEvent(new Date());
   const points = totalPoints(currentUser.id);
@@ -39,6 +40,14 @@ export default function HomeFeed() {
           <PostCard key={post.id} post={post} />
         ))}
       </div>
+
+      <button
+        onClick={onCreateReport}
+        aria-label="報告する"
+        className="fixed bottom-20 right-4 z-10 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg active:scale-90"
+      >
+        <Camera className="size-6" />
+      </button>
     </div>
   );
 }

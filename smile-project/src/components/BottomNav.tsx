@@ -1,7 +1,7 @@
-import { Home, Camera, PartyPopper, Coins, CalendarDays, type LucideIcon } from 'lucide-react';
+import { Home, Sparkles, Coins, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type Tab = 'home' | 'post' | 'events' | 'exchange' | 'mypage';
+export type Tab = 'home' | 'post' | 'points' | 'exchange';
 
 interface TabDef {
   id: Tab;
@@ -10,11 +10,9 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
-  { id: 'home', label: 'ホーム', icon: Home },
-  { id: 'post', label: '投稿する', icon: Camera },
-  { id: 'events', label: 'イベント', icon: PartyPopper },
+  { id: 'home', label: 'イベント報告', icon: Home },
+  { id: 'points', label: 'ポイント', icon: Sparkles },
   { id: 'exchange', label: 'ポイント交換', icon: Coins },
-  { id: 'mypage', label: 'マイページ', icon: CalendarDays },
 ];
 
 export default function BottomNav({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {

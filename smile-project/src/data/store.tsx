@@ -47,7 +47,7 @@ interface StoreValue {
   totalPoints: (userId: string) => number;
   monthlyPoints: (userId: string, year: number, month: number) => number;
   monthlyScores: (userId: string, year: number, month: number) => Map<number, number>;
-  monthlyLeaderboard: () => LeaderboardEntry[];
+  overallLeaderboard: () => LeaderboardEntry[];
   memberById: (id: string) => Member | undefined;
   toggleRole: () => void;
   redeem: (itemKey: string) => boolean;
@@ -161,15 +161,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return map;
     }
 
-    function monthlyLeaderboard(): LeaderboardEntry[] {
-      const now = new Date();
+    function overallLeaderboard(): LeaderboardEntry[] {
       return allMembers
         .map((member) => {
-          const memberPosts = posts.filter((p) => {
-            if (p.userId !== member.id || !p.grant) return false;
-            const d = new Date(p.grant.grantedAt);
-            return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-          });
+          const memberPosts = posts.filter((p) => p.userId === member.id && p.grant);
           const points = memberPosts.reduce((sum, p) => sum + (p.grant?.points ?? 0), 0);
           return { member, points, postCount: memberPosts.length };
         })
@@ -209,7 +204,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       totalPoints,
       monthlyPoints,
       monthlyScores,
-      monthlyLeaderboard,
+      overallLeaderboard,
       memberById,
       toggleRole,
       redeem,
