@@ -69,38 +69,20 @@ function buildLikes(authorId: string, allMembers: Member[], managers: Member[], 
   return shuffled.slice(0, count).map((m) => m.id);
 }
 
-// 6月10日に開催された実際の「花祭り」イベントの写真を使った投稿
-function buildFeaturedHanamatsuriPosts(allMembers: Member[], managers: Member[]): EventPost[] {
+interface FeaturedPostSpec {
+  authorId: string;
+  phase: EventPhase;
+  actionKey: string;
+  photo: string;
+  comment: string;
+  date: string;
+}
+
+// 実際のイベント写真を使った投稿（花祭り・クリスマス等）を生成する共通ヘルパー
+function buildFeaturedPosts(eventKey: string, specs: FeaturedPostSpec[], allMembers: Member[], managers: Member[]): EventPost[] {
   const byId = (id: string) => allMembers.find((m) => m.id === id)!;
 
-  const featured: { authorId: string; phase: EventPhase; actionKey: string; photo: string; comment: string; date: string }[] = [
-    {
-      authorId: 'u1',
-      phase: 'prep',
-      actionKey: 'prep-participation',
-      photo: '/photos/events/hanamatsuri-2.jpg',
-      comment: '花祭りに向けて、マリーゴールドの仕入れと株分けをみんなで手分けして進めました🌼',
-      date: fixedDate(2026, 6, 9, 10, 30),
-    },
-    {
-      authorId: 'u3',
-      phase: 'prep',
-      actionKey: 'genki-participation',
-      photo: '/photos/events/hanamatsuri-3.jpg',
-      comment: '一鉢ずつ丁寧に。準備段階から気持ちを込めて取り組みました😊',
-      date: fixedDate(2026, 6, 9, 15, 45),
-    },
-    {
-      authorId: 'u4',
-      phase: 'day',
-      actionKey: 'eyecatch-smile',
-      photo: '/photos/events/hanamatsuri-1.jpg',
-      comment: '花祭り当日、店内が花でいっぱいになりました🌸みんなの笑顔が一番の飾り付けです！',
-      date: fixedDate(2026, 6, 10, 18, 0),
-    },
-  ];
-
-  return featured.map(({ authorId, phase, actionKey, photo, comment, date }) => {
+  return specs.map(({ authorId, phase, actionKey, photo, comment, date }) => {
     const author = byId(authorId);
     const managerCandidates = managers.filter((m) => m.id !== authorId);
     const manager = managerCandidates[Math.floor(Math.random() * managerCandidates.length)];
@@ -111,7 +93,7 @@ function buildFeaturedHanamatsuriPosts(allMembers: Member[], managers: Member[])
       userId: author.id,
       userName: author.name,
       avatar: author.avatar,
-      eventKey: 'gardening',
+      eventKey,
       phase,
       actionKey,
       photo,
@@ -123,6 +105,76 @@ function buildFeaturedHanamatsuriPosts(allMembers: Member[], managers: Member[])
   });
 }
 
+// 6月10日に開催された実際の「花祭り」イベントの写真を使った投稿
+function buildFeaturedHanamatsuriPosts(allMembers: Member[], managers: Member[]): EventPost[] {
+  return buildFeaturedPosts(
+    'gardening',
+    [
+      {
+        authorId: 'u1',
+        phase: 'prep',
+        actionKey: 'prep-participation',
+        photo: '/photos/events/hanamatsuri-2.jpg',
+        comment: '花祭りに向けて、マリーゴールドの仕入れと株分けをみんなで手分けして進めました🌼',
+        date: fixedDate(2026, 6, 9, 10, 30),
+      },
+      {
+        authorId: 'u3',
+        phase: 'prep',
+        actionKey: 'genki-participation',
+        photo: '/photos/events/hanamatsuri-3.jpg',
+        comment: '一鉢ずつ丁寧に。準備段階から気持ちを込めて取り組みました😊',
+        date: fixedDate(2026, 6, 9, 15, 45),
+      },
+      {
+        authorId: 'u4',
+        phase: 'day',
+        actionKey: 'eyecatch-smile',
+        photo: '/photos/events/hanamatsuri-1.jpg',
+        comment: '花祭り当日、店内が花でいっぱいになりました🌸みんなの笑顔が一番の飾り付けです！',
+        date: fixedDate(2026, 6, 10, 18, 0),
+      },
+    ],
+    allMembers,
+    managers,
+  );
+}
+
+// 12月に開催された実際の「クリスマスケーキ試食会」の写真を使った投稿
+function buildFeaturedChristmasPosts(allMembers: Member[], managers: Member[]): EventPost[] {
+  return buildFeaturedPosts(
+    'santa-innovation',
+    [
+      {
+        authorId: 'u3',
+        phase: 'prep',
+        actionKey: 'prep-participation',
+        photo: '/photos/events/christmas-1.jpg',
+        comment: 'クリスマスケーキ試食会の準備をしました🎅お客様に楽しんでいただけますように',
+        date: fixedDate(2025, 12, 23, 13, 0),
+      },
+      {
+        authorId: 'u4',
+        phase: 'day',
+        actionKey: 'eyecatch-smile',
+        photo: '/photos/events/christmas-2.jpg',
+        comment: 'クリスマスケーキ試食会、当日は仮装で盛り上げました🎄',
+        date: fixedDate(2025, 12, 24, 13, 15),
+      },
+      {
+        authorId: 'u5',
+        phase: 'day',
+        actionKey: 'genki-greeting',
+        photo: '/photos/events/christmas-3.jpg',
+        comment: 'サンタ姿で元気よくお声掛け！お客様にも喜んでいただけました🎁',
+        date: fixedDate(2025, 12, 24, 15, 30),
+      },
+    ],
+    allMembers,
+    managers,
+  );
+}
+
 export function buildSeedEventPosts(): EventPost[] {
   const posts: EventPost[] = [];
   const allMembers = [ME, ...COLLEAGUES];
@@ -132,6 +184,7 @@ export function buildSeedEventPosts(): EventPost[] {
   const phases: EventPhase[] = ['prep', 'day', 'post'];
 
   posts.push(...buildFeaturedHanamatsuriPosts(allMembers, managers));
+  posts.push(...buildFeaturedChristmasPosts(allMembers, managers));
 
   authors.forEach((author, idx) => {
     phases.forEach((phase, phaseIdx) => {
