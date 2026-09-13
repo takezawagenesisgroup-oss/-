@@ -38,37 +38,33 @@ export default function PostCard({ post }: { post: EventPost }) {
     if (mgrLikes === 0) {
       progressMessage =
         post.likes.length >= POINT_RULE.minLikes
-          ? '店長・上長のいいねでポイント獲得！'
+          ? '店長・上長のいいねでポイント獲得'
           : `店長・上長を含む${POINT_RULE.minLikes}人のいいねでポイント獲得（あと${remaining}件）`;
     } else {
-      progressMessage = `あと${remaining}件のいいねでポイント獲得！`;
+      progressMessage = `あと${remaining}件のいいねでポイント獲得`;
     }
   }
 
   return (
-    <div className="border-b border-border pb-4">
-      <div className="flex items-center gap-3 px-4 py-3">
-        <span className="rounded-full bg-gradient-to-tr from-story-1 via-story-2 to-story-3 p-[2px]">
-          <Avatar src={post.avatar} alt={post.userName} className="h-10 w-10 rounded-full border-2 border-card bg-secondary text-lg" />
-        </span>
+    <article className="mx-3 mt-3 overflow-hidden rounded-2xl bg-card first:mt-0">
+      <div className="flex items-center gap-2.5 px-3 py-2.5">
+        <Avatar src={post.avatar} alt={post.userName} className="h-9 w-9 rounded-full bg-secondary text-base" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] font-bold text-foreground">{post.userName}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {timeAgo(post.createdAt)} ・ {phaseMeta.emoji} {phaseMeta.label} ・ {action?.label}
-          </p>
+          <p className="truncate text-sm font-bold text-foreground">{post.userName}</p>
         </div>
+        <p className="shrink-0 text-xs text-muted-foreground">{timeAgo(post.createdAt)}</p>
       </div>
 
       <div className="relative flex items-center justify-center overflow-hidden bg-muted">
         {isImageSrc(post.photo) ? (
-          <img src={post.photo} alt="イベント報告" className="aspect-[4/5] w-full object-cover" />
+          <img src={post.photo} alt="イベント報告" className="aspect-square w-full object-cover object-top" />
         ) : (
-          <div className="flex aspect-[4/5] w-full items-center justify-center text-8xl">{post.photo}</div>
+          <div className="flex aspect-square w-full items-center justify-center text-8xl">{post.photo}</div>
         )}
         {action && (
           <div
             className={cn(
-              'absolute right-3 top-3 flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold shadow-sm',
+              'absolute right-2.5 top-2.5 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold shadow-sm',
               earned ? 'bg-coin text-coin-foreground' : 'bg-black/60 text-white',
             )}
           >
@@ -77,7 +73,7 @@ export default function PostCard({ post }: { post: EventPost }) {
         )}
       </div>
 
-      <div className="px-4 pt-3">
+      <div className="px-3 py-3">
         <div className="flex items-center gap-4">
           <button
             onClick={() => toggleLike(post.id)}
@@ -94,7 +90,7 @@ export default function PostCard({ post }: { post: EventPost }) {
         </div>
 
         {likers.length > 0 && (
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-1.5 flex items-center gap-2">
             <div className="flex -space-x-1.5">
               {likers.slice(0, 6).map((m) => (
                 <Avatar
@@ -115,14 +111,17 @@ export default function PostCard({ post }: { post: EventPost }) {
           </div>
         )}
 
-        {progressMessage && <p className="mt-1 text-xs text-muted-foreground">{progressMessage}</p>}
-
         {post.comment && (
-          <p className="mt-2 text-sm leading-relaxed text-foreground">
+          <p className="mt-1.5 text-sm leading-relaxed text-foreground">
             <span className="font-semibold">{post.userName}</span> {post.comment}
           </p>
         )}
+
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          {phaseMeta.emoji} {phaseMeta.label} ・ {action?.label}
+          {progressMessage && ` ・ ${progressMessage}`}
+        </p>
       </div>
-    </div>
+    </article>
   );
 }

@@ -7,32 +7,15 @@ export default function HomeFeed({ onCreateReport }: { onCreateReport: () => voi
   const { posts, currentUser, totalPoints } = useStore();
   const event = currentSeasonalEvent(new Date());
   const points = totalPoints(currentUser.id);
-  const myPostCount = posts.filter((p) => p.userId === currentUser.id).length;
-  const pendingCount = posts.filter((p) => p.userId === currentUser.id && !p.pointsEarnedAt).length;
 
   return (
     <div className="mx-auto max-w-md pb-4">
-      <div className="flex items-center gap-2.5 border-b border-border px-4 py-3">
-        <span className="text-2xl">{event.emoji}</span>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">{event.seasonLabel}・開催中</p>
-          <p className="truncate text-sm font-bold text-foreground">{event.title}</p>
-        </div>
-      </div>
-
-      <div className="flex items-center divide-x divide-border border-b border-border px-4 py-3 text-center">
-        <div className="flex-1">
-          <p className="font-display text-base font-bold text-coin">✨ {points}P</p>
-          <p className="text-xs text-muted-foreground">保有ポイント</p>
-        </div>
-        <div className="flex-1">
-          <p className="font-display text-base font-bold text-primary">{myPostCount}</p>
-          <p className="text-xs text-muted-foreground">投稿数</p>
-        </div>
-        <div className="flex-1">
-          <p className="font-display text-base font-bold text-foreground">{pendingCount}</p>
-          <p className="text-xs text-muted-foreground">いいね待ち</p>
-        </div>
+      <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+        <span className="text-lg">{event.emoji}</span>
+        <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+          <span className="font-semibold text-foreground">{event.seasonLabel}</span>・{event.title}
+        </p>
+        <p className="shrink-0 font-display text-sm font-bold text-coin">✨{points}P</p>
       </div>
 
       <div className="flex flex-col">
