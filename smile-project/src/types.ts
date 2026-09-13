@@ -104,8 +104,8 @@ export const SEASONAL_EVENTS: SeasonalEvent[] = [
     month: 6,
     seasonLabel: '6月【夏】',
     emoji: '🌻',
-    title: 'ガーデニング＆空間演出',
-    description: 'オフィスや店舗を花と緑で彩る空間コンテスト。',
+    title: '花祭り',
+    description: '店舗を花と緑で彩る恒例のガーデニングイベント。今年は6月10日に開催。',
     skillTag: 'デザイン思考・環境改善（5S）',
   },
   {

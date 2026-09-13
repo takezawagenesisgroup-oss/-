@@ -4,11 +4,11 @@ import { EXCHANGE_ITEMS, currentSeasonalEvent, eventActionsFor } from '../types'
 export const ME: Member = { id: 'me', name: '自分', avatar: '🙂', role: 'staff' };
 
 export const COLLEAGUES: Member[] = [
-  { id: 'u1', name: '田中 美咲', avatar: '/photos/person1-avatar.jpg', photo: '/photos/person1.jpg', role: 'staff' },
-  { id: 'u2', name: '佐藤 健一', avatar: '/photos/person2-avatar.jpg', photo: '/photos/person2.jpg', role: 'manager' },
-  { id: 'u3', name: '鈴木 蓮', avatar: '/photos/person3-avatar.jpg', photo: '/photos/person3.jpg', role: 'staff' },
-  { id: 'u4', name: '山本 陽菜', avatar: '/photos/person4-avatar.jpg', photo: '/photos/person4.jpg', role: 'staff' },
-  { id: 'u5', name: '高橋 大和', avatar: '👨🏻‍🦰', role: 'manager' },
+  { id: 'u1', name: '坂下 涼香', avatar: '/photos/person1-avatar.jpg', photo: '/photos/person1.jpg', role: 'manager' },
+  { id: 'u2', name: '安藤 幸二', avatar: '/photos/person2-avatar.jpg', photo: '/photos/person2.jpg', role: 'manager' },
+  { id: 'u3', name: '竹内 壮良', avatar: '/photos/person3-avatar.jpg', photo: '/photos/person3.jpg', role: 'staff' },
+  { id: 'u4', name: '福西 良子', avatar: '/photos/person4-avatar.jpg', photo: '/photos/person4.jpg', role: 'staff' },
+  { id: 'u5', name: '久保 渉功', avatar: '/photos/person5-avatar.jpg', photo: '/photos/person5.jpg', role: 'staff' },
 ];
 
 const PHOTO_EMOJIS = ['😄', '😁', '😊', '🥰', '😆', '🙂'];
@@ -44,6 +44,10 @@ function daysAgo(n: number, hour = 12): string {
   return d.toISOString();
 }
 
+function fixedDate(year: number, month: number, day: number, hour = 12, minute = 0): string {
+  return new Date(year, month - 1, day, hour, minute, 0).toISOString();
+}
+
 let idCounter = 1;
 function nextId(): string {
   return `p${idCounter++}`;
@@ -65,6 +69,60 @@ function buildLikes(authorId: string, allMembers: Member[], managers: Member[], 
   return shuffled.slice(0, count).map((m) => m.id);
 }
 
+// 6月10日に開催された実際の「花祭り」イベントの写真を使った投稿
+function buildFeaturedHanamatsuriPosts(allMembers: Member[], managers: Member[]): EventPost[] {
+  const byId = (id: string) => allMembers.find((m) => m.id === id)!;
+
+  const featured: { authorId: string; phase: EventPhase; actionKey: string; photo: string; comment: string; date: string }[] = [
+    {
+      authorId: 'u1',
+      phase: 'prep',
+      actionKey: 'prep-participation',
+      photo: '/photos/events/hanamatsuri-2.jpg',
+      comment: '花祭りに向けて、マリーゴールドの仕入れと株分けをみんなで手分けして進めました🌼',
+      date: fixedDate(2026, 6, 9, 10, 30),
+    },
+    {
+      authorId: 'u3',
+      phase: 'prep',
+      actionKey: 'genki-participation',
+      photo: '/photos/events/hanamatsuri-3.jpg',
+      comment: '一鉢ずつ丁寧に。準備段階から気持ちを込めて取り組みました😊',
+      date: fixedDate(2026, 6, 9, 15, 45),
+    },
+    {
+      authorId: 'u4',
+      phase: 'day',
+      actionKey: 'eyecatch-smile',
+      photo: '/photos/events/hanamatsuri-1.jpg',
+      comment: '花祭り当日、店内が花でいっぱいになりました🌸みんなの笑顔が一番の飾り付けです！',
+      date: fixedDate(2026, 6, 10, 18, 0),
+    },
+  ];
+
+  return featured.map(({ authorId, phase, actionKey, photo, comment, date }) => {
+    const author = byId(authorId);
+    const managerCandidates = managers.filter((m) => m.id !== authorId);
+    const manager = managerCandidates[Math.floor(Math.random() * managerCandidates.length)];
+    const others = allMembers.filter((m) => m.id !== authorId && m.id !== manager.id).sort(() => Math.random() - 0.5);
+    const likes = [manager, ...others.slice(0, 2)].map((m) => m.id);
+    return {
+      id: nextId(),
+      userId: author.id,
+      userName: author.name,
+      avatar: author.avatar,
+      eventKey: 'gardening',
+      phase,
+      actionKey,
+      photo,
+      comment,
+      createdAt: date,
+      likes,
+      pointsEarnedAt: date,
+    };
+  });
+}
+
 export function buildSeedEventPosts(): EventPost[] {
   const posts: EventPost[] = [];
   const allMembers = [ME, ...COLLEAGUES];
@@ -72,6 +130,8 @@ export function buildSeedEventPosts(): EventPost[] {
   const event = currentSeasonalEvent(new Date());
   const authors = [ME, ...COLLEAGUES];
   const phases: EventPhase[] = ['prep', 'day', 'post'];
+
+  posts.push(...buildFeaturedHanamatsuriPosts(allMembers, managers));
 
   authors.forEach((author, idx) => {
     phases.forEach((phase, phaseIdx) => {
