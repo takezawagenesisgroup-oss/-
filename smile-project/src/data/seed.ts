@@ -4,11 +4,11 @@ import { EXCHANGE_ITEMS, currentSeasonalEvent, eventActionsFor } from '../types'
 export const ME: Member = { id: 'me', name: '自分', avatar: '🙂', role: 'staff' };
 
 export const COLLEAGUES: Member[] = [
-  { id: 'u1', name: '中村 彩花', avatar: '😊', role: 'manager' },
-  { id: 'u2', name: '小林 大輝', avatar: '😄', role: 'manager' },
-  { id: 'u3', name: '渡辺 陽菜', avatar: '🥰', role: 'staff' },
-  { id: 'u4', name: '加藤 美月', avatar: '😆', role: 'staff' },
-  { id: 'u5', name: '木村 蓮', avatar: '😁', role: 'staff' },
+  { id: 'u1', name: '中村 彩花', avatar: '/photos/avatars/u1.jpg', role: 'manager' },
+  { id: 'u2', name: '小林 大輝', avatar: '/photos/avatars/u2.jpg', role: 'manager' },
+  { id: 'u3', name: '渡辺 陽菜', avatar: '/photos/avatars/u3.jpg', role: 'staff' },
+  { id: 'u4', name: '加藤 美月', avatar: '/photos/avatars/u4.jpg', role: 'staff' },
+  { id: 'u5', name: '木村 蓮', avatar: '/photos/avatars/u5.jpg', role: 'staff' },
 ];
 
 const PHOTO_EMOJIS = ['😄', '😁', '😊', '🥰', '😆', '🙂'];
@@ -146,7 +146,7 @@ function buildFeaturedChristmasPosts(allMembers: Member[], managers: Member[]): 
     'santa-innovation',
     [
       {
-        authorId: 'u3',
+        authorId: 'u5',
         phase: 'prep',
         actionKey: 'prep-participation',
         photo: '/photos/events/christmas-1.jpg',
@@ -154,7 +154,7 @@ function buildFeaturedChristmasPosts(allMembers: Member[], managers: Member[]): 
         date: fixedDate(2025, 12, 23, 13, 0),
       },
       {
-        authorId: 'u4',
+        authorId: 'u3',
         phase: 'day',
         actionKey: 'eyecatch-smile',
         photo: '/photos/events/christmas-2.jpg',
@@ -162,7 +162,7 @@ function buildFeaturedChristmasPosts(allMembers: Member[], managers: Member[]): 
         date: fixedDate(2025, 12, 24, 13, 15),
       },
       {
-        authorId: 'u5',
+        authorId: 'u4',
         phase: 'day',
         actionKey: 'genki-greeting',
         photo: '/photos/events/christmas-3.jpg',
