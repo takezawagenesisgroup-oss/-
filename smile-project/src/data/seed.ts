@@ -4,11 +4,11 @@ import { EXCHANGE_ITEMS, currentSeasonalEvent, eventActionsFor } from '../types'
 export const ME: Member = { id: 'me', name: '自分', avatar: '🙂', role: 'staff' };
 
 export const COLLEAGUES: Member[] = [
-  { id: 'u1', name: '中村 彩花', avatar: '/photos/avatars/u1.jpg', photo: '/photos/postphotos/u1.jpg', role: 'manager' },
-  { id: 'u2', name: '小林 大輝', avatar: '/photos/avatars/u2.jpg', photo: '/photos/postphotos/u2.jpg', role: 'manager' },
-  { id: 'u3', name: '渡辺 陽菜', avatar: '/photos/avatars/u3.jpg', photo: '/photos/postphotos/u3.jpg', role: 'staff' },
-  { id: 'u4', name: '加藤 美月', avatar: '/photos/avatars/u4.jpg', photo: '/photos/postphotos/u4.jpg', role: 'staff' },
-  { id: 'u5', name: '木村 修', avatar: '/photos/avatars/u5.jpg', photo: '/photos/postphotos/u5.jpg', role: 'staff' },
+  { id: 'u1', name: '坂下 鈴花', avatar: '/photos/avatars/u1.jpg', photo: '/photos/postphotos/u1.jpg', role: 'manager' },
+  { id: 'u2', name: '安藤 幸治', avatar: '/photos/avatars/u2.jpg', photo: '/photos/postphotos/u2.jpg', role: 'manager' },
+  { id: 'u3', name: '福西 涼子', avatar: '/photos/avatars/u3.jpg', photo: '/photos/postphotos/u3.jpg', role: 'staff' },
+  { id: 'u4', name: '北村 藍', avatar: '/photos/avatars/u4.jpg', photo: '/photos/postphotos/u4.jpg', role: 'staff' },
+  { id: 'u5', name: '久保 拓', avatar: '/photos/avatars/u5.jpg', photo: '/photos/postphotos/u5.jpg', role: 'staff' },
 ];
 
 const PHOTO_EMOJIS = ['😄', '😁', '😊', '🥰', '😆', '🙂'];
