@@ -23,7 +23,7 @@ function timeAgo(iso: string): string {
 }
 
 export default function Exchange() {
-  const { currentUser, totalPoints, monthlyPoints, redeem, redemptions } = useStore();
+  const { currentUser, totalPoints, monthlyPoints, redeem, redemptions, memberById } = useStore();
   const [message, setMessage] = useState<string | null>(null);
   const balance = totalPoints(currentUser.id);
   const now = new Date();
@@ -32,9 +32,9 @@ export default function Exchange() {
   const myHistory = redemptions.filter((r) => r.userId === currentUser.id);
 
   function handleRedeem(item: ExchangeItem) {
-    const ok = redeem(item.key);
-    setMessage(ok ? `${item.emoji} 「${item.label}」と交換しました！` : 'ポイントが足りません。');
-    setTimeout(() => setMessage(null), 2200);
+    const result = redeem(item.key);
+    setMessage(result.message);
+    setTimeout(() => setMessage(null), 4000);
   }
 
   return (
@@ -93,16 +93,32 @@ export default function Exchange() {
         <p className="py-4 text-center text-xs text-muted-foreground">まだ交換履歴はありません。</p>
       ) : (
         <div className="flex flex-col gap-2 pb-4">
-          {myHistory.slice(0, 8).map((r) => (
-            <div key={r.id} className={cn('flex items-center justify-between rounded-xl bg-muted px-3 py-2 text-xs text-foreground/80')}>
-              <span>
-                {r.emoji} {r.label}
-              </span>
-              <span className="flex items-center gap-2 text-muted-foreground">
-                -{r.cost} P・{timeAgo(r.createdAt)}
-              </span>
-            </div>
-          ))}
+          {myHistory.slice(0, 8).map((r) => {
+            const manager = r.notifiedManagerId ? memberById(r.notifiedManagerId) : undefined;
+            return (
+              <div key={r.id} className="flex flex-col gap-1 rounded-xl bg-muted px-3 py-2 text-xs text-foreground/80">
+                <div className="flex items-center justify-between">
+                  <span>
+                    {r.emoji} {r.label}
+                  </span>
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    -{r.cost} P・{timeAgo(r.createdAt)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{manager ? `${manager.name}に通知` : '店長・上長に通知'}</span>
+                  <span
+                    className={cn(
+                      'rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                      r.status === 'handed_over' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-coin/20 text-coin',
+                    )}
+                  >
+                    {r.status === 'handed_over' ? '受け渡し済み' : '受け取り待ち'}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

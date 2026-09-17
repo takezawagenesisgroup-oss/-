@@ -89,71 +89,129 @@ export interface EventPost {
   createdAt: string; // ISO
   likes: string[]; // member ids who liked
   pointsEarnedAt?: string; // ISO — set once 店長・上長を含む3件以上のいいねの条件を満たした瞬間
+  reportedBy?: string; // 本人以外が代理で投稿した場合、その投稿者のmember id
+}
+
+// イベントへの参加エントリー：エントリー期間中に本人が登録することで、
+// そのイベントの評価項目確認・投稿フェーズに進める
+export interface EventEntry {
+  eventKey: string;
+  memberId: string;
+  enteredAt: string; // ISO
+}
+
+export interface MonthDay {
+  month: number;
+  day: number;
 }
 
 export interface SeasonalEvent {
   key: string;
-  month: number; // 3, 6, 9, or 12 — kickoff month of the quarter
-  seasonLabel: string; // e.g. '3月【春】'
+  eventMonth: number; // 開催月
+  eventDay: number; // 開催日
+  seasonLabel: string; // e.g. '3月10日開催'
   emoji: string;
   title: string;
   description: string;
   skillTag: string; // 「勝手に身につくスキル」
+  entryStart: MonthDay; // エントリー受付開始日
+  entryEnd: MonthDay; // エントリー受付終了日
 }
 
+// 4シーズンのイベント：それぞれ専用のエントリー期間を設け、その期間にエントリーした人だけが
+// 「評価項目の確認 → 投稿（本人 or 第三者）」のフェーズに進める、参加制の座組み。
 export const SEASONAL_EVENTS: SeasonalEvent[] = [
   {
-    key: 'sakura-kickoff',
-    month: 3,
-    seasonLabel: '3月【春】',
+    key: 'sakura-matsuri',
+    eventMonth: 3,
+    eventDay: 10,
+    seasonLabel: '3月10日開催',
     emoji: '🌸',
-    title: 'さくらキックオフ',
+    title: '桜祭り',
     description: '新年度を祝う！最高の花見＆歓迎フェスをプロデュース。',
     skillTag: '段取り力・PM・気配り',
+    entryStart: { month: 1, day: 1 },
+    entryEnd: { month: 1, day: 31 },
   },
   {
     key: 'gardening',
-    month: 6,
-    seasonLabel: '6月【夏】',
+    eventMonth: 6,
+    eventDay: 10,
+    seasonLabel: '6月10日開催',
     emoji: '🌻',
     title: '花祭り',
-    description: '店舗を花と緑で彩る恒例のガーデニングイベント。今年は6月10日に開催。',
+    description: '店舗を花と緑で彩る恒例のガーデニングイベント。',
     skillTag: 'デザイン思考・環境改善（5S）',
+    entryStart: { month: 3, day: 1 },
+    entryEnd: { month: 3, day: 31 },
   },
   {
-    key: 'harvest-marche',
-    month: 9,
-    seasonLabel: '9月【秋】',
-    emoji: '🌾',
-    title: '成果＆ナレッジマルシェ',
-    description: '上半期の成果や学びを「収穫物」に見立てて屋台で発表。',
-    skillTag: 'プレゼン力・横の連携',
+    key: 'genesis-halloween',
+    eventMonth: 10,
+    eventDay: 10,
+    seasonLabel: '10月10日開催',
+    emoji: '🎃',
+    title: 'ジェネシスハロウィン',
+    description: '仮装と装飾でお客様をおもてなしするハロウィンイベント。',
+    skillTag: '企画力・チームワーク',
+    entryStart: { month: 8, day: 1 },
+    entryEnd: { month: 8, day: 31 },
   },
   {
-    key: 'santa-innovation',
-    month: 12,
-    seasonLabel: '12月【冬】',
+    key: 'genesis-xmas',
+    eventMonth: 12,
+    eventDay: 10,
+    seasonLabel: '12月10日開催',
     emoji: '🎄',
-    title: 'サンタ・イノベーション',
+    title: 'ジェネシスHappy Xmas',
     description: '感謝のギフト＋「会社を良くするカイゼン提案」大会。',
     skillTag: '課題解決・提案力',
+    entryStart: { month: 10, day: 1 },
+    entryEnd: { month: 10, day: 31 },
   },
 ];
 
+// 月日を年内で比較可能な単純な通し番号に変換（日は1-31に収まるため月*31+日で単調増加）
+function monthDayNum(md: MonthDay): number {
+  return md.month * 31 + md.day;
+}
+
+function dateNum(date: Date): number {
+  return monthDayNum({ month: date.getMonth() + 1, day: date.getDate() });
+}
+
+// 現在の「開催サイクル」：各イベントのエントリー開始日から、次のイベントのエントリー開始日の前日まで。
+// エントリー期間が終わった後も、当日・事後の投稿はこのサイクルの中で行う。
 export function currentSeasonalEvent(date: Date): SeasonalEvent {
-  const month = date.getMonth() + 1; // 1-12
-  // pick the event whose kickoff month is closest at or before `month`, wrapping around the year
-  let best = SEASONAL_EVENTS[0];
-  let bestDiff = -Infinity;
-  for (const ev of SEASONAL_EVENTS) {
-    let diff = month - ev.month;
-    if (diff < 0) diff += 12;
-    if (diff <= 2 && (bestDiff === -Infinity || diff < bestDiff)) {
-      best = ev;
-      bestDiff = diff;
-    }
+  const d = dateNum(date);
+  const sorted = [...SEASONAL_EVENTS].sort((a, b) => monthDayNum(a.entryStart) - monthDayNum(b.entryStart));
+  let current = sorted[0];
+  for (const ev of sorted) {
+    if (monthDayNum(ev.entryStart) <= d) current = ev;
   }
-  return best;
+  return current;
+}
+
+export type EntryWindowStatus = 'open' | 'closed' | 'upcoming';
+
+// 指定イベントのエントリー受付が「受付中／終了／これから」のどれかを判定
+export function entryWindowStatus(event: SeasonalEvent, date: Date): EntryWindowStatus {
+  const d = dateNum(date);
+  const start = monthDayNum(event.entryStart);
+  const end = monthDayNum(event.entryEnd);
+  if (d < start) return 'upcoming';
+  if (d > end) return 'closed';
+  return 'open';
+}
+
+export function formatMonthDay(md: MonthDay): string {
+  return `${md.month}月${md.day}日`;
+}
+
+// 次にエントリー受付が始まるイベント（今のサイクルの次のイベント）
+export function nextSeasonalEvent(event: SeasonalEvent): SeasonalEvent {
+  const idx = SEASONAL_EVENTS.findIndex((e) => e.key === event.key);
+  return SEASONAL_EVENTS[(idx + 1) % SEASONAL_EVENTS.length];
 }
 
 export interface ExchangeItem {
@@ -173,6 +231,8 @@ export const EXCHANGE_ITEMS: ExchangeItem[] = [
   { key: 'jtb-5000', label: 'JTB旅行券 5,000円分', emoji: '✈️', cost: 5000, kind: 'jtb' },
 ];
 
+export type RedemptionStatus = 'pending' | 'handed_over';
+
 export interface Redemption {
   id: string;
   userId: string;
@@ -181,4 +241,7 @@ export interface Redemption {
   emoji: string;
   cost: number;
   createdAt: string; // ISO
+  status: RedemptionStatus; // pending＝店長・上長に通知済み、手渡し待ち／handed_over＝手渡し完了
+  notifiedManagerId?: string; // プッシュ通知を受け取った店長・上長のmember id
+  handedOverAt?: string; // ISO — 手渡し完了時刻
 }

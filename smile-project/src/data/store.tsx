@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { EventPhase, EventPost, Member, Redemption } from '../types';
+import type { EventEntry, EventPhase, EventPost, Member, Redemption } from '../types';
 import { EXCHANGE_ITEMS, POINT_RULE, currentSeasonalEvent, findEventAction } from '../types';
-import { buildSeedEventPosts, buildSeedRedemptions, ME, COLLEAGUES } from './seed';
+import { buildSeedEntries, buildSeedEventPosts, buildSeedRedemptions, ME, COLLEAGUES } from './seed';
 
 const POSTS_KEY = 'smile-project-event-posts-v1';
-const REDEMPTIONS_KEY = 'smile-project-redemptions-v2';
+const REDEMPTIONS_KEY = 'smile-project-redemptions-v3';
+const ENTRIES_KEY = 'smile-project-entries-v1';
 const ROLE_KEY = 'smile-project-role-v1';
 
 function loadFromStorage<T>(key: string, build: () => T): T {
@@ -38,10 +39,11 @@ export interface LeaderboardEntry {
 interface StoreValue {
   posts: EventPost[];
   redemptions: Redemption[];
+  entries: EventEntry[];
   currentUser: Member;
   colleagues: Member[];
   allMembers: Member[];
-  addPost: (phase: EventPhase, actionKey: string, comment: string, photo: string) => void;
+  addPost: (phase: EventPhase, actionKey: string, comment: string, photo: string, targetUserId?: string) => void;
   toggleLike: (postId: string) => void;
   isPostEarned: (post: EventPost) => boolean;
   managerLikeCount: (post: EventPost) => number;
@@ -51,7 +53,12 @@ interface StoreValue {
   overallLeaderboard: () => LeaderboardEntry[];
   memberById: (id: string) => Member | undefined;
   toggleRole: () => void;
-  redeem: (itemKey: string) => boolean;
+  redeem: (itemKey: string) => { ok: boolean; message: string };
+  hasEntered: (eventKey: string, memberId: string) => boolean;
+  enterEvent: (eventKey: string) => void;
+  enteredMembers: (eventKey: string) => Member[];
+  pendingRedemptions: () => Redemption[];
+  markHandedOver: (redemptionId: string) => void;
 }
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -59,6 +66,7 @@ const StoreContext = createContext<StoreValue | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [posts, setPosts] = useState<EventPost[]>(() => loadFromStorage(POSTS_KEY, buildSeedEventPosts));
   const [redemptions, setRedemptions] = useState<Redemption[]>(() => loadFromStorage(REDEMPTIONS_KEY, buildSeedRedemptions));
+  const [entries, setEntries] = useState<EventEntry[]>(() => loadFromStorage(ENTRIES_KEY, buildSeedEntries));
   const [role, setRole] = useState<Member['role']>(loadRole);
   const allMembers = useMemo(() => [{ ...ME, role }, ...COLLEAGUES], [role]);
   const currentUser = allMembers[0];
@@ -70,6 +78,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(REDEMPTIONS_KEY, JSON.stringify(redemptions));
   }, [redemptions]);
   useEffect(() => {
+    localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+  }, [entries]);
+  useEffect(() => {
     localStorage.setItem(ROLE_KEY, role);
   }, [role]);
 
@@ -78,12 +89,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return allMembers.find((m) => m.id === id);
     }
 
-    function addPost(phase: EventPhase, actionKey: string, comment: string, photo: string) {
+    function addPost(phase: EventPhase, actionKey: string, comment: string, photo: string, targetUserId?: string) {
+      const subject = (targetUserId && memberById(targetUserId)) || currentUser;
+      const isProxy = subject.id !== currentUser.id;
       const newPost: EventPost = {
         id: `p${Date.now()}`,
-        userId: currentUser.id,
-        userName: currentUser.name,
-        avatar: currentUser.avatar,
+        userId: subject.id,
+        userName: subject.name,
+        avatar: subject.avatar,
         eventKey: currentSeasonalEvent(new Date()).key,
         phase,
         actionKey,
@@ -91,6 +104,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         comment,
         createdAt: new Date().toISOString(),
         likes: [],
+        reportedBy: isProxy ? currentUser.id : undefined,
       };
       setPosts((prev) => [newPost, ...prev]);
     }
@@ -168,10 +182,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setRole((prev) => (prev === 'staff' ? 'manager' : 'staff'));
     }
 
-    function redeem(itemKey: string): boolean {
+    function redeem(itemKey: string): { ok: boolean; message: string } {
       const item = EXCHANGE_ITEMS.find((i) => i.key === itemKey);
-      if (!item) return false;
-      if (totalPoints(currentUser.id) < item.cost) return false;
+      if (!item) return { ok: false, message: 'アイテムが見つかりません。' };
+      if (totalPoints(currentUser.id) < item.cost) {
+        return { ok: false, message: 'ポイントが足りません。' };
+      }
+      const managers = allMembers.filter((m) => m.role === 'manager' && m.id !== currentUser.id);
+      const manager = managers[Math.floor(Math.random() * managers.length)] ?? allMembers.find((m) => m.role === 'manager');
       const redemption: Redemption = {
         id: `rd${Date.now()}`,
         userId: currentUser.id,
@@ -180,14 +198,45 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         emoji: item.emoji,
         cost: item.cost,
         createdAt: new Date().toISOString(),
+        status: 'pending',
+        notifiedManagerId: manager?.id,
       };
       setRedemptions((prev) => [redemption, ...prev]);
-      return true;
+      const managerName = manager?.name ?? '店長・上長';
+      return {
+        ok: true,
+        message: `${item.emoji} 「${item.label}」を申請しました。${managerName}に通知されます。店舗窓口で手渡しにてお受け取りください。`,
+      };
+    }
+
+    function hasEntered(eventKey: string, memberId: string): boolean {
+      return entries.some((e) => e.eventKey === eventKey && e.memberId === memberId);
+    }
+
+    function enterEvent(eventKey: string) {
+      if (hasEntered(eventKey, currentUser.id)) return;
+      setEntries((prev) => [...prev, { eventKey, memberId: currentUser.id, enteredAt: new Date().toISOString() }]);
+    }
+
+    function enteredMembers(eventKey: string): Member[] {
+      const ids = new Set(entries.filter((e) => e.eventKey === eventKey).map((e) => e.memberId));
+      return allMembers.filter((m) => ids.has(m.id));
+    }
+
+    function pendingRedemptions(): Redemption[] {
+      return redemptions.filter((r) => r.status === 'pending');
+    }
+
+    function markHandedOver(redemptionId: string) {
+      setRedemptions((prev) =>
+        prev.map((r) => (r.id === redemptionId ? { ...r, status: 'handed_over', handedOverAt: new Date().toISOString() } : r)),
+      );
     }
 
     return {
       posts,
       redemptions,
+      entries,
       currentUser,
       colleagues: COLLEAGUES,
       allMembers,
@@ -202,8 +251,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       memberById,
       toggleRole,
       redeem,
+      hasEntered,
+      enterEvent,
+      enteredMembers,
+      pendingRedemptions,
+      markHandedOver,
     };
-  }, [posts, redemptions, allMembers, currentUser]);
+  }, [posts, redemptions, entries, allMembers, currentUser]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

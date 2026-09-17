@@ -3,9 +3,19 @@ import { useStore } from '../data/store';
 import Avatar from '../components/Avatar';
 import type { Tab } from '../components/BottomNav';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, Coins, RefreshCw } from 'lucide-react';
-import { PHASE_META, POINT_LIMITS, POST_THEMES, findEventAction } from '../types';
+import { Bell, ChevronLeft, ChevronRight, Coins, RefreshCw } from 'lucide-react';
+import {
+  PHASE_META,
+  POINT_LIMITS,
+  POST_THEMES,
+  currentSeasonalEvent,
+  entryWindowStatus,
+  findEventAction,
+  formatMonthDay,
+  nextSeasonalEvent,
+} from '../types';
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -25,10 +35,31 @@ interface ActivityEntry {
 }
 
 export default function Points({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
-  const { currentUser, totalPoints, monthlyScores, overallLeaderboard, posts, redemptions, toggleRole } = useStore();
+  const {
+    currentUser,
+    totalPoints,
+    monthlyScores,
+    overallLeaderboard,
+    posts,
+    redemptions,
+    toggleRole,
+    hasEntered,
+    enterEvent,
+    enteredMembers,
+    pendingRedemptions,
+    markHandedOver,
+    memberById,
+  } = useStore();
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
+
+  const event = currentSeasonalEvent(now);
+  const windowStatus = entryWindowStatus(event, now);
+  const entered = hasEntered(event.key, currentUser.id);
+  const entryCount = enteredMembers(event.key).length;
+  const upcoming = nextSeasonalEvent(event);
+  const pending = pendingRedemptions();
 
   const scores = monthlyScores(currentUser.id, viewYear, viewMonth);
   const monthTotal = [...scores.values()].reduce((a, b) => a + b, 0);
@@ -106,6 +137,80 @@ export default function Points({ onNavigate }: { onNavigate: (tab: Tab) => void 
         <RefreshCw className="size-3.5" />
         🔧 デモ用：表示モードを「{currentUser.role === 'manager' ? 'スタッフ' : '店長・上長'}」に切り替える
       </button>
+
+      <Card className="mt-4 p-4">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{event.emoji}</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">{event.seasonLabel}</p>
+            <p className="truncate text-sm font-bold text-foreground">{event.title}</p>
+          </div>
+          {entered && (
+            <span className="shrink-0 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-400">
+              エントリー済み
+            </span>
+          )}
+        </div>
+
+        {entered ? (
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+            参加エントリー済みです。「報告する」からこのイベントの評価項目に沿って投稿に参加できます（現在{entryCount}人がエントリー中）。
+          </p>
+        ) : windowStatus === 'open' ? (
+          <>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              🎟️ エントリー受付中（{formatMonthDay(event.entryStart)}〜{formatMonthDay(event.entryEnd)}）。エントリーすると評価項目を確認し、投稿に参加できます。
+            </p>
+            <Button onClick={() => enterEvent(event.key)} size="sm" className="mt-3 w-full">
+              参加エントリーする
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              今回のエントリー期間（{formatMonthDay(event.entryStart)}〜{formatMonthDay(event.entryEnd)}）は終了しました。次回は「{upcoming.title}」（
+              {formatMonthDay(upcoming.entryStart)}〜{formatMonthDay(upcoming.entryEnd)}にエントリー受付）です。
+            </p>
+            <button
+              onClick={() => enterEvent(event.key)}
+              className="mt-3 w-full rounded-xl border border-dashed border-border py-2 text-xs text-muted-foreground active:scale-95"
+            >
+              🔧 デモ用：期間外でもエントリーして投稿を試す
+            </button>
+          </>
+        )}
+      </Card>
+
+      {currentUser.role === 'manager' && pending.length > 0 && (
+        <Card className="mt-4 border-primary/40 p-4">
+          <div className="flex items-center gap-1.5">
+            <Bell className="size-4 text-primary" />
+            <p className="text-sm font-semibold text-foreground">交換リクエスト（手渡し待ち）</p>
+          </div>
+          <div className="mt-3 flex flex-col gap-2">
+            {pending.map((r) => {
+              const requester = memberById(r.userId);
+              const d = new Date(r.createdAt);
+              return (
+                <div key={r.id} className="flex items-center gap-3 rounded-xl bg-secondary/50 px-3 py-2.5">
+                  <span className="text-xl">{r.emoji}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {requester?.name ?? '不明'}さん・{r.label}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {r.cost.toLocaleString()}P ・{d.getMonth() + 1}月{d.getDate()}日申請
+                    </p>
+                  </div>
+                  <Button size="sm" onClick={() => markHandedOver(r.id)}>
+                    手渡し完了
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       <Card className="mt-4 p-4">
         <p className="text-sm font-semibold text-foreground">✨ こんな投稿でポイントGET！</p>

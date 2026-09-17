@@ -51,6 +51,9 @@ export default function PostCard({ post }: { post: EventPost }) {
         <Avatar src={post.avatar} alt={post.userName} className="h-9 w-9 rounded-full bg-secondary text-base" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold text-foreground">{post.userName}</p>
+          {post.reportedBy && (
+            <p className="truncate text-[11px] text-muted-foreground">👀 {memberById(post.reportedBy)?.name ?? '仲間'}さんが報告</p>
+          )}
         </div>
         <p className="shrink-0 text-xs text-muted-foreground">{timeAgo(post.createdAt)}</p>
       </div>

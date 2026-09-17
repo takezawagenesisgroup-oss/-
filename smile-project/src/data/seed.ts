@@ -1,4 +1,4 @@
-import type { EventPhase, EventPost, Member, Redemption } from '../types';
+import type { EventEntry, EventPhase, EventPost, Member, Redemption } from '../types';
 import { EXCHANGE_ITEMS, currentSeasonalEvent, eventActionsFor } from '../types';
 
 export const ME: Member = { id: 'me', name: '自分', avatar: '🙂', role: 'staff' };
@@ -143,7 +143,7 @@ function buildFeaturedHanamatsuriPosts(allMembers: Member[], managers: Member[])
 // 12月に開催された実際の「クリスマスケーキ試食会」の写真を使った投稿
 function buildFeaturedChristmasPosts(allMembers: Member[], managers: Member[]): EventPost[] {
   return buildFeaturedPosts(
-    'santa-innovation',
+    'genesis-xmas',
     [
       {
         authorId: 'u5',
@@ -218,10 +218,16 @@ export function buildSeedRedemptions(): Redemption[] {
   const redemptions: Redemption[] = [];
   let rIdCounter = 1;
   const pool = COLLEAGUES;
+  const managers = COLLEAGUES.filter((m) => m.role === 'manager');
   const count = 3 + Math.floor(Math.random() * 2);
   for (let i = 0; i < count; i++) {
     const user = pool[Math.floor(Math.random() * pool.length)];
     const item = EXCHANGE_ITEMS[Math.floor(Math.random() * EXCHANGE_ITEMS.length)];
+    const manager = managers[Math.floor(Math.random() * managers.length)];
+    const daysBack = Math.floor(Math.random() * 20);
+    const createdAt = daysAgo(daysBack);
+    // 直近の1件だけ「手渡し待ち」、それ以外は既に手渡し済みという想定のデモデータ
+    const isPending = i === 0 && daysBack <= 1;
     redemptions.push({
       id: `rd${rIdCounter++}`,
       userId: user.id,
@@ -229,8 +235,22 @@ export function buildSeedRedemptions(): Redemption[] {
       label: item.label,
       emoji: item.emoji,
       cost: item.cost,
-      createdAt: daysAgo(Math.floor(Math.random() * 20)),
+      createdAt,
+      status: isPending ? 'pending' : 'handed_over',
+      notifiedManagerId: manager.id,
+      handedOverAt: isPending ? undefined : daysAgo(Math.max(0, daysBack - 1)),
     });
   }
   return redemptions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+// 今の開催サイクルのイベントに、同僚はすでにエントリー済みというデモ状態を作る
+// （「自分」は未エントリーのままにして、エントリー〜投稿までの流れを実際に試せるようにする）
+export function buildSeedEntries(): EventEntry[] {
+  const event = currentSeasonalEvent(new Date());
+  return COLLEAGUES.map((member) => ({
+    eventKey: event.key,
+    memberId: member.id,
+    enteredAt: daysAgo(3 + Math.floor(Math.random() * 5)),
+  }));
 }
