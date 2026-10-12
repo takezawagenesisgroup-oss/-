@@ -1,0 +1,9 @@
+{
+  "name": "voice-schedule",
+  "version": "1.0.0",
+  "private": true,
+  "description": "音声で Google カレンダーに予定を登録する PWA + Google Apps Script",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

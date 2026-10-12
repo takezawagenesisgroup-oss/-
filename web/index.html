@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>音声スケジュール</title>
+  <meta name="theme-color" content="#1a73e8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="音声予定">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="bar">
+    <h1>音声スケジュール</h1>
+    <button id="openSettings" class="icon-btn" aria-label="設定">⚙</button>
+  </header>
+
+  <main>
+    <section class="mic-area">
+      <button id="mic" class="mic" aria-label="タップして話す">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg>
+      </button>
+      <p id="status" class="status">タップして予定を話してください</p>
+      <p class="hint">例：「10月15日14時から16時まで本社会議室で営業会議」</p>
+    </section>
+
+    <section class="card">
+      <label for="transcript" class="label">話した内容（キーボードの音声入力・手入力も可）</label>
+      <textarea id="transcript" rows="2" placeholder="明日の午後3時から1時間、田中さんと打ち合わせ、場所は渋谷オフィス"></textarea>
+      <button id="parse" class="btn secondary">内容を読み取る</button>
+    </section>
+
+    <form id="eventForm" class="card" hidden>
+      <h2>登録内容の確認</h2>
+      <ul id="warnings" class="warnings"></ul>
+      <label class="label" for="title">予定</label>
+      <input id="title" required>
+      <label class="label" for="startDate">日付</label>
+      <input id="startDate" type="date" required>
+      <label class="check"><input id="allDay" type="checkbox"> 終日</label>
+      <div class="row" id="timeRow">
+        <div><label class="label" for="startTime">開始</label><input id="startTime" type="time"></div>
+        <div><label class="label" for="endTime">終了</label><input id="endTime" type="time"></div>
+      </div>
+      <label class="label" for="endDate">終了日</label>
+      <input id="endDate" type="date">
+      <label class="label" for="location">場所</label>
+      <input id="location">
+      <div class="row actions">
+        <button type="button" id="retry" class="btn secondary">もう一度話す</button>
+        <button type="submit" id="submit" class="btn primary">登録する</button>
+      </div>
+    </form>
+
+    <section id="result" class="card result" hidden></section>
+
+    <section class="card">
+      <h2>最近の登録</h2>
+      <ul id="history" class="history"></ul>
+    </section>
+  </main>
+
+  <dialog id="settings">
+    <form method="dialog" id="settingsForm">
+      <h2>設定</h2>
+      <label class="label" for="gasUrl">Apps Script ウェブアプリ URL</label>
+      <input id="gasUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec" required>
+      <label class="label" for="apiKey">API キー（Apps Script の API_KEY）</label>
+      <input id="apiKey" type="password" autocomplete="off" required>
+      <label class="check"><input id="autoRegister" type="checkbox"> 確認せずにすぐ登録する（日付と時刻が読み取れた場合のみ）</label>
+      <label class="check"><input id="autoStart" type="checkbox"> アプリを開いたらすぐ聞き取りを始める（対応ブラウザのみ）</label>
+      <p id="settingsStatus" class="status small"></p>
+      <div class="row actions">
+        <button type="button" id="testConnection" class="btn secondary">接続テスト</button>
+        <button value="save" class="btn primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="parser.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
