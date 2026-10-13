@@ -1,4 +1,4 @@
-/* global parseSchedule */
+/* global parseSchedule, GoogleCalendar */
 (function () {
   'use strict';
 
@@ -13,6 +13,9 @@
     endDate: $('endDate'), location: $('location'), retry: $('retry'), submit: $('submit'),
     result: $('result'), history: $('history'),
     settings: $('settings'), settingsForm: $('settingsForm'), openSettings: $('openSettings'),
+    account: $('account'), modeGoogle: $('modeGoogle'), modeGas: $('modeGas'),
+    googleSection: $('googleSection'), gasSection: $('gasSection'), googleAccount: $('googleAccount'),
+    signIn: $('signIn'), switchAccount: $('switchAccount'), signOut: $('signOut'),
     gasUrl: $('gasUrl'), autoRegister: $('autoRegister'), autoStart: $('autoStart'),
     settingsStatus: $('settingsStatus'), testConnection: $('testConnection')
   };
@@ -28,13 +31,19 @@
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* 保存できなくても続行 */ }
   }
 
+  var config = window.VOICE_SCHEDULE_CONFIG || {};
+  GoogleCalendar.init(config.googleClientId);
+
   var settings = load(SETTINGS_KEY, { gasUrl: '', autoRegister: false, autoStart: false });
+  // 登録方法: 'google'（ログインした人のカレンダー）/ 'gas'（Apps Script 経由）
+  if (!settings.mode) settings.mode = settings.gasUrl || !GoogleCalendar.isAvailable() ? 'gas' : 'google';
 
   // ?gas=... 付きの URL で開くと設定を取り込む（スマホへの設定を楽にするため）
   (function importSettingsFromUrl() {
     var params = new URLSearchParams(location.search);
     if (!params.get('gas')) return;
     settings.gasUrl = params.get('gas');
+    settings.mode = 'gas';
     save(SETTINGS_KEY, settings);
     history.replaceState(null, '', location.pathname);
   })();
@@ -111,11 +120,13 @@
     // 日付や内容が聞き取れなかったときは自動登録せず確認画面を出す（終了時刻の補完は問題なし）
     var uncertain = current.warnings.some(function (w) { return w.indexOf('終了時刻') === -1; });
     var timed = !current.allDay && !uncertain;
-    if (fromVoice && settings.autoRegister && timed && isConfigured()) {
+    // Google ログインの再確認が必要なとき（ポップアップが出る）はタップが必要なので自動登録しない
+    var ready = settings.mode === 'google' ? GoogleCalendar.isSignedIn() : isConfigured();
+    if (fromVoice && settings.autoRegister && timed && ready) {
       setStatus('登録しています…');
       register();
     } else {
-      setStatus('内容を確認して「登録」を押してください');
+      setStatus('内容を確認して「登録する」を押してください');
       els.form.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
@@ -161,7 +172,18 @@
   // ---------- 登録 ----------
 
   function isConfigured() {
-    return !!settings.gasUrl;
+    return settings.mode === 'google' ? GoogleCalendar.isAvailable() : !!settings.gasUrl;
+  }
+
+  /** 選択中の登録方法で予定を登録し、{ url, calendar } を返す */
+  function insertEvent(ev) {
+    if (settings.mode === 'google') {
+      return GoogleCalendar.insertEvent(ev).then(function (created) {
+        renderAccount();
+        return created;
+      });
+    }
+    return callApi({ event: ev }).then(function (data) { return data.created; });
   }
 
   function callApi(payload) {
@@ -181,7 +203,9 @@
 
   function register() {
     if (!isConfigured()) {
-      setStatus('先に設定（⚙）で Apps Script の URL を入力してください', 'error');
+      setStatus(settings.mode === 'google'
+        ? 'Google ログインが未設定です（管理者が web/config.js を設定する必要があります）'
+        : '先に設定（⚙）で Apps Script の URL を入力してください', 'error');
       openSettings();
       return;
     }
@@ -191,9 +215,9 @@
       return;
     }
     els.submit.disabled = true;
-    callApi({ event: ev }).then(function (data) {
-      showResult(true, ev, data.created);
-      addHistory(ev, data.created);
+    insertEvent(ev).then(function (created) {
+      showResult(true, ev, created);
+      addHistory(ev, created);
       els.form.hidden = true;
       els.transcript.value = '';
       setStatus('登録しました。続けて登録する場合はもう一度タップ', 'ok');
@@ -222,7 +246,8 @@
     var h = document.createElement('h2');
     h.textContent = ok ? '✓ Googleカレンダーに登録しました' : '登録できませんでした';
     var p = document.createElement('p');
-    p.textContent = ok ? describe(ev) : message;
+    p.textContent = ok ? describe(ev) + (created && created.calendar ? '\n登録先: ' + created.calendar : '') : message;
+    p.style.whiteSpace = 'pre-line';
     els.result.appendChild(h);
     els.result.appendChild(p);
     if (ok && created && created.url) {
@@ -237,7 +262,7 @@
 
   function addHistory(ev, created) {
     var list = load(HISTORY_KEY, []);
-    list.unshift({ text: describe(ev), url: created && created.url, at: new Date().toISOString() });
+    list.unshift({ text: describe(ev), url: created && created.url, account: created && created.calendar, at: new Date().toISOString() });
     save(HISTORY_KEY, list.slice(0, 10));
     renderHistory();
   }
@@ -255,7 +280,7 @@
       var li = document.createElement('li');
       var when = document.createElement('span');
       when.className = 'when';
-      when.textContent = new Date(item.at).toLocaleString('ja-JP') + ' 登録';
+      when.textContent = new Date(item.at).toLocaleString('ja-JP') + ' 登録' + (item.account ? '（' + item.account + '）' : '');
       li.appendChild(when);
       if (item.url) {
         var a = document.createElement('a');
@@ -273,7 +298,57 @@
 
   // ---------- 設定 ----------
 
+  /** 画面上部に「どのアカウントのカレンダーに登録されるか」を表示する */
+  function renderAccount() {
+    els.account.innerHTML = '';
+    if (settings.mode !== 'google' || !GoogleCalendar.isAvailable()) {
+      els.account.textContent = settings.mode === 'gas' && settings.gasUrl ? '登録先: Apps Script のカレンダー' : '';
+      return;
+    }
+    if (GoogleCalendar.hasAccount()) {
+      els.account.appendChild(document.createTextNode('登録先: ' + GoogleCalendar.email() + ' '));
+    }
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = GoogleCalendar.hasAccount() ? '切替' : 'Google でログイン';
+    btn.addEventListener('click', function () {
+      signIn(GoogleCalendar.hasAccount());
+    });
+    els.account.appendChild(btn);
+  }
+
+  function renderGoogleSection() {
+    var google = els.modeGoogle.checked;
+    els.googleSection.hidden = !google;
+    els.gasSection.hidden = google;
+    if (!GoogleCalendar.isAvailable()) {
+      els.googleAccount.textContent = 'Google ログインはまだ使えません（管理者が web/config.js に OAuth クライアント ID を設定する必要があります）';
+      els.signIn.hidden = els.switchAccount.hidden = els.signOut.hidden = true;
+      return;
+    }
+    var has = GoogleCalendar.hasAccount();
+    els.googleAccount.textContent = has ? 'ログイン中: ' + GoogleCalendar.email() : '未ログイン';
+    els.signIn.hidden = has;
+    els.switchAccount.hidden = els.signOut.hidden = !has;
+  }
+
+  function signIn(selectAccount) {
+    return GoogleCalendar.getToken({ selectAccount: !!selectAccount }).then(function () {
+      settings.mode = 'google';
+      save(SETTINGS_KEY, settings);
+      renderAccount();
+      renderGoogleSection();
+      setStatus('タップして予定を話してください');
+    }).catch(function (err) {
+      els.googleAccount.textContent = err.message;
+      setStatus(err.message, 'error');
+    });
+  }
+
   function openSettings() {
+    els.modeGoogle.checked = settings.mode === 'google';
+    els.modeGas.checked = settings.mode !== 'google';
+    renderGoogleSection();
     els.gasUrl.value = settings.gasUrl;
     els.autoRegister.checked = settings.autoRegister;
     els.autoStart.checked = settings.autoStart;
@@ -283,6 +358,7 @@
 
   function readSettingsForm() {
     return {
+      mode: els.modeGoogle.checked ? 'google' : 'gas',
       gasUrl: els.gasUrl.value.trim(),
       autoRegister: els.autoRegister.checked,
       autoStart: els.autoStart.checked
@@ -292,6 +368,7 @@
   els.settingsForm.addEventListener('submit', function () {
     settings = readSettingsForm();
     save(SETTINGS_KEY, settings);
+    renderAccount();
     setStatus(isConfigured() ? 'タップして予定を話してください' : '設定が未完了です', isConfigured() ? '' : 'error');
   });
 
@@ -300,7 +377,11 @@
     settings = readSettingsForm();
     els.settingsStatus.className = 'status small';
     els.settingsStatus.textContent = '確認中…';
-    callApi({ text: '明日10時 接続テスト', dryRun: true }).then(function () {
+    var test = settings.mode === 'google'
+      ? GoogleCalendar.check()
+      : callApi({ text: '明日10時 接続テスト', dryRun: true });
+    test.then(function () {
+      renderGoogleSection();
       els.settingsStatus.className = 'status small ok';
       els.settingsStatus.textContent = '接続できました（予定は登録していません）';
     }).catch(function (err) {
@@ -329,10 +410,22 @@
     register();
   });
   els.openSettings.addEventListener('click', openSettings);
+  els.modeGoogle.addEventListener('change', renderGoogleSection);
+  els.modeGas.addEventListener('change', renderGoogleSection);
+  els.signIn.addEventListener('click', function () { signIn(false); });
+  els.switchAccount.addEventListener('click', function () { signIn(true); });
+  els.signOut.addEventListener('click', function () {
+    GoogleCalendar.signOut();
+    renderGoogleSection();
+    renderAccount();
+  });
 
   renderHistory();
+  renderAccount();
   if (!isConfigured()) {
     setStatus('最初に設定（⚙）を行ってください', 'error');
+  } else if (settings.mode === 'google' && !GoogleCalendar.hasAccount()) {
+    setStatus('最初に「Google でログイン」を押してください');
   } else if (settings.autoStart && Recognition) {
     // ブラウザによってはタップなしでは開始できない（その場合はボタンを押せば OK）
     startListening();

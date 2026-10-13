@@ -1,6 +1,6 @@
 // アプリ本体をキャッシュして、起動を速くする（登録処理は常にネットワーク経由）
-var CACHE = 'voice-schedule-v1';
-var FILES = ['./', 'index.html', 'style.css', 'app.js', 'parser.js', 'manifest.webmanifest', 'icon.svg'];
+var CACHE = 'voice-schedule-v2';
+var FILES = ['./', 'index.html', 'style.css', 'app.js', 'parser.js', 'config.js', 'google-calendar.js', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }));
