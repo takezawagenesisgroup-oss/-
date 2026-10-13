@@ -61,8 +61,17 @@ GWS 側の処理：
    - `GENESIS_TOKEN`：GWS の API トークン
 3. エディタで `installGenesisTrigger` を 1 回実行（カレンダー変更時に `syncToGenesis` が自動で動くようになる。初回は過去 30 日以降の予定を送信）。
 
-## 今後の検討事項
+## 複数人で使う場合（Google ログイン方式）
 
-- **社員ごとの連携**：現在は 1 アカウント（1 カレンダー）想定。社員全員分を連携する場合は、Google Workspace のドメイン全体の委任（サービスアカウント）を使い、GWS のサーバー側から各社員のカレンダーを Calendar API（`events.watch` + `syncToken`）で同期する方式に移行するのがよい。送信データの形式は上記と同じにしておけば GWS 側の処理は流用できる。
+Google ログイン方式では、各社員が自分のカレンダーに登録するため、`GenesisSync.js`（1 アカウント用）では全員分を連携できない。
+次のどちらかで、**GWS のサーバー側から各社員の Google カレンダーを同期** する。
+
+1. **Google Workspace を使っている場合（おすすめ）**：サービスアカウントにドメイン全体の委任を設定し、GWS サーバーが各社員のカレンダーを Calendar API（`events.watch` の通知 + `syncToken` の差分取得）で読む。社員の操作は不要。
+2. **Gmail アカウントの場合**：GWS 側に「Google カレンダーと連携する」ボタンを用意し、社員ごとに OAuth（オフラインアクセス）で同意をもらってリフレッシュトークンを保存。以降は 1 と同様に差分同期する。
+
+どちらの場合も、同期処理が受け取るデータは上記の `events` の形式と同じにしておけば、GWS 側の登録・更新・削除処理を 1 人用と共通化できる。
+音声で登録した予定には `extendedProperties.private.source = "voice-schedule"`（Apps Script 経由はタグ `source`）が付いているので、必要なら区別できる。
+
+## 今後の検討事項
 - **GWS → Google の逆方向**：GWS で入力した予定を Google カレンダーにも反映したい場合は、GWS から Apps Script の `doPost`（`event` 形式）を呼べば登録できる。ただし双方向にするとループしやすいので、`extendedProperties` / タグ（`source`）で発生元を判定する。
 - **音声の解析精度**：現在はルールベースの解析。言い回しが増えて精度が足りなくなった場合は、Apps Script から生成 AI（Claude API など）を呼んで解析する方式に差し替えられるよう、解析処理は `parseSchedule()` 1 関数にまとめてある。

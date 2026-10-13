@@ -17,6 +17,7 @@
     <h1>音声スケジュール</h1>
     <button id="openSettings" class="icon-btn" aria-label="設定">⚙</button>
   </header>
+  <p id="account" class="account"></p>
 
   <main>
     <section class="mic-area">
@@ -66,8 +67,25 @@
   <dialog id="settings">
     <form method="dialog" id="settingsForm">
       <h2>設定</h2>
-      <label class="label" for="gasUrl">Apps Script ウェブアプリ URL</label>
-      <input id="gasUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec" required>
+      <fieldset class="modes">
+        <legend class="label">登録方法</legend>
+        <label class="check"><input type="radio" name="mode" value="google" id="modeGoogle"> Google アカウントでログイン（自分のカレンダーに登録）</label>
+        <label class="check"><input type="radio" name="mode" value="gas" id="modeGas"> Apps Script 経由（個人用・Siri 連携用）</label>
+      </fieldset>
+
+      <div id="googleSection">
+        <p id="googleAccount" class="status small"></p>
+        <div class="row">
+          <button type="button" id="signIn" class="btn secondary">ログイン</button>
+          <button type="button" id="switchAccount" class="btn secondary">アカウント切替</button>
+          <button type="button" id="signOut" class="btn secondary">ログアウト</button>
+        </div>
+      </div>
+
+      <div id="gasSection">
+        <label class="label" for="gasUrl">Apps Script ウェブアプリ URL</label>
+        <input id="gasUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+      </div>
       <label class="check"><input id="autoRegister" type="checkbox"> 確認せずにすぐ登録する（日付と時刻が読み取れた場合のみ）</label>
       <label class="check"><input id="autoStart" type="checkbox"> アプリを開いたらすぐ聞き取りを始める（対応ブラウザのみ）</label>
       <p id="settingsStatus" class="status small"></p>
@@ -78,7 +96,9 @@
     </form>
   </dialog>
 
+  <script src="config.js"></script>
   <script src="parser.js"></script>
+  <script src="google-calendar.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
