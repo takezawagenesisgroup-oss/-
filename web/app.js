@@ -13,7 +13,7 @@
     endDate: $('endDate'), location: $('location'), retry: $('retry'), submit: $('submit'),
     result: $('result'), history: $('history'),
     settings: $('settings'), settingsForm: $('settingsForm'), openSettings: $('openSettings'),
-    gasUrl: $('gasUrl'), apiKey: $('apiKey'), autoRegister: $('autoRegister'), autoStart: $('autoStart'),
+    gasUrl: $('gasUrl'), autoRegister: $('autoRegister'), autoStart: $('autoStart'),
     settingsStatus: $('settingsStatus'), testConnection: $('testConnection')
   };
 
@@ -28,14 +28,13 @@
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* 保存できなくても続行 */ }
   }
 
-  var settings = load(SETTINGS_KEY, { gasUrl: '', apiKey: '', autoRegister: false, autoStart: false });
+  var settings = load(SETTINGS_KEY, { gasUrl: '', autoRegister: false, autoStart: false });
 
-  // ?gas=...&key=... 付きの URL で開くと設定を取り込む（スマホへの設定を楽にするため）
+  // ?gas=... 付きの URL で開くと設定を取り込む（スマホへの設定を楽にするため）
   (function importSettingsFromUrl() {
     var params = new URLSearchParams(location.search);
-    if (!params.get('gas') && !params.get('key')) return;
-    if (params.get('gas')) settings.gasUrl = params.get('gas');
-    if (params.get('key')) settings.apiKey = params.get('key');
+    if (!params.get('gas')) return;
+    settings.gasUrl = params.get('gas');
     save(SETTINGS_KEY, settings);
     history.replaceState(null, '', location.pathname);
   })();
@@ -162,7 +161,7 @@
   // ---------- 登録 ----------
 
   function isConfigured() {
-    return !!(settings.gasUrl && settings.apiKey);
+    return !!settings.gasUrl;
   }
 
   function callApi(payload) {
@@ -170,7 +169,7 @@
     return fetch(settings.gasUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(Object.assign({ key: settings.apiKey }, payload))
+      body: JSON.stringify(payload)
     }).then(function (res) {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       return res.json();
@@ -182,7 +181,7 @@
 
   function register() {
     if (!isConfigured()) {
-      setStatus('先に設定（⚙）で Apps Script の URL と API キーを入力してください', 'error');
+      setStatus('先に設定（⚙）で Apps Script の URL を入力してください', 'error');
       openSettings();
       return;
     }
@@ -276,7 +275,6 @@
 
   function openSettings() {
     els.gasUrl.value = settings.gasUrl;
-    els.apiKey.value = settings.apiKey;
     els.autoRegister.checked = settings.autoRegister;
     els.autoStart.checked = settings.autoStart;
     els.settingsStatus.textContent = '';
@@ -286,7 +284,6 @@
   function readSettingsForm() {
     return {
       gasUrl: els.gasUrl.value.trim(),
-      apiKey: els.apiKey.value.trim(),
       autoRegister: els.autoRegister.checked,
       autoStart: els.autoStart.checked
     };

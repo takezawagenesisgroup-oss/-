@@ -4,14 +4,16 @@
  * PWA や iPhone のショートカットから POST を受け取り、Google カレンダーに予定を登録する。
  * 「自分として実行」でデプロイするので、OAuth クライアントの準備やトークンの期限切れを気にせず使える。
  *
+ * ※ 合言葉（API キー）による認証は行っていない。ウェブアプリの URL を知っている人は誰でも登録できるため、
+ *   URL は他人に共有しないこと。
+ *
  * スクリプトプロパティ（プロジェクトの設定 → スクリプト プロパティ）:
- *   API_KEY      必須。PWA / ショートカットと共有する合言葉（長いランダム文字列）
  *   CALENDAR_ID  任意。登録先カレンダー ID（省略時はデフォルトカレンダー）
  *
  * リクエスト（POST、本文は JSON）:
- *   { "key": "...", "text": "明日15時から会議" }                 … サーバー側で解析して登録
- *   { "key": "...", "text": "...", "dryRun": true }              … 解析結果だけ返す
- *   { "key": "...", "event": { title, startDate, startTime, ... } } … 解析済み（PWA で確認・修正済み）の予定を登録
+ *   { "text": "明日15時から会議" }                 … サーバー側で解析して登録
+ *   { "text": "...", "dryRun": true }              … 解析結果だけ返す
+ *   { "event": { title, startDate, startTime, ... } } … 解析済み（PWA で確認・修正済み）の予定を登録
  */
 
 var SOURCE_TAG = 'voice-schedule';
@@ -19,8 +21,6 @@ var SOURCE_TAG = 'voice-schedule';
 function doPost(e) {
   try {
     var body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
-    checkKey_(body.key);
-
     var event = body.event || parseSchedule(body.text || '', new Date());
     if (body.dryRun) return json_({ ok: true, event: event });
 
@@ -34,12 +34,6 @@ function doPost(e) {
 /** 動作確認用。ブラウザで Web アプリの URL を開くと応答する */
 function doGet() {
   return json_({ ok: true, service: 'voice-schedule', time: new Date().toISOString() });
-}
-
-function checkKey_(key) {
-  var expected = PropertiesService.getScriptProperties().getProperty('API_KEY');
-  if (!expected) throw new Error('スクリプトプロパティ API_KEY が設定されていません');
-  if (key !== expected) throw new Error('認証に失敗しました（API_KEY が一致しません）');
 }
 
 function getCalendar_() {
@@ -105,17 +99,9 @@ function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
-/** 初期設定用: エディタからこの関数を 1 回実行すると API_KEY を自動生成してログに表示する */
+/** 初期設定用: エディタからこの関数を 1 回実行して、カレンダーへのアクセスを許可しておく */
 function setup() {
-  var props = PropertiesService.getScriptProperties();
-  var key = props.getProperty('API_KEY');
-  if (!key) {
-    key = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
-    props.setProperty('API_KEY', key);
-  }
-  // カレンダーへのアクセス許可をここで済ませておく
   Logger.log('登録先カレンダー: ' + getCalendar_().getName());
-  Logger.log('API_KEY: ' + key);
 }
 
 /** エディタから解析結果を試す */
