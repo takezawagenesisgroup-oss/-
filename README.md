@@ -48,7 +48,7 @@ iPhone なら「Hey Siri、予定登録」でも使えます。
 | `web/google-calendar.js` | Google ログインと Calendar API への登録 |
 | `gas/` | Google Apps Script。予定の登録 API と、ジェネシスワークシステム連携（準備中） |
 | `web/parser.js` | 日本語の日時・場所・内容を読み取る処理（`gas/Parser.js` は同じもののコピー） |
-| `sync/` | Google Workspace 全社員のカレンダー → ジェネシスワークシステムの自動同期（Cloud Run で実行） |
+| `sync/` | （将来用）Google Workspace 全社員のカレンダー → ジェネシスワークシステムの自動同期 |
 | `docs/` | Google ログインの設定、iPhone ショートカットの作り方、ジェネシスワークシステム連携の設計・設定 |
 
 ## 話し方の例
@@ -124,15 +124,15 @@ iPhone なら「Hey Siri、予定登録」でも使えます。
 
 アプリを開かず「Hey Siri、予定登録」→ 話すだけで登録できます。作り方は [docs/iphone-shortcut.md](docs/iphone-shortcut.md)。
 
-## ジェネシスワークシステムとの連携（Google Workspace 全社員）
+## ジェネシスワークシステムとの連携
 
-**スマホの Google カレンダーアプリで入力・変更・削除した予定が、数分以内にジェネシスワークシステムのスケジュールに自動反映** されます。
-PC で入力した予定や音声スケジュールで登録した予定も同じです。社員の操作は不要です。
+**竹澤さんがスマホの Google カレンダーで入力・変更・削除した予定が、ジェネシスワークシステムのスケジュールに自動で反映** されます。
+PC で入力した予定や、音声スケジュールで登録した予定も同じです。
 
-- 同期サービス（`sync/`）が 5 分ごとに全社員の Google カレンダーの変更だけを読み取り（読み取り専用）、ジェネシスワークシステムへ送ります。
+- Apps Script（`gas/GenesisSync.js`）が、カレンダーが変わるたびに差分だけをジェネシスワークシステムへ送ります（念のため 10 分ごとにも確認）。
 - 「非公開」の予定は「予定あり」とだけ送ります。
-- 設定手順：[docs/workspace-sync-setup.md](docs/workspace-sync-setup.md)（Workspace 管理者の許可が 1 回必要）
-- ジェネシスワークシステム側で用意する受け口（API）の仕様：[docs/genesis-integration.md](docs/genesis-integration.md)
+- 設定手順と、ジェネシスワークシステム側で用意する受け口（API）の仕様：[docs/genesis-integration.md](docs/genesis-integration.md)
+- 将来、社員全員分に広げる場合は `sync/`（[docs/workspace-sync-setup.md](docs/workspace-sync-setup.md)）を使います。
 
 ## 開発者向け
 
