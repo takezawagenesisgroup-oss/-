@@ -1,4 +1,9 @@
-name: deploy web to GitHub Pages
+name: deploy web to GitHub Pages (voice/)
+
+# このリポジトリの GitHub Pages は gh-pages ブランチから公開されていて、
+# ルートには別のページ（index.html）がある。それを消さないよう、
+# web/ の中身を gh-pages ブランチの voice/ フォルダにだけ反映する。
+# 公開 URL: https://<owner>.github.io/<repo>/voice/
 
 on:
   push:
@@ -7,25 +12,35 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: pages-voice
+  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
         with:
-          path: web
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          path: src
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: site
+      - name: Copy web/ to gh-pages:voice/
+        run: |
+          rm -rf site/voice
+          mkdir -p site/voice
+          cp -R src/web/. site/voice/
+          cd site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add voice
+          if git diff --cached --quiet; then
+            echo "変更なし"
+          else
+            git commit -m "voice/: ${GITHUB_SHA::7} を公開"
+            git push origin gh-pages
+          fi

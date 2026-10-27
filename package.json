@@ -4,6 +4,6 @@
   "private": true,
   "description": "音声で Google カレンダーに予定を登録する PWA + Google Apps Script",
   "scripts": {
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js sync/test/*.test.js"
   }
 }

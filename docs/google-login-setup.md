@@ -56,7 +56,7 @@ window.VOICE_SCHEDULE_CONFIG = {
 
 ## 利用者の使い方
 
-1. スマホで公開 URL（`https://takezawagenesisgroup-oss.github.io/-/`）を開き、ホーム画面に追加。
+1. スマホで公開 URL（`https://takezawagenesisgroup-oss.github.io/-/voice/`）を開き、ホーム画面に追加。
 2. 画面上部の「Google でログイン」→ 自分のアカウントを選び、カレンダーへのアクセスを「許可」。
 3. マイクをタップして話す →「登録する」→ **ログインした人の Google カレンダー** に登録されます。
 

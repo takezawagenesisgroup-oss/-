@@ -48,7 +48,8 @@ iPhone なら「Hey Siri、予定登録」でも使えます。
 | `web/google-calendar.js` | Google ログインと Calendar API への登録 |
 | `gas/` | Google Apps Script。予定の登録 API と、ジェネシスワークシステム連携（準備中） |
 | `web/parser.js` | 日本語の日時・場所・内容を読み取る処理（`gas/Parser.js` は同じもののコピー） |
-| `docs/` | Google ログインの設定、iPhone ショートカットの作り方、ジェネシスワークシステム連携の設計 |
+| `sync/` | Google Workspace 全社員のカレンダー → ジェネシスワークシステムの自動同期（Cloud Run で実行） |
+| `docs/` | Google ログインの設定、iPhone ショートカットの作り方、ジェネシスワークシステム連携の設計・設定 |
 
 ## 話し方の例
 
@@ -98,9 +99,9 @@ iPhone なら「Hey Siri、予定登録」でも使えます。
 
 `web/` フォルダを HTTPS で公開します（マイクを使うため HTTPS が必須です）。
 
-- **GitHub Pages**（このリポジトリに設定済み）：GitHub の Settings → Pages → Source を「GitHub Actions」にすると、`main` に push するたびに自動公開されます。
-  公開 URL：`https://<ユーザー名>.github.io/<リポジトリ名>/`
-  ※ 非公開リポジトリで Pages を使うには GitHub の有料プランが必要です。使えない場合は Netlify / Cloudflare Pages / Firebase Hosting などに `web/` をそのままアップロードしても動きます。
+- **GitHub Pages**（設定済み・追加作業なし）：`main` に push するたびに、`web/` の中身が gh-pages ブランチの `voice/` フォルダに自動で反映されます。
+  公開 URL：**https://takezawagenesisgroup-oss.github.io/-/voice/**
+  ※ gh-pages ブランチのルートには別のページ（スマイルプロジェクト）があるため、Pages の Source 設定は **変更しないでください**（「Deploy from a branch: gh-pages」のまま）。使えない場合は Netlify / Cloudflare Pages / Firebase Hosting などに `web/` をそのままアップロードしても動きます。
 - 画面のファイルには Apps Script の URL は含まれません（URL は各端末に保存されます）。
 
 ### 3. スマホに入れる
@@ -123,18 +124,20 @@ iPhone なら「Hey Siri、予定登録」でも使えます。
 
 アプリを開かず「Hey Siri、予定登録」→ 話すだけで登録できます。作り方は [docs/iphone-shortcut.md](docs/iphone-shortcut.md)。
 
-## ジェネシスワークシステムとの連携（準備済み）
+## ジェネシスワークシステムとの連携（Google Workspace 全社員）
 
-ジェネシスワークシステムのカレンダー機能が完成したら、`gas/GenesisSync.js` を有効にするだけで、
-**Google カレンダーの追加・変更・削除がジェネシスワークシステムのスケジュールに自動反映** されます。
-音声で登録した予定だけでなく、Google カレンダーに直接入力した予定も連携されます。
+**スマホの Google カレンダーアプリで入力・変更・削除した予定が、数分以内にジェネシスワークシステムのスケジュールに自動反映** されます。
+PC で入力した予定や音声スケジュールで登録した予定も同じです。社員の操作は不要です。
 
-ジェネシスワークシステム側で用意してほしい受け口（API）の仕様は [docs/genesis-integration.md](docs/genesis-integration.md) にまとめています。
+- 同期サービス（`sync/`）が 5 分ごとに全社員の Google カレンダーの変更だけを読み取り（読み取り専用）、ジェネシスワークシステムへ送ります。
+- 「非公開」の予定は「予定あり」とだけ送ります。
+- 設定手順：[docs/workspace-sync-setup.md](docs/workspace-sync-setup.md)（Workspace 管理者の許可が 1 回必要）
+- ジェネシスワークシステム側で用意する受け口（API）の仕様：[docs/genesis-integration.md](docs/genesis-integration.md)
 
 ## 開発者向け
 
 ```sh
-npm test                 # 日本語解析のテスト
+npm test                 # 日本語解析・カレンダー登録・同期サービスのテスト
 ./scripts/sync-gas.sh    # web/parser.js を変更したら gas/Parser.js にコピー（テストで一致を確認しています）
 ```
 

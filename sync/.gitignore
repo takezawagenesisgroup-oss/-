@@ -1,0 +1,4 @@
+.env
+state.json
+*.json.tmp
+service-account*.json
