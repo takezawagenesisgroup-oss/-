@@ -36,6 +36,8 @@ function toGenesisEvent(item, userEmail) {
     attendees: isPrivate ? [] : (item.attendees || []).map((a) => ({ email: a.email, responseStatus: a.responseStatus })),
     busy: item.transparency !== 'transparent',
     source: (item.extendedProperties && item.extendedProperties.private && item.extendedProperties.private.source) || null,
+    // GWS で作られて Google に登録された予定は GWS 側の ID を持っている（GWS はこれで元の予定に紐づける）
+    genesisId: (item.extendedProperties && item.extendedProperties.private && item.extendedProperties.private.genesisId) || null,
     updated: item.updated || null,
     htmlLink: isPrivate ? '' : (item.htmlLink || '')
   });

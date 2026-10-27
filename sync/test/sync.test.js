@@ -107,7 +107,7 @@ const meeting = {
   iCalUID: 'ev1@google.com', updated: '2026-10-25T00:00:00Z'
 };
 
-test.beforeEach(() => mock.schedules.clear());
+test.beforeEach(() => mock.reset());
 
 test('初回は全件、2 回目以降は差分だけを社員ごとに GWS へ送る', async () => {
   const { world, run, stateStore } = setup();
@@ -125,7 +125,7 @@ test('初回は全件、2 回目以降は差分だけを社員ごとに GWS へ�
   assert.equal(world.posts[0].fullSync, true);
   assert.equal(world.posts[0].events[0].title, '営業会議');
   assert.equal(world.posts[0].events[0].userEmail, 'tanaka@example.com');
-  assert.equal(mock.schedules.size, 1);
+  assert.equal(mock.activeSchedules().length, 1);
 
   // スマホで予定を追加・削除した想定
   world.posts = [];
@@ -139,7 +139,7 @@ test('初回は全件、2 回目以降は差分だけを社員ごとに GWS へ�
   assert.equal(world.posts[0].fullSync, false);
   const saved = await stateStore.load();
   assert.match(saved.users['tanaka@example.com'].syncToken, /^sync-tanaka/);
-  assert.deepEqual([...mock.schedules.values()].map((e) => e.title), ['歯医者']);
+  assert.deepEqual(mock.activeSchedules().map((e) => e.title), ['歯医者']);
 });
 
 test('GWS への送信に失敗したら同期位置を進めず、次回再送する', async () => {
