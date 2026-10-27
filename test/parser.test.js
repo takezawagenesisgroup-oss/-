@@ -90,3 +90,32 @@ test('gas/Parser.js は web/parser.js と同じ内容', () => {
   const gas = fs.readFileSync(path.join(__dirname, '../gas/Parser.js'), 'utf8');
   assert.equal(gas, web, 'scripts/sync-gas.sh を実行してください');
 });
+
+test('gas/AllInOne.gs が最新で、Apps Script 上で動く', () => {
+  const vm = require('node:vm');
+  const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+  const bundle = read('gas/AllInOne.gs');
+  for (const f of ['gas/Parser.js', 'gas/Code.js', 'gas/GenesisSync.js']) {
+    assert.ok(bundle.includes(read(f)), `${f} が反映されていません。scripts/sync-gas.sh を実行してください`);
+  }
+  const calls = [];
+  const ctx = {
+    PropertiesService: { getScriptProperties: () => ({ getProperty: () => null }) },
+    CalendarApp: { getDefaultCalendar: () => ({
+      getName: () => 'takezawa', getId: () => 'takezawa@example.com',
+      createEvent: (t, s, e, o) => {
+        calls.push(t);
+        return { getId: () => 'id@google.com', getTitle: () => t, getStartTime: () => s, getEndTime: () => e, setTag: () => {} };
+      }
+    }) },
+    ContentService: { createTextOutput: (s) => ({ setMimeType: () => s }), MimeType: { JSON: 'json' } },
+    Utilities: { base64EncodeWebSafe: (s) => Buffer.from(s).toString('base64url') },
+    Logger: { log: () => {} }
+  };
+  vm.createContext(ctx);
+  vm.runInContext(bundle, ctx);
+  const res = JSON.parse(ctx.doPost({ postData: { contents: JSON.stringify({ text: '明日15時から会議' }) } }));
+  assert.equal(res.ok, true);
+  assert.deepEqual(calls, ['会議']);
+  assert.equal(typeof ctx.syncWithGenesis, 'function');
+});
