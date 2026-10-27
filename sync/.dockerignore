@@ -1,0 +1,7 @@
+node_modules
+test
+dev
+state.json
+*.json.tmp
+.env
+service-account*.json

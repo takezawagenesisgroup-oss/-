@@ -38,6 +38,8 @@ function syncToGenesis() {
   try {
     var calendarId = props.getProperty('CALENDAR_ID') || 'primary';
     var syncToken = props.getProperty(GENESIS_SYNC_TOKEN_KEY);
+    var userEmail = Session.getEffectiveUser().getEmail();
+    var fullSync = !syncToken;
     var options = { maxResults: 250, showDeleted: true, singleEvents: true };
     if (syncToken) {
       options.syncToken = syncToken;
@@ -59,16 +61,24 @@ function syncToGenesis() {
         }
         throw err;
       }
-      (response.items || []).forEach(function (item) { changes.push(toGenesisEvent_(item, calendarId)); });
+      (response.items || []).forEach(function (item) { changes.push(toGenesisEvent_(item, userEmail)); });
       options.pageToken = response.nextPageToken;
     } while (options.pageToken);
 
-    if (changes.length) {
+    if (changes.length || fullSync) {
       var res = UrlFetchApp.fetch(endpoint, {
         method: 'post',
         contentType: 'application/json',
         headers: { Authorization: 'Bearer ' + (props.getProperty('GENESIS_TOKEN') || '') },
-        payload: JSON.stringify({ source: 'google-calendar', events: changes }),
+        // 形式は sync/（全社員版）と同じ。docs/genesis-integration.md を参照
+        payload: JSON.stringify({
+          source: 'google-calendar',
+          userEmail: userEmail,
+          fullSync: fullSync,
+          timeMin: fullSync ? options.timeMin : null,
+          batch: { index: 0, total: 1 },
+          events: changes
+        }),
         muteHttpExceptions: true
       });
       if (res.getResponseCode() >= 300) {
@@ -82,20 +92,38 @@ function syncToGenesis() {
   }
 }
 
-/** Google カレンダーの予定をジェネシスワークシステムに送る形式へ変換する */
-function toGenesisEvent_(item, calendarId) {
-  var allDay = !!(item.start && item.start.date);
-  return {
-    googleEventId: item.id,          // ジェネシス側ではこれをキーに登録・更新・削除する
-    googleCalendarId: calendarId,
-    status: item.status === 'cancelled' ? 'deleted' : 'active',
-    title: item.summary || '',
-    location: item.location || '',
-    description: item.description || '',
-    allDay: allDay,
-    start: item.start ? (item.start.dateTime || item.start.date) : null,
-    end: item.end ? (item.end.dateTime || item.end.date) : null,  // 終日の場合は翌日（排他的）
-    updated: item.updated || null,
-    htmlLink: item.htmlLink || ''
+/**
+ * Google カレンダーの予定をジェネシスワークシステムに送る形式へ変換する
+ * （sync/src/transform.js と同じ内容）
+ */
+function toGenesisEvent_(item, userEmail) {
+  var base = {
+    userEmail: userEmail,
+    googleEventId: item.id,          // userEmail + googleEventId をキーに登録・更新・削除する
+    googleCalendarId: 'primary',
+    status: item.status === 'cancelled' ? 'deleted' : 'active'
   };
+  if (base.status === 'deleted') return base;
+
+  var isPrivate = item.visibility === 'private' || item.visibility === 'confidential';
+  var self = (item.attendees || []).filter(function (a) { return a.self; })[0];
+  var ext = item.extendedProperties && item.extendedProperties.private;
+  base.title = isPrivate ? '予定あり' : (item.summary || '(タイトルなし)');
+  base.location = isPrivate ? '' : (item.location || '');
+  base.description = isPrivate ? '' : (item.description || '');
+  base.private = isPrivate;
+  base.allDay = !!(item.start && item.start.date);
+  base.start = item.start ? (item.start.dateTime || item.start.date) : null;
+  base.end = item.end ? (item.end.dateTime || item.end.date) : null;  // 終日の場合は翌日（排他的）
+  base.timeZone = (item.start && item.start.timeZone) || null;
+  base.iCalUID = item.iCalUID || null;
+  base.recurringEventId = item.recurringEventId || null;
+  base.organizerEmail = (item.organizer && item.organizer.email) || null;
+  base.myResponseStatus = self ? self.responseStatus : null;
+  base.attendees = isPrivate ? [] : (item.attendees || []).map(function (a) { return { email: a.email, responseStatus: a.responseStatus }; });
+  base.busy = item.transparency !== 'transparent';
+  base.source = (ext && ext.source) || null;
+  base.updated = item.updated || null;
+  base.htmlLink = isPrivate ? '' : (item.htmlLink || '');
+  return base;
 }
