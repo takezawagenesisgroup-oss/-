@@ -124,14 +124,14 @@ iPhone なら「Hey Siri、予定登録」でも使えます。
 
 アプリを開かず「Hey Siri、予定登録」→ 話すだけで登録できます。作り方は [docs/iphone-shortcut.md](docs/iphone-shortcut.md)。
 
-## ジェネシスワークシステムとの連携
+## ジェネシスワークシステムとの連携（双方向）
 
-**竹澤さんがスマホの Google カレンダーで入力・変更・削除した予定が、ジェネシスワークシステムのスケジュールに自動で反映** されます。
-PC で入力した予定や、音声スケジュールで登録した予定も同じです。
+竹澤さんの **Google カレンダー** と **ジェネシスワークシステム**（https://genesis-app-genesis.web.app ）のスケジュールを自動で同じ内容に保ちます。
 
-- Apps Script（`gas/GenesisSync.js`）が、カレンダーが変わるたびに差分だけをジェネシスワークシステムへ送ります（念のため 10 分ごとにも確認）。
-- 「非公開」の予定は「予定あり」とだけ送ります。
-- 設定手順と、ジェネシスワークシステム側で用意する受け口（API）の仕様：[docs/genesis-integration.md](docs/genesis-integration.md)
+- スマホ・PC の Google カレンダーで入力・変更・削除 → **すぐに** ジェネシスワークシステムへ反映
+- ジェネシスワークシステムで入力・変更・削除 → **5 分以内に** Google カレンダー（スマホ）へ反映
+- 音声スケジュールで登録した予定も同じように反映されます。「非公開」の予定は「予定あり」とだけ送ります。
+- 同期は Apps Script（`gas/GenesisSync.js`）が行います。設定手順と、ジェネシスワークシステム側で用意する API の仕様：[docs/genesis-integration.md](docs/genesis-integration.md)
 - 将来、社員全員分に広げる場合は `sync/`（[docs/workspace-sync-setup.md](docs/workspace-sync-setup.md)）を使います。
 
 ## 開発者向け
