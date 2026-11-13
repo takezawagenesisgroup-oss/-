@@ -1,0 +1,241 @@
+<title>マイジャグⅥ 導入比較</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: summary row → corporate ranking with bars → filterable store list */
+:root{--bg:#f6f7f9;--surface:#fff;--fg:#1b2230;--muted:#5f6b7d;--line:#dde2ea;--accent:#c4122f;--accent-soft:#fbe7ea;--bar:#9aa6b8;
+--f-head:"Zen Kaku Gothic New","Hiragino Sans",sans-serif;--f-body:"Noto Sans JP","Hiragino Sans",sans-serif;--f-num:"Roboto Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161d;--surface:#1a2029;--fg:#e8ecf2;--muted:#9aa5b5;--line:#2c3440;--accent:#ff5a72;--accent-soft:#3a1d24;--bar:#5c687a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12161d;--surface:#1a2029;--fg:#e8ecf2;--muted:#9aa5b5;--line:#2c3440;--accent:#ff5a72;--accent-soft:#3a1d24;--bar:#5c687a;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);line-height:1.6}
+.wrap{max-width:1040px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:32px}
+h1{font-family:var(--f-head);font-size:1.6rem;margin:0;text-wrap:balance}
+h2{font-family:var(--f-head);font-size:1.15rem;margin:0 0 4px}
+.sub{color:var(--muted);font-size:.85rem;margin:4px 0 0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:grid;gap:6px}
+.tile .lab{font-size:.78rem;color:var(--muted);letter-spacing:.04em}
+.tile .cmp{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.tile .g{font-size:1.7rem;font-weight:700;color:var(--accent)}
+.tile .o{color:var(--muted);font-size:.95rem}
+.tile .d{font-size:.85rem;font-weight:600}
+.scroll{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:640px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-size:.75rem;color:var(--muted);font-weight:600;background:var(--surface);position:sticky;top:0}
+th.sort{cursor:pointer;user-select:none}th.sort:hover{color:var(--fg)}
+td.name,th.name{text-align:left}
+td{font-family:var(--f-num);font-variant-numeric:tabular-nums}td.name{font-family:var(--f-body)}
+tr.gen td{background:var(--accent-soft);font-weight:700}
+tr.avg td{color:var(--muted);font-style:italic}
+.barcell{width:180px}
+.bar{height:10px;border-radius:2px;background:var(--bar)}
+tr.gen .bar{background:var(--accent)}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+select,input{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+select:focus-visible,input:focus-visible,th.sort:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note{font-size:.78rem;color:var(--muted)}
+.na{color:var(--muted)}
+</style>
+
+<div class="wrap">
+<header>
+<h1>北海道 マイジャグラーⅥ 導入比較</h1>
+<p class="sub">ジェネシス（自社3店）と他社9法人の比較。出典：Enterprise日報（入替前＝2026/9/30、現在＝2026/11/12）、全レート合計</p>
+</header>
+
+<section class="tiles" id="tiles"></section>
+
+<section>
+<h2>法人別ランキング</h2>
+<p class="sub">ジャグラー総台数に占めるⅥの割合が高い順</p>
+<div class="scroll" style="margin-top:10px"><table id="corp"></table></div>
+</section>
+
+<section>
+<h2>店舗別一覧</h2>
+<div class="controls">
+<label for="fcorp">法人</label><select id="fcorp"></select>
+<input id="q" type="search" placeholder="店名で絞り込み">
+<span class="note" id="cnt"></span>
+</div>
+<div class="scroll"><table id="store"></table></div>
+<p class="note">列見出しをクリックすると並べ替えます。※の店はEnterpriseに機種別台数が無いため「－」表示。閉店のライジング西帯広・音更、ひまわり柏林台、太陽柏林台は対象外。Ⅵ÷入替前Ⅴが100%を超える店は、入替前Ⅴより多い台数のⅥを入れた店です。</p>
+</div>
+</div>
+
+<script>
+// [法人, 店名, 入替前Ⅴ, Ⅵ, 現Ⅴ, ジャグ計]  null = データなし
+const S=`ジェネシス|エルシティ|37|24|13|142
+ジェネシス|オペラ|32|21|11|53
+ジェネシス|ゴッサムシティ|61|33|28|102
+マルハン|マルハン旭川永山店|38|16|24|178
+マルハン|マルハン岩見沢店 ※||||
+マルハン|マルハン琴似店|54|28|18|141
+マルハン|マルハン釧路店|26|16|10|128
+マルハン|マルハン恵庭店|16|16|0|86
+マルハン|マルハン月寒店|39|52|0|121
+マルハン|マルハン江別店|34|24|10|140
+マルハン|マルハン札幌北店|82|30|52|215
+マルハン|マルハン室蘭店|24|24|0|129
+マルハン|マルハン新砂川店|32|20|12|98
+マルハン|マルハン千歳店|40|30|10|158
+マルハン|マルハン帯広店|13|13|0|86
+マルハン|マルハン滝川店|35|16|19|99
+マルハン|マルハン端野店|0|0|0|50
+マルハン|マルハン中標津店|8|12|0|82
+マルハン|マルハン苫小牧駅前店|76|26|50|196
+マルハン|マルハン柏林台店|40|16|24|157
+マルハン|マルハン白石店|1|0|1|74
+マルハン|マルハン函館港店|30|20|10|150
+マルハン|マルハン函館大門店|0|3|0|76
+マルハン|マルハン美しが丘店|36|18|18|188
+マルハン|マルハン苗穂店|38|20|18|136
+マルハン|マルハン北見店|34|21|8|123
+マルハン|マルハン網走店|12|0|12|64
+マルハン|マルハン木場店|12|0|12|110
+マルハン|マルハン紋別店|20|0|10|73
+イーグル|イーグル スクエア帯広店|0|0|0|30
+イーグル|イーグル９旭川店|0|0|0|25
+イーグル|イーグルＲ－１南８条店|40|20|20|140
+イーグル|イーグルウイング伏古店|19|10|9|72
+イーグル|イーグルウェーブ厚別店|5|0|5|47
+イーグル|イーグルウエスト西町店|0|0|0|34
+イーグル|イーグルオー小樽店|6|6|0|50
+イーグル|イーグルゴー北郷店|10|10|0|61
+イーグル|イーグルピュアシティ東札幌店|16|16|0|52
+イーグル|イーグルプレイス北４１条店|20|20|0|78
+イーグル|クラブイーグル千歳店|19|0|19|70
+イーグル|クラブイーグル麻生店|22|0|22|85
+イーグル|プラスイーグル釧路星が浦店|28|12|16|87
+ライジング|ライジング琴似|26|16|4|78
+ライジング|ライジング元町|28|22|6|95
+ライジング|ライジング江別|15|10|5|58
+ライジング|ライジング帯広|30|22|8|80
+ライジング|ライジング苗穂|17|12|5|64
+太陽|太陽 デュオ店|15|15|0|44
+太陽|太陽 岩見沢店|14|0|14|40
+太陽|太陽 釧路星が浦店 ※||||
+太陽|太陽 山下通店|10|5|5|38
+太陽|太陽 室蘭店|0|0|0|41
+太陽|太陽 新琴似店|10|5|5|36
+太陽|太陽 青葉店|6|0|6|40
+太陽|太陽 帯広店|10|5|5|40
+太陽|太陽 中標津店|13|10|3|38
+太陽|太陽 藤野店|8|4|4|40
+太陽|太陽 南６条店|8|0|8|36
+太陽|太陽 苗穂本町店|24|24|0|72
+太陽|太陽 富良野店|16|10|6|40
+太陽|太陽 平岸店|22|16|6|44
+太陽|太陽 北２４条店|12|7|5|39
+ハッピー|ハッピー栄町店|14|6|6|66
+ハッピー|ハッピー厚別通店|14|0|14|77
+ハッピー|ハッピー厚別店|14|0|14|64
+ハッピー|ハッピー三光店|16|6|8|86
+ハッピー|ハッピー手稲前田店|18|18|10|90
+ハッピー|ハッピー小樽駅前店|0|0|0|38
+ハッピー|ハッピー西宮の沢店|16|0|14|77
+ハッピー|ハッピー西町店|18|0||85
+ハッピー|ハッピー千歳駅前店|34|20|12|136
+ハッピー|ハッピー藻岩店|18|8|10|85
+ハッピー|ハッピー築港店|6|0|6|109
+ハッピー|ハッピー東苗穂店|22|10|12|104
+ハッピー|ハッピー屯田四条店|18|12|6|84
+ハッピー|ハッピー南６条店|36|36|0|163
+ハッピー|ハッピー二十四軒店|18|18|0|80
+ハッピー|ハッピー白石店|20|14|6|94
+ハッピー|ハッピー八軒店|16|0|14|77
+ハッピー|ハッピー本通店|16|8|8|92
+ハッピー|ハッピー麻生店|36|36|0|110
+ベガスベガス|ベガス旭川店|10|6|4|91
+ベガスベガス|ベガス栄町店|8|2|6|52
+ベガスベガス|ベガス釧路店|38|22|16|137
+ベガスベガス|ベガス札幌店|4|2|2|72
+ベガスベガス|ベガス帯広北店|20|10|10|106
+ベガスベガス|ベガス大谷地店|39|0||148
+ベガスベガス|ベガス狸小路店|72|37|35|182
+ベガスベガス|ベガス狸小路二丁目店|6|2|4|79
+ベガスベガス|ベガス苫小牧店|72|38|34|174
+ベガスベガス|ベガス函館吉川店|15|8|7|111
+ベガスベガス|ベガス函館空港前店|17|9|8|76
+ベガスベガス|ベガス函館五稜郭店|29|17|12|127
+ベガスベガス|ベガス函館港店|9|5|4|74
+ベガスベガス|ベガス函館新港店|11|6|5|70
+ベガスベガス|ベガス函館神山店|2|1|1|34
+ベガスベガス|ベガス函館本店|55|30|25|181
+ベガスベガス|ベガス発寒店|60|27|33|152
+ベガスベガス|ベガス美しが丘店|4|2|2|45
+ロイヤル|ロイヤル栗山店 ※||||
+ロイヤル|ロイヤル帯広店|0|10|0|64
+ロイヤル|ロイヤル苫小牧店|0|0|0|30
+ロイヤル|ロイヤル北見店|0|10|0|80
+ロイヤル|ロイヤル網走店|0|0|0|60
+ひまわり|ひまわりＳ室蘭店|0|0|0|40
+ひまわり|ひまわりタウン|0|0|0|46
+ひまわり|ひまわりファイターズ通り店|5|0|5|41
+ひまわり|ひまわり伊達店|16|0|16|64
+ひまわり|ひまわり音更店|8|0|8|47
+ひまわり|ひまわり釧路店|44|20|24|88
+ひまわり|ひまわり根室店|5|0|5|43
+ひまわり|ひまわり札幌駅前タワー店|50|50|0|176
+ひまわり|ひまわり士別店|10|0|10|41
+ひまわり|ひまわり室蘭店|28|10|18|80
+ひまわり|ひまわり篠路店|18|9|9|76
+ひまわり|ひまわり新琴似店|22|11|11|95
+ひまわり|ひまわり真駒内店|24|8|16|71
+ひまわり|ひまわり清田店|28|12|16|104
+ひまわり|ひまわり帯広店|16|8|8|66
+ひまわり|ひまわり滝川店|5|0|5|49
+ひまわり|ひまわり知床店|6|0|6|32
+ひまわり|ひまわり中標津店|5|0|5|40
+ひまわり|ひまわり弟子屈店|0|0|0|32
+ひまわり|ひまわり苫小牧店|36|18|18|108
+ひまわり|ひまわり日乃出店|8|0|8|62
+ひまわり|ひまわり函館店|9|0|9|68
+ひまわり|ひまわり美幌店|4|0|4|44
+ひまわり|ひまわり豊平店|32|16|16|80
+ひまわり|ひまわり北見店|36|18|18|90
+ひまわり|ひまわり紋別店|6|0|6|51
+ひまわり|ひまわり留萌店|6|0|6|43
+がちゃぽん|がちゃぽん札幌新川店|20|9|11|96
+がちゃぽん|がちゃぽん帯広店|17|9|8|96
+がちゃぽん|がちゃぽん苫小牧店|18|9|9|100`;
+const num=v=>v===''?null:+v;
+const stores=S.split('\n').map(l=>{const[c,n,a,b,d,e]=l.split('|');return{c,n,v5:num(a),v6:num(b),now:num(d),jug:num(e)}});
+const pct=(a,b)=>a==null||b==null||b===0?null:a/b;
+const fp=v=>v==null?'<span class="na">－</span>':Math.round(v*100)+'%';
+const fn=v=>v==null?'<span class="na">－</span>':v.toLocaleString();
+const f1=v=>v.toFixed(1);
+// 法人集計
+const corps=[...new Set(stores.map(s=>s.c))].map(c=>{const ss=stores.filter(s=>s.c===c);const d=ss.filter(s=>s.jug!=null);
+const sum=k=>d.reduce((t,s)=>t+(s[k]||0),0);return{c,n:ss.length,nd:d.length,v5:sum('v5'),v6:sum('v6'),jug:sum('jug')}});
+corps.forEach(o=>{o.r6=o.v6/o.jug;o.r5=o.v5?o.v6/o.v5:null;o.per=o.v6/o.nd});
+const gen=corps.find(o=>o.c==='ジェネシス');
+const oth=corps.filter(o=>o!==gen).reduce((t,o)=>({n:t.n+o.n,nd:t.nd+o.nd,v5:t.v5+o.v5,v6:t.v6+o.v6,jug:t.jug+o.jug}),{n:0,nd:0,v5:0,v6:0,jug:0});
+oth.r6=oth.v6/oth.jug;oth.r5=oth.v6/oth.v5;oth.per=oth.v6/oth.nd;oth.c='他社9法人 合計';
+// タイル
+const T=[['1店あたりのⅥ台数',f1(gen.per)+'台',f1(oth.per)+'台',`約${(gen.per/oth.per).toFixed(1)}倍（+${f1(gen.per-oth.per)}台）`],
+['Ⅵ ÷ ジャグラー総台数',fp(gen.r6),(oth.r6*100).toFixed(1)+'%',`約${(gen.r6/oth.r6).toFixed(1)}倍（+${((gen.r6-oth.r6)*100).toFixed(1)}pt）`],
+['Ⅵ ÷ 入替前Ⅴ台数',fp(gen.r5),(oth.r5*100).toFixed(1)+'%',`+${((gen.r5-oth.r5)*100).toFixed(1)}pt`],
+['他社と同じ比率だった場合',gen.v6+'台',`他社比率なら ${Math.round(gen.jug*oth.r6)}台`,`+${gen.v6-Math.round(gen.jug*oth.r6)}台 多い`]];
+document.getElementById('tiles').innerHTML=T.map(([l,g,o,d])=>`<div class="tile"><div class="lab">${l}</div><div class="cmp"><span class="g">${g}</span><span class="o">${o.startsWith('他社')?o:'他社 '+o}</span></div><div class="d">${d}</div></div>`).join('');
+// 法人表
+const max=Math.max(...corps.map(o=>o.r6));
+const rows=[...corps].sort((a,b)=>b.r6-a.r6);
+let rk=0,prev=null;rows.forEach((o,i)=>{const r=Math.round(o.r6*100);if(r!==prev){rk=i+1;prev=r}o.rank=rk});
+document.getElementById('corp').innerHTML=`<thead><tr><th>順位</th><th class="name">法人</th><th>店舗数</th><th>入替前Ⅴ</th><th>Ⅵ台数</th><th>ジャグ計</th><th>1店あたりⅥ</th><th>Ⅵ÷入替前Ⅴ</th><th>Ⅵ÷ジャグ計</th><th class="name barcell"></th></tr></thead><tbody>`+
+rows.map(o=>`<tr class="${o===gen?'gen':''}"><td>${o.rank}</td><td class="name">${o.c}</td><td>${o.n}</td><td>${fn(o.v5)}</td><td>${fn(o.v6)}</td><td>${fn(o.jug)}</td><td>${f1(o.per)}</td><td>${fp(o.r5)}</td><td>${fp(o.r6)}</td><td class="barcell"><div class="bar" style="width:${o.r6/max*100}%"></div></td></tr>`).join('')+
+`<tr class="avg"><td></td><td class="name">${oth.c}</td><td>${oth.n}</td><td>${fn(oth.v5)}</td><td>${fn(oth.v6)}</td><td>${fn(oth.jug)}</td><td>${f1(oth.per)}</td><td>${(oth.r5*100).toFixed(1)}%</td><td>${(oth.r6*100).toFixed(1)}%</td><td class="barcell"><div class="bar" style="width:${oth.r6/max*100}%;opacity:.5"></div></td></tr></tbody>`;
+// 店舗表
+stores.forEach(s=>{s.r5=pct(s.v6,s.v5);s.r6=pct(s.v6,s.jug)});
+const sel=document.getElementById('fcorp');sel.innerHTML='<option value="">すべて</option>'+corps.map(o=>`<option>${o.c}</option>`).join('');
+const cols=[['c','法人',1],['n','店舗',1],['v5','入替前Ⅴ'],['v6','Ⅵ'],['now','現Ⅴ'],['jug','ジャグ計'],['r5','Ⅵ÷入替前Ⅴ'],['r6','Ⅵ÷ジャグ計']];
+let sk='r6',sd=-1;
+function draw(){const f=sel.value,q=document.getElementById('q').value.trim();
+let list=stores.filter(s=>(!f||s.c===f)&&(!q||s.n.includes(q)));
+list.sort((a,b)=>{const x=a[sk],y=b[sk];if(x==null)return 1;if(y==null)return -1;return(typeof x==='string'?x.localeCompare(y,'ja'):x-y)*sd});
+document.getElementById('cnt').textContent=list.length+'店';
+document.getElementById('store').innerHTML='<thead><tr><th>#</th>'+cols.map(([k,l,t])=>`<th class="sort${t?' name':''}" tabindex="0" data-k="${k}">${l}${k===sk?(sd<0?' ▼':' ▲'):''}</th>`).join('')+'</tr></thead><tbody>'+
+list.map((s,i)=>`<tr class="${s.c==='ジェネシス'?'gen':''}"><td>${i+1}</td><td class="name">${s.c}</td><td class="name">${s.n}</td><td>${fn(s.v5)}</td><td>${fn(s.v6)}</td><td>${fn(s.now)}</td><td>${fn(s.jug)}</td><td>${fp(s.r5)}</td><td>${fp(s.r6)}</td></tr>`).join('')+'</tbody>';
+document.querySelectorAll('#store th.sort').forEach(th=>{const go=()=>{const k=th.dataset.k;if(k===sk)sd=-sd;else{sk=k;sd=(k==='c'||k==='n')?1:-1}draw()};th.onclick=go;th.onkeydown=e=>{if(e.key==='Enter')go()}})}
+sel.onchange=draw;document.getElementById('q').oninput=draw;draw();
+</script>
