@@ -33,6 +33,15 @@ tr.gen .bar{background:var(--accent)}
 .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
 select,input{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
 select:focus-visible,input:focus-visible,th.sort:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs button{font:inherit;font-family:var(--f-head);font-weight:700;padding:10px 18px;border:0;background:none;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.tabs button:focus-visible{outline:2px solid var(--accent)}
+.grank{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:10px 0 16px}
+.grank .tile b{font-family:var(--f-head);font-size:1rem}
+.grank dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:.85rem}
+.grank dt{color:var(--muted)}.grank dd{margin:0;text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.grank dd strong{color:var(--accent)}
 .note{font-size:.78rem;color:var(--muted)}
 .na{color:var(--muted)}
 </style>
@@ -45,21 +54,26 @@ select:focus-visible,input:focus-visible,th.sort:focus-visible{outline:2px solid
 
 <section class="tiles" id="tiles"></section>
 
-<section>
+<div>
+<nav class="tabs" role="tablist"><button role="tab" id="t-corp" data-v="corp">法人別</button><button role="tab" id="t-store" data-v="store">店舗別</button></nav>
+<section id="v-corp">
 <h2>法人別ランキング</h2>
 <p class="sub">ジャグラー総台数に占めるⅥの割合が高い順</p>
 <div class="scroll" style="margin-top:10px"><table id="corp"></table></div>
 </section>
 
-<section>
-<h2>店舗別一覧</h2>
+<section id="v-store" hidden>
+<h2>店舗別ランキング</h2>
+<p class="sub">ジェネシス3店の道内順位（機種別台数がある131店中。Ⅵ÷入替前Ⅴは入替前Ⅴがある117店中）</p>
+<div class="grank" id="grank"></div>
 <div class="controls">
 <label for="fcorp">法人</label><select id="fcorp"></select>
 <input id="q" type="search" placeholder="店名で絞り込み">
 <span class="note" id="cnt"></span>
 </div>
 <div class="scroll"><table id="store"></table></div>
-<p class="note">列見出しをクリックすると並べ替えます。※の店はEnterpriseに機種別台数が無いため「－」表示。閉店のライジング西帯広・音更、ひまわり柏林台、太陽柏林台は対象外。Ⅵ÷入替前Ⅴが100%を超える店は、入替前Ⅴより多い台数のⅥを入れた店です。</p>
+<p class="note">列見出しをクリックすると並べ替えます。※の店はEnterpriseに機種別台数が無いため「－」表示。閉店のライジング西帯広・音更、ひまわり柏林台、太陽柏林台は対象外。Ⅵ÷入替前Ⅴが100%を超える店は、入替前Ⅴより多い台数のⅥを入れた店です。順位は並べ替えている列の値で付けています（同値は同順位）。</p>
+</section>
 </div>
 </div>
 
@@ -234,8 +248,17 @@ function draw(){const f=sel.value,q=document.getElementById('q').value.trim();
 let list=stores.filter(s=>(!f||s.c===f)&&(!q||s.n.includes(q)));
 list.sort((a,b)=>{const x=a[sk],y=b[sk];if(x==null)return 1;if(y==null)return -1;return(typeof x==='string'?x.localeCompare(y,'ja'):x-y)*sd});
 document.getElementById('cnt').textContent=list.length+'店';
-document.getElementById('store').innerHTML='<thead><tr><th>#</th>'+cols.map(([k,l,t])=>`<th class="sort${t?' name':''}" tabindex="0" data-k="${k}">${l}${k===sk?(sd<0?' ▼':' ▲'):''}</th>`).join('')+'</tr></thead><tbody>'+
-list.map((s,i)=>`<tr class="${s.c==='ジェネシス'?'gen':''}"><td>${i+1}</td><td class="name">${s.c}</td><td class="name">${s.n}</td><td>${fn(s.v5)}</td><td>${fn(s.v6)}</td><td>${fn(s.now)}</td><td>${fn(s.jug)}</td><td>${fp(s.r5)}</td><td>${fp(s.r6)}</td></tr>`).join('')+'</tbody>';
+const num=typeof stores[0][sk]!=='string';const pool=stores.filter(s=>s[sk]!=null);
+const rankOf=s=>!num||s[sk]==null?'<span class="na">－</span>':1+pool.filter(x=>(s[sk]-x[sk])*sd>0).length;
+document.getElementById('store').innerHTML='<thead><tr><th>順位</th>'+cols.map(([k,l,t])=>`<th class="sort${t?' name':''}" tabindex="0" data-k="${k}">${l}${k===sk?(sd<0?' ▼':' ▲'):''}</th>`).join('')+'</tr></thead><tbody>'+
+list.map((s,i)=>`<tr class="${s.c==='ジェネシス'?'gen':''}"><td>${rankOf(s)}</td><td class="name">${s.c}</td><td class="name">${s.n}</td><td>${fn(s.v5)}</td><td>${fn(s.v6)}</td><td>${fn(s.now)}</td><td>${fn(s.jug)}</td><td>${fp(s.r5)}</td><td>${fp(s.r6)}</td></tr>`).join('')+'</tbody>';
 document.querySelectorAll('#store th.sort').forEach(th=>{const go=()=>{const k=th.dataset.k;if(k===sk)sd=-sd;else{sk=k;sd=(k==='c'||k==='n')?1:-1}draw()};th.onclick=go;th.onkeydown=e=>{if(e.key==='Enter')go()}})}
+// ジェネシス店舗の順位
+const gRank=(s,k)=>{const p=stores.filter(x=>x[k]!=null);return s[k]==null?'－':`<strong>${1+p.filter(x=>x[k]>s[k]).length}位</strong> / ${p.length}`};
+document.getElementById('grank').innerHTML=stores.filter(s=>s.c==='ジェネシス').map(s=>`<div class="tile"><b>${s.n}</b><dl><dt>Ⅵ÷ジャグ計 ${fp(s.r6)}</dt><dd>${gRank(s,'r6')}</dd><dt>Ⅵ台数 ${s.v6}台</dt><dd>${gRank(s,'v6')}</dd><dt>Ⅵ÷入替前Ⅴ ${fp(s.r5)}</dt><dd>${gRank(s,'r5')}</dd></dl></div>`).join('');
+// タブ
+function view(){const v=location.hash==='#store'?'store':'corp';['corp','store'].forEach(k=>{document.getElementById('v-'+k).hidden=k!==v;document.getElementById('t-'+k).setAttribute('aria-selected',k===v)})}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{location.hash=b.dataset.v;view()});
+addEventListener('hashchange',view);view();
 sel.onchange=draw;document.getElementById('q').oninput=draw;draw();
 </script>
