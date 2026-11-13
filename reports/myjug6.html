@@ -11,7 +11,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f-body);line-height:
 h1{font-family:var(--f-head);font-size:1.6rem;margin:0;text-wrap:balance}
 h2{font-family:var(--f-head);font-size:1.15rem;margin:0 0 4px}
 .sub{color:var(--muted);font-size:.85rem;margin:4px 0 0}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .tile{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:grid;gap:6px}
 .tile .lab{font-size:.78rem;color:var(--muted);letter-spacing:.04em}
 .tile .cmp{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-family:var(--f-num);font-variant-numeric:tabular-nums}
@@ -58,7 +58,7 @@ select:focus-visible,input:focus-visible,th.sort:focus-visible{outline:2px solid
 <nav class="tabs" role="tablist"><button role="tab" id="t-corp" data-v="corp">法人別</button><button role="tab" id="t-store" data-v="store">店舗別</button></nav>
 <section id="v-corp">
 <h2>法人別ランキング</h2>
-<p class="sub">ジャグラー総台数に占めるⅥの割合が高い順</p>
+<p class="sub">ジャグラー総台数に占めるⅥの割合が高い順。Ⅴ撤去＝入替前Ⅴ（9/30）－現Ⅴ（11/12）、撤去率＝Ⅴ撤去÷入替前Ⅴ、Ⅵ÷撤去＝撤去1台あたりのⅥ導入台数</p>
 <div class="scroll" style="margin-top:10px"><table id="corp"></table></div>
 </section>
 
@@ -72,7 +72,7 @@ select:focus-visible,input:focus-visible,th.sort:focus-visible{outline:2px solid
 <span class="note" id="cnt"></span>
 </div>
 <div class="scroll"><table id="store"></table></div>
-<p class="note">列見出しをクリックすると並べ替えます。※の店はEnterpriseに機種別台数が無いため「－」表示。閉店のライジング西帯広・音更、ひまわり柏林台、太陽柏林台は対象外。Ⅵ÷入替前Ⅴが100%を超える店は、入替前Ⅴより多い台数のⅥを入れた店です。順位は並べ替えている列の値で付けています（同値は同順位）。</p>
+<p class="note">列見出しをクリックすると並べ替えます。※の店はEnterpriseに機種別台数が無いため「－」表示。閉店のライジング西帯広・音更、ひまわり柏林台、太陽柏林台は対象外。Ⅵ÷入替前Ⅴが100%を超える店は、入替前Ⅴより多い台数のⅥを入れた店です。ハッピー西町店・ベガス大谷地店は現Ⅴの台数が無いため撤去台数は「－」（法人合計からも除外）。Ⅵ÷撤去が100%を超える店は撤去台数より多くⅥを入れた店です。順位は並べ替えている列の値で付けています（同値は同順位）。</p>
 </section>
 </div>
 </div>
@@ -219,16 +219,21 @@ const pct=(a,b)=>a==null||b==null||b===0?null:a/b;
 const fp=v=>v==null?'<span class="na">－</span>':Math.round(v*100)+'%';
 const fn=v=>v==null?'<span class="na">－</span>':v.toLocaleString();
 const f1=v=>v.toFixed(1);
+// 店舗の撤去・比率
+stores.forEach(s=>{s.rm=s.v5==null||s.now==null?null:s.v5-s.now;s.rr=pct(s.rm,s.v5);s.r6rm=s.rm?s.v6/s.rm:null;s.r5=pct(s.v6,s.v5);s.r6=pct(s.v6,s.jug)});
 // 法人集計
+const rmAgg=d=>{const k=d.filter(s=>s.rm!=null);return{rm:k.reduce((t,s)=>t+s.rm,0),rmV5:k.reduce((t,s)=>t+s.v5,0),rmV6:k.reduce((t,s)=>t+s.v6,0)}};
+const fx=(a,b)=>b?a/b:null;
 const corps=[...new Set(stores.map(s=>s.c))].map(c=>{const ss=stores.filter(s=>s.c===c);const d=ss.filter(s=>s.jug!=null);
-const sum=k=>d.reduce((t,s)=>t+(s[k]||0),0);return{c,n:ss.length,nd:d.length,v5:sum('v5'),v6:sum('v6'),jug:sum('jug')}});
-corps.forEach(o=>{o.r6=o.v6/o.jug;o.r5=o.v5?o.v6/o.v5:null;o.per=o.v6/o.nd});
+const sum=k=>d.reduce((t,s)=>t+(s[k]||0),0);return{c,n:ss.length,nd:d.length,v5:sum('v5'),v6:sum('v6'),jug:sum('jug'),...rmAgg(d)}});
+corps.forEach(o=>{o.r6=o.v6/o.jug;o.r5=o.v5?o.v6/o.v5:null;o.per=o.v6/o.nd;o.rr=fx(o.rm,o.rmV5);o.r6rm=fx(o.rmV6,o.rm)});
 const gen=corps.find(o=>o.c==='ジェネシス');
-const oth=corps.filter(o=>o!==gen).reduce((t,o)=>({n:t.n+o.n,nd:t.nd+o.nd,v5:t.v5+o.v5,v6:t.v6+o.v6,jug:t.jug+o.jug}),{n:0,nd:0,v5:0,v6:0,jug:0});
-oth.r6=oth.v6/oth.jug;oth.r5=oth.v6/oth.v5;oth.per=oth.v6/oth.nd;oth.c='他社9法人 合計';
+const oth=corps.filter(o=>o!==gen).reduce((t,o)=>({n:t.n+o.n,nd:t.nd+o.nd,v5:t.v5+o.v5,v6:t.v6+o.v6,jug:t.jug+o.jug,rm:t.rm+o.rm,rmV5:t.rmV5+o.rmV5,rmV6:t.rmV6+o.rmV6}),{n:0,nd:0,v5:0,v6:0,jug:0,rm:0,rmV5:0,rmV6:0});
+oth.r6=oth.v6/oth.jug;oth.r5=oth.v6/oth.v5;oth.per=oth.v6/oth.nd;oth.rr=oth.rm/oth.rmV5;oth.r6rm=oth.rmV6/oth.rm;oth.c='他社9法人 合計';
 // タイル
 const T=[['1店あたりのⅥ台数',f1(gen.per)+'台',f1(oth.per)+'台',`約${(gen.per/oth.per).toFixed(1)}倍（+${f1(gen.per-oth.per)}台）`],
 ['Ⅵ ÷ ジャグラー総台数',fp(gen.r6),(oth.r6*100).toFixed(1)+'%',`約${(gen.r6/oth.r6).toFixed(1)}倍（+${((gen.r6-oth.r6)*100).toFixed(1)}pt）`],
+['Ⅴ撤去率（撤去÷入替前Ⅴ）',fp(gen.rr),(oth.rr*100).toFixed(1)+'%',`+${((gen.rr-oth.rr)*100).toFixed(1)}pt（ジェネシス撤去${gen.rm}台→Ⅵ${gen.v6}台）`],
 ['Ⅵ ÷ 入替前Ⅴ台数',fp(gen.r5),(oth.r5*100).toFixed(1)+'%',`+${((gen.r5-oth.r5)*100).toFixed(1)}pt`],
 ['他社と同じ比率だった場合',gen.v6+'台',`他社比率なら ${Math.round(gen.jug*oth.r6)}台`,`+${gen.v6-Math.round(gen.jug*oth.r6)}台 多い`]];
 document.getElementById('tiles').innerHTML=T.map(([l,g,o,d])=>`<div class="tile"><div class="lab">${l}</div><div class="cmp"><span class="g">${g}</span><span class="o">${o.startsWith('他社')?o:'他社 '+o}</span></div><div class="d">${d}</div></div>`).join('');
@@ -236,13 +241,12 @@ document.getElementById('tiles').innerHTML=T.map(([l,g,o,d])=>`<div class="tile"
 const max=Math.max(...corps.map(o=>o.r6));
 const rows=[...corps].sort((a,b)=>b.r6-a.r6);
 let rk=0,prev=null;rows.forEach((o,i)=>{const r=Math.round(o.r6*100);if(r!==prev){rk=i+1;prev=r}o.rank=rk});
-document.getElementById('corp').innerHTML=`<thead><tr><th>順位</th><th class="name">法人</th><th>店舗数</th><th>入替前Ⅴ</th><th>Ⅵ台数</th><th>ジャグ計</th><th>1店あたりⅥ</th><th>Ⅵ÷入替前Ⅴ</th><th>Ⅵ÷ジャグ計</th><th class="name barcell"></th></tr></thead><tbody>`+
-rows.map(o=>`<tr class="${o===gen?'gen':''}"><td>${o.rank}</td><td class="name">${o.c}</td><td>${o.n}</td><td>${fn(o.v5)}</td><td>${fn(o.v6)}</td><td>${fn(o.jug)}</td><td>${f1(o.per)}</td><td>${fp(o.r5)}</td><td>${fp(o.r6)}</td><td class="barcell"><div class="bar" style="width:${o.r6/max*100}%"></div></td></tr>`).join('')+
-`<tr class="avg"><td></td><td class="name">${oth.c}</td><td>${oth.n}</td><td>${fn(oth.v5)}</td><td>${fn(oth.v6)}</td><td>${fn(oth.jug)}</td><td>${f1(oth.per)}</td><td>${(oth.r5*100).toFixed(1)}%</td><td>${(oth.r6*100).toFixed(1)}%</td><td class="barcell"><div class="bar" style="width:${oth.r6/max*100}%;opacity:.5"></div></td></tr></tbody>`;
+document.getElementById('corp').innerHTML=`<thead><tr><th>順位</th><th class="name">法人</th><th>店舗数</th><th>入替前Ⅴ</th><th>Ⅴ撤去</th><th>撤去率</th><th>Ⅵ台数</th><th>Ⅵ÷撤去</th><th>ジャグ計</th><th>1店あたりⅥ</th><th>Ⅵ÷入替前Ⅴ</th><th>Ⅵ÷ジャグ計</th><th class="name barcell"></th></tr></thead><tbody>`+
+rows.map(o=>`<tr class="${o===gen?'gen':''}"><td>${o.rank}</td><td class="name">${o.c}</td><td>${o.n}</td><td>${fn(o.v5)}</td><td>${fn(o.rm)}</td><td>${fp(o.rr)}</td><td>${fn(o.v6)}</td><td>${fp(o.r6rm)}</td><td>${fn(o.jug)}</td><td>${f1(o.per)}</td><td>${fp(o.r5)}</td><td>${fp(o.r6)}</td><td class="barcell"><div class="bar" style="width:${o.r6/max*100}%"></div></td></tr>`).join('')+
+`<tr class="avg"><td></td><td class="name">${oth.c}</td><td>${oth.n}</td><td>${fn(oth.v5)}</td><td>${fn(oth.rm)}</td><td>${(oth.rr*100).toFixed(1)}%</td><td>${fn(oth.v6)}</td><td>${(oth.r6rm*100).toFixed(1)}%</td><td>${fn(oth.jug)}</td><td>${f1(oth.per)}</td><td>${(oth.r5*100).toFixed(1)}%</td><td>${(oth.r6*100).toFixed(1)}%</td><td class="barcell"><div class="bar" style="width:${oth.r6/max*100}%;opacity:.5"></div></td></tr></tbody>`;
 // 店舗表
-stores.forEach(s=>{s.r5=pct(s.v6,s.v5);s.r6=pct(s.v6,s.jug)});
 const sel=document.getElementById('fcorp');sel.innerHTML='<option value="">すべて</option>'+corps.map(o=>`<option>${o.c}</option>`).join('');
-const cols=[['c','法人',1],['n','店舗',1],['v5','入替前Ⅴ'],['v6','Ⅵ'],['now','現Ⅴ'],['jug','ジャグ計'],['r5','Ⅵ÷入替前Ⅴ'],['r6','Ⅵ÷ジャグ計']];
+const cols=[['c','法人',1],['n','店舗',1],['v5','入替前Ⅴ'],['v6','Ⅵ'],['now','現Ⅴ'],['rm','Ⅴ撤去'],['rr','撤去率'],['r6rm','Ⅵ÷撤去'],['jug','ジャグ計'],['r5','Ⅵ÷入替前Ⅴ'],['r6','Ⅵ÷ジャグ計']];
 let sk='r6',sd=-1;
 function draw(){const f=sel.value,q=document.getElementById('q').value.trim();
 let list=stores.filter(s=>(!f||s.c===f)&&(!q||s.n.includes(q)));
@@ -251,11 +255,11 @@ document.getElementById('cnt').textContent=list.length+'店';
 const num=typeof stores[0][sk]!=='string';const pool=stores.filter(s=>s[sk]!=null);
 const rankOf=s=>!num||s[sk]==null?'<span class="na">－</span>':1+pool.filter(x=>(s[sk]-x[sk])*sd>0).length;
 document.getElementById('store').innerHTML='<thead><tr><th>順位</th>'+cols.map(([k,l,t])=>`<th class="sort${t?' name':''}" tabindex="0" data-k="${k}">${l}${k===sk?(sd<0?' ▼':' ▲'):''}</th>`).join('')+'</tr></thead><tbody>'+
-list.map((s,i)=>`<tr class="${s.c==='ジェネシス'?'gen':''}"><td>${rankOf(s)}</td><td class="name">${s.c}</td><td class="name">${s.n}</td><td>${fn(s.v5)}</td><td>${fn(s.v6)}</td><td>${fn(s.now)}</td><td>${fn(s.jug)}</td><td>${fp(s.r5)}</td><td>${fp(s.r6)}</td></tr>`).join('')+'</tbody>';
+list.map((s,i)=>`<tr class="${s.c==='ジェネシス'?'gen':''}"><td>${rankOf(s)}</td><td class="name">${s.c}</td><td class="name">${s.n}</td><td>${fn(s.v5)}</td><td>${fn(s.v6)}</td><td>${fn(s.now)}</td><td>${fn(s.rm)}</td><td>${fp(s.rr)}</td><td>${fp(s.r6rm)}</td><td>${fn(s.jug)}</td><td>${fp(s.r5)}</td><td>${fp(s.r6)}</td></tr>`).join('')+'</tbody>';
 document.querySelectorAll('#store th.sort').forEach(th=>{const go=()=>{const k=th.dataset.k;if(k===sk)sd=-sd;else{sk=k;sd=(k==='c'||k==='n')?1:-1}draw()};th.onclick=go;th.onkeydown=e=>{if(e.key==='Enter')go()}})}
 // ジェネシス店舗の順位
 const gRank=(s,k)=>{const p=stores.filter(x=>x[k]!=null);return s[k]==null?'－':`<strong>${1+p.filter(x=>x[k]>s[k]).length}位</strong> / ${p.length}`};
-document.getElementById('grank').innerHTML=stores.filter(s=>s.c==='ジェネシス').map(s=>`<div class="tile"><b>${s.n}</b><dl><dt>Ⅵ÷ジャグ計 ${fp(s.r6)}</dt><dd>${gRank(s,'r6')}</dd><dt>Ⅵ台数 ${s.v6}台</dt><dd>${gRank(s,'v6')}</dd><dt>Ⅵ÷入替前Ⅴ ${fp(s.r5)}</dt><dd>${gRank(s,'r5')}</dd></dl></div>`).join('');
+document.getElementById('grank').innerHTML=stores.filter(s=>s.c==='ジェネシス').map(s=>`<div class="tile"><b>${s.n}</b><dl><dt>Ⅵ÷ジャグ計 ${fp(s.r6)}</dt><dd>${gRank(s,'r6')}</dd><dt>Ⅴ撤去 ${s.rm}台（${fp(s.rr)}）</dt><dd>${gRank(s,'rm')}</dd><dt>Ⅵ台数 ${s.v6}台</dt><dd>${gRank(s,'v6')}</dd><dt>Ⅵ÷入替前Ⅴ ${fp(s.r5)}</dt><dd>${gRank(s,'r5')}</dd></dl></div>`).join('');
 // タブ
 function view(){const v=location.hash==='#store'?'store':'corp';['corp','store'].forEach(k=>{document.getElementById('v-'+k).hidden=k!==v;document.getElementById('t-'+k).setAttribute('aria-selected',k===v)})}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{location.hash=b.dataset.v;view()});
